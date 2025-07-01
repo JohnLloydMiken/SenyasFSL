@@ -1,0 +1,27 @@
+[
+    {
+        "reason": "Just for Fun",
+        "image": "Fun.png"
+    },
+     {
+        "reason": "Work or business",
+        "image": "Work.png"
+    },
+     {
+        "reason": "Friends",
+        "image": "Friends.png"
+    },
+     {
+        "reason": "Family",
+        "image": "Family.png"
+    },
+     {
+        "reason": "Deaf",
+        "image": "deaf.png"
+    },
+     {
+        "reason": "Other",
+        "image": "Others.png"
+    }
+  
+]
