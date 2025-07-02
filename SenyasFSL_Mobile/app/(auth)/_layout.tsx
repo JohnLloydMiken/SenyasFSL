@@ -7,7 +7,8 @@ export default  function GetStartedLayout(){
         <Stack initialRouteName="index">
             <Stack.Screen name="index" 
             options={{
-                headerShown: false
+                headerShown: false,
+                gestureEnabled: false
             }}
              />
             <Stack.Screen name="register" 
@@ -20,6 +21,7 @@ export default  function GetStartedLayout(){
                                             backgroundColor: "#FAF3E0",
                                             },
                                             headerShadowVisible: false,
+                                              gestureEnabled: false
                                         })}
              />
 
@@ -34,6 +36,7 @@ export default  function GetStartedLayout(){
                                             backgroundColor: "#FAF3E0",
                                             },
                                             headerShadowVisible: false,
+                                              gestureEnabled: false
                                         })}
              />
              
@@ -57,6 +60,7 @@ export default  function GetStartedLayout(){
                                             backgroundColor: "#FAF3E0",
                                             },
                                             headerShadowVisible: false,
+                                              gestureEnabled: false
                                             
                                         })}
              />
@@ -69,7 +73,7 @@ export default  function GetStartedLayout(){
                                                 </View>
                                             ),
                                             headerLeft: () => (
-                                                <GoBackBTN onPress={()=>navigation.replace("register")}/>
+                                                <GoBackBTN onPress={()=>navigation.replace("register_whyFSL")}/>
                                             ),
                                        
                                             headerRight: ()=>(
@@ -80,6 +84,7 @@ export default  function GetStartedLayout(){
                                             backgroundColor: "#FAF3E0",
                                             },
                                             headerShadowVisible: false,
+                                              gestureEnabled: false
                                             
                                         })}
              />
@@ -92,7 +97,7 @@ export default  function GetStartedLayout(){
                                                 </View>
                                             ),
                                             headerLeft: () => (
-                                                <GoBackBTN onPress={()=>navigation.replace("register")}/>
+                                                <GoBackBTN onPress={()=>navigation.replace("register_how")}/>
                                             ),
                                        
                                             headerRight: ()=>(
@@ -103,9 +108,50 @@ export default  function GetStartedLayout(){
                                             backgroundColor: "#FAF3E0",
                                             },
                                             headerShadowVisible: false,
+                                              gestureEnabled: false
                                             
                                         })}
              />
+                <Stack.Screen name="sign_up"
+
+             options={({ navigation }) => ({
+                                             headerTitle: ()=>(
+                                                <View style = {{width: 280, height: 20, backgroundColor: "#FFEEB9", borderRadius: 20, marginLeft: 8}}>
+                                                    <View style={{height:20, width: 280, backgroundColor: '#FB990F', borderRadius: 20}}></View>
+                                                </View>
+                                            ),
+                                            headerLeft: () => (
+                                                <GoBackBTN onPress={()=>navigation.replace("register_last")}/>
+                                            ),
+                                       
+                                            headerRight: ()=>(
+                                                <Text style ={{color: "#5B5B5B", fontWeight: 'bold', fontSize: 14}}>4/4</Text>
+                                            )
+                                            ,
+                                            headerStyle: {
+                                            backgroundColor: "#FAF3E0",
+                                            },
+                                            headerShadowVisible: false,
+                                              gestureEnabled: false
+                                            
+                                        })}
+             />
+                 <Stack.Screen name="congrast"
+                    options={{
+                       headerShown: false,
+                        
+                       
+                          
+                    }}
+                    />
+                    <Stack.Screen name="welcome"
+                    options={{
+                       headerShown: false,
+                        
+                       
+                          
+                    }}
+                    />
              </Stack>
     )
 }

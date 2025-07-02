@@ -1,7 +1,9 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native'
+import {  Text, View, TextInput, TouchableOpacity } from 'react-native'
 import React from 'react'
 import "@/global.css"
 import Authbutton from '@/components/button'
+import { router } from 'expo-router'
+
 export default function login() {
   return (
     <View className='flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-80'>
@@ -19,7 +21,7 @@ export default function login() {
       </View>
 
       <View className='w-11/12'>
-        <Authbutton content='LogIn'/>
+        <Authbutton content='LogIn' onPress={()=> router.push('/welcome')}/>
         <TouchableOpacity><Text className='text-center'>Forgot Password?</Text></TouchableOpacity>
       </View>
        

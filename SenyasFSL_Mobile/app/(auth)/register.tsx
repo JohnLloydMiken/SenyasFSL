@@ -15,7 +15,7 @@ export default function register() {
           <Text className='text-center text-xl'>Nice to meet you! Let’s start your Filipino Sign Language journey.</Text>
         </View>
 
-        <View className='w-11/12'>
+        <View className='w-11/12 absolute bottom-12'>
           <Authbutton content='Next' onPress={()=> router.push('./register_whyFSL')}/>
         </View>
     </View>

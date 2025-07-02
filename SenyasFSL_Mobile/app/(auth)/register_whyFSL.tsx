@@ -45,7 +45,7 @@ export default function register_whyFSL() {
         
         style ={{width: '100%'}}
       /></View>
-       <View className='w-11/12 mt-[7.5rem]'>
+       <View className='w-11/12 absolute bottom-12'>
          <Authbutton content='Next' onPress={()=> router.push('/register_how') }/>
        </View>
     </View>
