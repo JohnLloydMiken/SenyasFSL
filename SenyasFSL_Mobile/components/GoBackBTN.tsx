@@ -9,7 +9,7 @@ type BtnProps = {
 const GoBackBTN: React.FC<BtnProps> = ({ onPress, }) => {
   return (
     <TouchableOpacity onPress={onPress}>
-      <Text className='text-[#FB990F] text-lg font-bold'>{'<Back'}</Text>
+      <Text className='text-[#FB990F] text-lg font-PoppinsBold'>{'<Back'}</Text>
     </TouchableOpacity>
   )
 }

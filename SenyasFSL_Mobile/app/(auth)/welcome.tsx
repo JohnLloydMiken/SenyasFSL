@@ -15,7 +15,7 @@ export default function welcome() {
             
         </View>
          <View className='w-11/12 absolute bottom-12'>
-              <Authbutton content='Start Playing' onPress={()=>router.push('/')}></Authbutton>
+              <Authbutton content='Start Playing' onPress={()=>router.replace('../(main_interface)/')}></Authbutton>
         </View>
     </View>
   )
