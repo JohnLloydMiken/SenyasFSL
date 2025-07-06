@@ -4,7 +4,7 @@ import { View, Text } from "react-native";
 export default  function GetStartedLayout(){
 
     return (
-        <Stack initialRouteName="index">
+        <Stack >
             <Stack.Screen name="index" 
             options={{
                 headerShown: false,

@@ -6,8 +6,11 @@ import HomeIcon from '@/components/homeIcon';
 import ProfileIcon from '@/components/profileIcon';
 import DictionaryIcon from '@/components/dictionaryIcon';
 import TreasureIcon from '@/components/treasureIcon';
+import { useRouter } from 'expo-router';
+
+
 export default function RootLayout() {
-  
+  const router = useRouter()
   return (
 
     <Tabs 
@@ -19,7 +22,11 @@ export default function RootLayout() {
                 <Curency number={100}/>
             ),
             headerRight: ()=>(
-                <HeaderRightBtn achievementCount={0} streakCount={0}/>
+                <HeaderRightBtn achievementCount={0} streakCount={0} 
+                onPressAchievement={()=> router.push('./headeroptions/')}
+                onPressLeaderboards={()=> router.push('../headeroptions/leaderboards')}
+                onPressStreak={()=> router.push('../headeroptions/streak')}
+                />
             ),
             headerStyle:{
                 borderBottomWidth: 0.5,

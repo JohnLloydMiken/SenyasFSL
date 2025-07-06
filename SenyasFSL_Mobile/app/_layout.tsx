@@ -2,7 +2,7 @@ import { Slot } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-
+import { router } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync(); 
 
@@ -16,11 +16,13 @@ export default function RootLayout() {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
+
+    
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
   return <Slot  
- 
+    
   />; 
 }
 

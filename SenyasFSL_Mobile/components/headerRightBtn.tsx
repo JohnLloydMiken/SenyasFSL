@@ -1,15 +1,18 @@
-import { StyleSheet, Text, View , TouchableOpacity, Image} from 'react-native'
+import { StyleSheet, Text, View , TouchableOpacity, Image, } from 'react-native'
 import React from 'react'
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
 type  headerBtnProps = {
     achievementCount: number,
-    streakCount: number
+    streakCount: number,
+     onPressAchievement: () => void;
+      onPressLeaderboards: () => void;
+       onPressStreak: () => void;
 }
- const headerRightBtn: React.FC<headerBtnProps> =({achievementCount, streakCount})=> {
+ const headerRightBtn: React.FC<headerBtnProps> =({achievementCount, streakCount, onPressAchievement , onPressLeaderboards, onPressStreak })=> {
   return (
     <View className='flex flex-row justify-center items-center gap-4 mr-4'>
-        <TouchableOpacity className='flex flex-row justify-center items-center'>
+        <TouchableOpacity className='flex flex-row justify-center items-center' onPress={onPressAchievement} id='trophy'>
             <Image source={require('../assets/images/Achievements.png')}/>
              <MaskedView
                   maskElement={
@@ -31,11 +34,11 @@ type  headerBtnProps = {
                 </MaskedView>
         </TouchableOpacity>
 
-        <TouchableOpacity>
+        <TouchableOpacity id='leader' onPress={onPressLeaderboards}>
             <Image source={require('../assets/images/Leaderboard.png')}/>
         </TouchableOpacity>
 
-          <TouchableOpacity className='flex flex-row justify-center items-center'>
+          <TouchableOpacity className='flex flex-row justify-center items-center' id='streak' onPress={onPressStreak}>
             <Image source={require('../assets/images/Streak.png')}/>
              <MaskedView
                   maskElement={
