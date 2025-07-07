@@ -1,0 +1,39 @@
+[
+    {
+        "id": 1,
+        "Fact_title": "What is the PFD?",
+        "image": "fact_folder.png",
+        "unlocked": true
+    },
+     {
+         "id": 1,
+        "Fact_title": "SenyasFact?",
+        "image": "fact_locked.png",
+        "unlocked": false
+    },
+     {
+         "id": 1,
+        "Fact_title": "SenyasFact",
+        "image": "fact_locked.png",
+        "unlocked": false
+    },
+     {
+         "id": 1,
+        "Fact_title": "SenyasFact",
+        "image": "fact_locked.png",
+        "unlocked": false
+    },
+     {
+        "id": 1,
+        "Fact_title": "SenyasFact",
+        "image": "fact_locked.png",
+        "unlocked": false
+    },
+     {
+        "id": 1,
+        "Fact_title": "SenyasFact",
+        "image": "fact_locked.png",
+        "unlocked": false
+    }
+    
+]

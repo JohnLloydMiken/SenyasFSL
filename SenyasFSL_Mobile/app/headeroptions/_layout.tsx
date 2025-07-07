@@ -47,7 +47,8 @@ export default function LeaderboardsLayout(){
                     color: 'white'
                     
                 },
-              
+                headerShadowVisible: true,
+            
               
             }}/>
              <Stack.Screen

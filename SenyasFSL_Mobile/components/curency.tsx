@@ -21,7 +21,7 @@ const Currency: React.FC<CurrencyProps> = ({ number }) => {
       <LinearGradient
         colors={['#FB990F', '#EA0505']}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 0.8 }}
       >
         {/* Invisible text only to preserve size */}
         <Text style={[styles.text, { opacity: 0 }]}>
