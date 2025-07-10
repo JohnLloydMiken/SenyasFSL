@@ -15,7 +15,7 @@ export default function index() {
     
   }
 
-  const [isUnlocked, setIsUnlocked] = useState(true) 
+  
   const unlockedFacts = Facts.filter(f => f.unlocked).length;
 
   return (

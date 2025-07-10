@@ -2,14 +2,18 @@ import { StyleSheet, Text, View , TouchableOpacity, Image, } from 'react-native'
 import React from 'react'
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useBottomSheet } from '@/modules/contextProvider';
 type  headerBtnProps = {
     achievementCount: number,
     streakCount: number,
      onPressAchievement: () => void;
       onPressLeaderboards: () => void;
-       onPressStreak: () => void;
+      
 }
- const headerRightBtn: React.FC<headerBtnProps> =({achievementCount, streakCount, onPressAchievement , onPressLeaderboards, onPressStreak })=> {
+ const headerRightBtn: React.FC<headerBtnProps> =({achievementCount, streakCount, onPressAchievement , onPressLeaderboards })=> {
+
+  const { openSheet } = useBottomSheet();
+
   return (
     <View className='flex flex-row justify-center items-center gap-4 mr-4'>
         <TouchableOpacity className='flex flex-row justify-center items-center' onPress={onPressAchievement} id='trophy'>
@@ -38,7 +42,7 @@ type  headerBtnProps = {
             <Image source={require('../assets/images/Leaderboard.png')}/>
         </TouchableOpacity>
 
-          <TouchableOpacity className='flex flex-row justify-center items-center' id='streak' onPress={onPressStreak}>
+          <TouchableOpacity className='flex flex-row justify-center items-center' id='streak' onPress={openSheet}>
             <Image source={require('../assets/images/Streak.png')}/>
              <MaskedView
                   maskElement={

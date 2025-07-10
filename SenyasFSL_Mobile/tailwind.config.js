@@ -11,7 +11,8 @@ module.exports = {
     extend: {
       fontFamily:{
        PoppinsRegular: ['Poppins-Black'],
-       PoppinsBold: ['Poppins-Bold']
+       PoppinsBold: ['Poppins-Bold'],
+       PoppinsSemiBold: ['Poppins-SemiBold']
       }
     },
   },
