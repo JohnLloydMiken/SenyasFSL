@@ -21,6 +21,8 @@ const Item: React.FC<itemCardProps> = ({itemName, itemCost, itemIcon}) =>{
         padding: 3, // This controls the thickness of the border
         width: 120,
         height: 130,
+        backgroundColor: 'white',
+        elevation: 5
       }}
     >
 
