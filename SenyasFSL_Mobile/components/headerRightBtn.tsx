@@ -12,7 +12,7 @@ type  headerBtnProps = {
 }
  const headerRightBtn: React.FC<headerBtnProps> =({achievementCount, streakCount, onPressAchievement , onPressLeaderboards })=> {
 
-  const { openSheet } = useBottomSheet();
+  const { openSheet , handleSheetRender} = useBottomSheet();
 
   return (
     <View className='flex flex-row justify-center items-center gap-4 mr-4'>
@@ -42,7 +42,10 @@ type  headerBtnProps = {
             <Image source={require('../assets/images/Leaderboard.png')}/>
         </TouchableOpacity>
 
-          <TouchableOpacity className='flex flex-row justify-center items-center' id='streak' onPress={openSheet}>
+          <TouchableOpacity className='flex flex-row justify-center items-center' id='streak' onPress={()=>{
+            handleSheetRender('streak')
+            openSheet(); 
+          }}>
             <Image source={require('../assets/images/Streak.png')}/>
              <MaskedView
                   maskElement={

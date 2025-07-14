@@ -1,451 +1,175 @@
-import { Image, Text, View, TouchableOpacity } from 'react-native';
-import { Tabs } from 'expo-router';
+import React from 'react';
+import { Text, View, TouchableOpacity } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Tabs, useRouter } from 'expo-router';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+
 import Curency from '@/components/curency';
 import HeaderRightBtn from '@/components/headerRightBtn';
 import HomeIcon from '@/components/homeIcon';
 import ProfileIcon from '@/components/profileIcon';
 import DictionaryIcon from '@/components/dictionaryIcon';
 import TreasureIcon from '@/components/treasureIcon';
-import { useRouter } from 'expo-router';
-import Streak from '../headeroptions/streak';
-import {BottomSheetProvider} from '@/modules/contextProvider'
-import { useBottomSheet } from '@/modules/contextProvider';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import MaskedView from '@react-native-masked-view/masked-view';
-import { LinearGradient } from 'expo-linear-gradient';
+import UserStreak from '@/modules/userStreak';
+import UserInput from '@/components/userInput';
+import Authbutton from '@/components/button';
 
+import { BottomSheetProvider, useBottomSheet } from '@/modules/contextProvider';
 
-const now = new Date();
-const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const today = days[now.getDay()];
 export default function RootLayout() {
- 
   return (
-
-      <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetProvider>
         <TabsWithBottomSheet />
       </BottomSheetProvider>
     </GestureHandlerRootView>
-  )
+  );
 }
 
 function TabsWithBottomSheet() {
-  const { bottomSheetRef, handleSheetChanges, isSheetOpen } = useBottomSheet();
-  const router = useRouter()
+  const { bottomSheetRef, handleSheetChanges, isSheetOpen, sheet } = useBottomSheet();
+  const router = useRouter();
+
+  const getSnapPoints = () => {
+  switch (sheet) {
+    case 'streak':
+      return ['50%']; // shorter content
+    case 'editData':
+    case 'editPass':
+      return ['60%']; // forms take more space
+    default:
+      return ['1%']; // or a closed value; used when sheet is null
+  }
+};
+
+
+  const commonTabOptions = {
+    tabBarLabelStyle: {
+      fontWeight: 'bold',
+      fontSize: 12,
+    },
+  };
+
   return (
     <>
-     <Tabs 
-    initialRouteName='index'
-    screenOptions={
-        {
-        headerTitle: "",
-        tabBarStyle: isSheetOpen ? { display: 'none' } : {},
-            headerLeft: ()=>(
-                <Curency number={100}/>
-            ),
-            headerRight: ()=>(
-                <HeaderRightBtn achievementCount={0} streakCount={0} 
-                onPressAchievement={()=> router.push('./headeroptions/')}
-                onPressLeaderboards={()=> router.push('../headeroptions/leaderboards')}
-                
-                />
-            ),
-            headerStyle:{
-                borderBottomWidth: 0.5,
-                 borderBottomColor: "black",
-                backgroundColor: "#fff", // optional for visibility
-            },
-            headerShadowVisible: false,
-             tabBarActiveTintColor: "#EA0505",
-           tabBarInactiveTintColor: "#8B8B8B",
-           
-        }
-        
-    }
-    
-    > 
-        <Tabs.Screen 
-        name='index'
-        
-        options={{
-           tabBarIcon: ({focused}) => <HomeIcon focused ={focused}/>,
-           title: "Home",
-           tabBarLabelStyle:{
-            fontWeight: "bold",
-            fontSize: 12,
+      <Tabs
+        initialRouteName="index"
+        screenOptions={{
+          headerTitle: '',
+          tabBarStyle: isSheetOpen ? { display: 'none' } : {},
+          headerLeft: () => <Curency number={100} />,
+          headerRight: () => (
+            <HeaderRightBtn
+              achievementCount={0}
+              streakCount={0}
+              onPressAchievement={() => router.push('./headeroptions/')}
+              onPressLeaderboards={() => router.push('../headeroptions/leaderboards')}
+            />
+          ),
+          headerStyle: {
+            borderBottomWidth: 0.5,
+            borderBottomColor: 'black',
+            backgroundColor: '#fff',
+          },
+          headerShadowVisible: false,
+          tabBarActiveTintColor: '#EA0505',
+          tabBarInactiveTintColor: '#8B8B8B',
+        }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
             
-           },
+            tabBarIcon: ({ focused }) => <HomeIcon focused={focused} />,
+            title: 'Home',
+          }}
+        />
+        <Tabs.Screen
+          name="treasure"
+          options={{
+            
+            tabBarIcon: ({ focused }) => <TreasureIcon focused={focused} />,
+            title: 'Treasure',
+          }}
+        />
+        <Tabs.Screen
+          name="dictionary"
+          options={{
            
-          
-        }}
-        
+            tabBarIcon: ({ focused }) => <DictionaryIcon focused={focused} />,
+            title: 'Dictionary',
+          }}
         />
-            <Tabs.Screen 
-        name='treasure'
-        
-        options={{
-           tabBarIcon: ({focused}) => <TreasureIcon focused ={focused}/>,
-           title: "Treasure",
-           tabBarLabelStyle:{
-            fontWeight: "bold",
-            fontSize: 12
-           },
-           
-          
-        }}
-        
+        <Tabs.Screen
+          name="profile"
+          options={{
+         
+            tabBarIcon: ({ focused }) => <ProfileIcon focused={focused} />,
+            title: 'Profile',
+          }}
         />
-            <Tabs.Screen 
-        name='dictionary'
-        
-        options={{
-           tabBarIcon: ({focused}) => <DictionaryIcon focused ={focused}/>,
-           title: "Dictionary",
-           tabBarLabelStyle:{
-            fontWeight: "bold",
-            fontSize: 12
-           }
-          
-        }}
-        
-        />
-            <Tabs.Screen 
-        name='profile'
-        
-        options={{
-           tabBarIcon: ({focused}) => <ProfileIcon focused ={focused}/>,
-           title: "Profile",
-           tabBarLabelStyle:{
-            fontWeight: "bold",
-            fontSize: 12
-           }
-          
-        }}
-        
-        />
-
-    </Tabs>
+      </Tabs>
 
       <BottomSheet
         ref={bottomSheetRef}
-        
         onChange={handleSheetChanges}
-        snapPoints={['50%']}
-        enablePanDownToClose = {true}
+         index={sheet === null ? -1 : 0}
+        snapPoints={getSnapPoints()}
+        enablePanDownToClose
       >
-        <BottomSheetView style={{  display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap:10,  height: '100%'}}>
-          <View className='bg-[#FAF3E0] w-11/12 rounded-xl p-8  relative '>
-              <View className='absolute left-[38%] -top-28 z-0'>
-                <Image source={require('../../assets/images/fire.png')} className='w-40 h-40  z-0   relative '/>
-              
+        <BottomSheetView
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            
+            alignItems: 'center',
+            flexDirection: 'column',
+            gap: 10,
+            height: '100%',
+          }}
+        >
+          {sheet === 'streak' && (
+            <>
+              <UserStreak streakCount={2} protectionCount={1} />
+              <TouchableOpacity className="w-11/12 p-4 bg-[#FB990F] rounded-xl mx-auto absolute bottom-5">
+                <Text className="font-PoppinsBold text-2xl text-center text-white">Share your Streak</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {sheet === 'editData' && (
+            <>
+              <UserInput
+                title="Edit personal data"
+                usernameTitle="Username"
+                userEmailTitle="Email"
+                userPasswordTitle="Current password"
+                passwordTitleDescription="Type in your password to update your email"
+              />
+              <View className="w-11/12 absolute bottom-1">
+                <Authbutton content="Save changes" onPress={() => bottomSheetRef.current?.close()} />
               </View>
-               <MaskedView
-                      style={{zIndex: 50, position: 'absolute', left: '60%', top: -5}}
-                      maskElement={
-                        
-                            <Text className="text-3xl font-PoppinsBold ">1</Text>
-                       
-                      }
-                    >
-                      <LinearGradient
-                        colors={['#FB990F', '#EA0505']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 0, y: 0.8 }}
-                      >
-                        {/* Invisible text only to preserve size */}
-                        <Text style={{ opacity: 0 }} className='text-3xl font-PoppinsBold  '>
-                          1
-                        </Text>
-                      </LinearGradient>
-                    </MaskedView>
+            </>
+          )}
 
-              <View>
-                <View className='flex flex-row justify-center items-center absolute -right-2 -top-4'>
-                  <Image source={require('../../assets/images/sunProtection.png')}/>
-                  <MaskedView
-                  
-                      maskElement={
-                        
-                            <Text className="text-3xl font-PoppinsBold ">1</Text>
-                       
-                      }
-                    >
-                      <LinearGradient
-                        colors={['#2DE2E2', '#0922A0']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 0, y: 0.8 }}
-                      >
-                        {/* Invisible text only to preserve size */}
-                        <Text style={{ opacity: 0 }} className='text-3xl font-PoppinsBold  '>
-                          1
-                        </Text>
-                      </LinearGradient>
-                    </MaskedView>
-                </View>
-                <Text className='text-center font-PoppinsBold text-3xl my-8'>1 Day Streak!</Text>
-
-                <View className='flex flex-row justify-around items-center'>
-                    {/* Monday */}
-                    <View >
-                      <View className='w-10 h-10 rounded-full border-2 border-[#FFC38B] relative'>
-                       {today === "Monday"?  <Image source={require('../../assets/images/fire.png')} style={{width: 50 , height: 50, position:'absolute', left: -10 , top: -15}}/> : null}
-                        </View>
-                      
-                      {today === "Monday"?  ( <MaskedView
-                           maskElement={
-                           <Text className='text-center text-xl font-PoppinsSemiBold'>Mo</Text>
-                                      }
-                        >
-                          <LinearGradient
-                            colors={['#FB990F', '#EA0505']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 0.8 }}
-                          >
-                            {/* Invisible text only to preserve size */}
-                            <Text className='text-center text-xl font-PoppinsSemiBold' style={{opacity: 0}}>Mo</Text>
-                      </LinearGradient>
-                    </MaskedView>): <Text className='text-center text-xl font-PoppinsSemiBold text-[#888888]'>Mo</Text> }
-
-                    </View>
-                    {/* Tuesday */}
-                     <View >
-                      <View className='w-10 h-10 rounded-full border-2 border-[#FFC38B] relative'>
-                       {today === "Tuesday"?  <Image source={require('../../assets/images/fire.png')} style={{width: 50 , height: 50, position:'absolute', left: -10 , top: -15}}/> : null}
-                        </View>
-                      
-                      {today === "Tuesday"?  ( <MaskedView
-                           maskElement={
-                           <Text className='text-center text-xl font-PoppinsSemiBold'>Tu</Text>
-                                      }
-                        >
-                          <LinearGradient
-                            colors={['#FB990F', '#EA0505']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 0.8 }}
-                          >
-                            {/* Invisible text only to preserve size */}
-                            <Text className='text-center text-xl font-PoppinsSemiBold' style={{opacity: 0}}>Mo</Text>
-                      </LinearGradient>
-                    </MaskedView>): <Text className='text-center text-xl font-PoppinsSemiBold text-[#888888]'>Tu</Text> }
-
-                    </View>
-                      {/* Wednesday */}
-                    <View >
-                      <View className='w-10 h-10 rounded-full border-2 border-[#FFC38B] relative'>
-                       {today === "Wednesday"?  <Image source={require('../../assets/images/fire.png')} style={{width: 50 , height: 50, position:'absolute', left: -10 , top: -15}}/> : null}
-                        </View>
-                      
-                      {today === "Wednesday"?  ( <MaskedView
-                           maskElement={
-                           <Text className='text-center text-xl font-PoppinsSemiBold'>We</Text>
-                                      }
-                        >
-                          <LinearGradient
-                            colors={['#FB990F', '#EA0505']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 0.8 }}
-                          >
-                            {/* Invisible text only to preserve size */}
-                            <Text className='text-center text-xl font-PoppinsSemiBold' style={{opacity: 0}}>Mo</Text>
-                      </LinearGradient>
-                    </MaskedView>): <Text className='text-center text-xl font-PoppinsSemiBold text-[#888888]'>We</Text> }
-
-                    </View>
-                    {/* Thursday */}  
-                   <View >
-                      <View className='w-10 h-10 rounded-full border-2 border-[#FFC38B] relative'>
-                       {today === "Thursday"?  <Image source={require('../../assets/images/fire.png')} style={{width: 50 , height: 50, position:'absolute', left: -10 , top: -15}}/> : null}
-                        </View>
-                      
-                      {today === "Thursday"?  ( <MaskedView
-                           maskElement={
-                           <Text className='text-center text-xl font-PoppinsSemiBold'>Th</Text>
-                                      }
-                        >
-                          <LinearGradient
-                            colors={['#FB990F', '#EA0505']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 0.8 }}
-                          >
-                            {/* Invisible text only to preserve size */}
-                            <Text className='text-center text-xl font-PoppinsSemiBold' style={{opacity: 0}}>Mo</Text>
-                      </LinearGradient>
-                    </MaskedView>): <Text className='text-center text-xl font-PoppinsSemiBold text-[#888888]'>Th</Text> }
-
-                    </View>
-                    {/* Friday */}
-                    <View >
-                      <View className='w-10 h-10 rounded-full border-2 border-[#FFC38B] relative'>
-                       {today === "Friday"?  <Image source={require('../../assets/images/fire.png')} style={{width: 50 , height: 50, position:'absolute', left: -10 , top: -15}}/> : null}
-                        </View>
-                      
-                      {today === "Friday"?  ( <MaskedView
-                           maskElement={
-                           <Text className='text-center text-xl font-PoppinsSemiBold'>Fr</Text>
-                                      }
-                        >
-                          <LinearGradient
-                            colors={['#FB990F', '#EA0505']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 0.8 }}
-                          >
-                            {/* Invisible text only to preserve size */}
-                            <Text className='text-center text-xl font-PoppinsSemiBold' style={{opacity: 0}}>Mo</Text>
-                      </LinearGradient>
-                    </MaskedView>): <Text className='text-center text-xl font-PoppinsSemiBold text-[#888888]'>Fr</Text> }
-
-                    </View>
-                    {/* Saturday */}
-                    <View >
-                      <View className='w-10 h-10 rounded-full border-2 border-[#FFC38B] relative'>
-                       {today === "Saturday"?  <Image source={require('../../assets/images/fire.png')} style={{width: 50 , height: 50, position:'absolute', left: -10 , top: -15}}/> : null}
-                        </View>
-                      
-                      {today === "Saturday"?  ( <MaskedView
-                           maskElement={
-                           <Text className='text-center text-xl font-PoppinsSemiBold'>Sa</Text>
-                                      }
-                        >
-                          <LinearGradient
-                            colors={['#FB990F', '#EA0505']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 0.8 }}
-                          >
-                            {/* Invisible text only to preserve size */}
-                            <Text className='text-center text-xl font-PoppinsSemiBold' style={{opacity: 0}}>Mo</Text>
-                      </LinearGradient>
-                    </MaskedView>): <Text className='text-center text-xl font-PoppinsSemiBold text-[#888888]'>Sa</Text> }
-
-                    </View>
-                    {/* Sunday */}
-                    <View >
-                      <View className='w-10 h-10 rounded-full border-2 border-[#FFC38B] relative'>
-                       {today === "Sunday"?  <Image source={require('../../assets/images/fire.png')} style={{width: 50 , height: 50, position:'absolute', left: -10 , top: -15}}/> : null}
-                        </View>
-                      
-                      {today === "Sunday"?  ( <MaskedView
-                           maskElement={
-                           <Text className='text-center text-xl font-PoppinsSemiBold'>Su</Text>
-                                      }
-                        >
-                          <LinearGradient
-                            colors={['#FB990F', '#EA0505']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 0.8 }}
-                          >
-                            {/* Invisible text only to preserve size */}
-                            <Text className='text-center text-xl font-PoppinsSemiBold' style={{opacity: 0}}>Su</Text>
-                      </LinearGradient>
-                    </MaskedView>): <Text className='text-center text-xl font-PoppinsSemiBold text-[#888888]'>Su</Text> }
-
-                    </View>
-
-                </View>
+          {sheet === 'editPass' && (
+            <>
+              <UserInput
+              title="Edit personal data"
+                usernameTitle="Username"
+                userEmailTitle="Email"
+                userPasswordTitle="Current password"
+                passwordTitleDescription="Type in your password to update your email"
+              />
+              <View className="w-11/12 absolute bottom-1">
+                <Authbutton content="Update password" onPress={() => bottomSheetRef.current?.close()} />
               </View>
-          </View>
-
-           <TouchableOpacity className='w-11/12 p-4 bg-[#FB990F] rounded-xl mx-auto absolute bottom-5 '>
-            <Text className='font-PoppinsBold text-2xl text-center text-white'>Share your Streak</Text>
-          </TouchableOpacity>
-
+            </>
+          )}
         </BottomSheetView>
-       
       </BottomSheet>
     </>
   );
 }
 
-/*
-   <Tabs 
-    initialRouteName='index'
-    screenOptions={
-        {
-        headerTitle: "",
-            headerLeft: ()=>(
-                <Curency number={100}/>
-            ),
-            headerRight: ()=>(
-                <HeaderRightBtn achievementCount={0} streakCount={0} 
-                onPressAchievement={()=> router.push('./headeroptions/')}
-                onPressLeaderboards={()=> router.push('../headeroptions/leaderboards')}
-                
-                />
-            ),
-            headerStyle:{
-                borderBottomWidth: 0.5,
-                 borderBottomColor: "black",
-                backgroundColor: "#fff", // optional for visibility
-            },
-            headerShadowVisible: false,
-             tabBarActiveTintColor: "#EA0505",
-           tabBarInactiveTintColor: "#8B8B8B",
-           
-        }
-        
-    }
-    
-    > 
-        <Tabs.Screen 
-        name='index'
-        
-        options={{
-           tabBarIcon: ({focused}) => <HomeIcon focused ={focused}/>,
-           title: "Home",
-           tabBarLabelStyle:{
-            fontWeight: "bold",
-            fontSize: 12,
-            
-           },
-           
-          
-        }}
-        
-        />
-            <Tabs.Screen 
-        name='treasure'
-        
-        options={{
-           tabBarIcon: ({focused}) => <TreasureIcon focused ={focused}/>,
-           title: "Treasure",
-           tabBarLabelStyle:{
-            fontWeight: "bold",
-            fontSize: 12
-           },
-           
-          
-        }}
-        
-        />
-            <Tabs.Screen 
-        name='dictionary'
-        
-        options={{
-           tabBarIcon: ({focused}) => <DictionaryIcon focused ={focused}/>,
-           title: "Dictionary",
-           tabBarLabelStyle:{
-            fontWeight: "bold",
-            fontSize: 12
-           }
-          
-        }}
-        
-        />
-            <Tabs.Screen 
-        name='profile'
-        
-        options={{
-           tabBarIcon: ({focused}) => <ProfileIcon focused ={focused}/>,
-           title: "Profile",
-           tabBarLabelStyle:{
-            fontWeight: "bold",
-            fontSize: 12
-           }
-          
-        }}
-        
-        />
 
-    </Tabs>
-*/
