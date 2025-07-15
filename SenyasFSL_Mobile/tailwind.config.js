@@ -15,6 +15,7 @@ module.exports = {
        PoppinsSemiBold: ['Poppins-SemiBold']
       }
     },
+    
   },
   plugins: [],
 }

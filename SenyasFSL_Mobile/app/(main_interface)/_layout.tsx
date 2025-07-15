@@ -121,7 +121,7 @@ function TabsWithBottomSheet() {
           style={{
             display: 'flex',
             justifyContent: 'center',
-            
+            width: '100%',
             alignItems: 'center',
             flexDirection: 'column',
             gap: 10,
@@ -130,7 +130,9 @@ function TabsWithBottomSheet() {
         >
           {sheet === 'streak' && (
             <>
-              <UserStreak streakCount={2} protectionCount={1} />
+               <View className="w-11/12 ">
+                <UserStreak streakCount={1} protectionCount={1} />
+            </View>
               <TouchableOpacity className="w-11/12 p-4 bg-[#FB990F] rounded-xl mx-auto absolute bottom-5">
                 <Text className="font-PoppinsBold text-2xl text-center text-white">Share your Streak</Text>
               </TouchableOpacity>
