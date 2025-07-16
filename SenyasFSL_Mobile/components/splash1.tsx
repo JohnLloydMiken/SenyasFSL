@@ -1,21 +1,16 @@
-
-import { View, StyleSheet, Image, SafeAreaView } from "react-native";
-
-// Replace with actual path to your images
-import FSL_sign from '@/assets/svgs/FSL_sign.svg'
-
+import { View, StyleSheet, useWindowDimensions, SafeAreaView } from "react-native";
+import FSL_sign from "@/assets/svgs/FSL_sign.svg";
 
 export default function Index() {
 
-  
-
-
+  const {width} = useWindowDimensions()
+  const svgSize = width < 768 ? 300 : 500;
   return (
-  <SafeAreaView style = {styles.container}>
-     <View >
-       <FSL_sign width={300} height={300} />
-    </View>
-  </SafeAreaView>
+    <SafeAreaView style={styles.container}>
+      <View>
+        <FSL_sign width={svgSize} height={svgSize} />
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -26,5 +21,4 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
- 
 });

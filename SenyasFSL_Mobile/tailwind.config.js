@@ -15,6 +15,12 @@ module.exports = {
        PoppinsSemiBold: ['Poppins-SemiBold']
       }
     },
+    screens: {
+      sm: '480px',
+      md: '768px', // tablets
+      lg: '1024px', // large tablets
+  
+    },
     
   },
   plugins: [],
