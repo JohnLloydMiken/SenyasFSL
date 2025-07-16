@@ -4,7 +4,9 @@ import { useFonts } from 'expo-font';
 import React from 'react'
 import '../../global.css'
 import Authbutton from '@/components/button';
+import FSL_start from '@/assets/svgs/FSL_start.svg'
 const getStartedBG = require('@/assets/images/getStartedBG.png')
+
 
 
  
@@ -19,7 +21,7 @@ export default function getStarted() {
 
     <SafeAreaView style ={styles.container}>
         <View className='mt-28' >
-              <Image source= {getStartedBG}/>
+              <FSL_start/>
         </View>
         <View className='flex justify-center items-center flex-col'>
             <Text className='text-2xl'>Start Learning</Text>

@@ -22,7 +22,7 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
-  return <Slot  
+  return <Slot initialRouteName='splash' 
    
   />; 
 }

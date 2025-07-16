@@ -1,14 +1,13 @@
 import { StyleSheet, SafeAreaView, View , Image} from 'react-native'
 import React from 'react'
-
+import FSL_loading_screen from '@/assets/svgs/FSL_loading_screen.svg'
 export default function splashScreen() {
 
- const icon2 = require("../assets/images/splash-icon2.png");
 
   return (
       <SafeAreaView style = {styles.container}>
      <View >
-        <Image source={icon2} style ={styles.image}/>
+      <FSL_loading_screen width={400} height={300} style={{marginRight: 20}}/>
     </View>
   </SafeAreaView>
   )
@@ -21,10 +20,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  image: {
-    
-    width: 380,
-    height: 150,
-    marginRight: 20
-  },
+ 
 })

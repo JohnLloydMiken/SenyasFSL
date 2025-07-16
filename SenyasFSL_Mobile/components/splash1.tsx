@@ -2,7 +2,7 @@
 import { View, StyleSheet, Image, SafeAreaView } from "react-native";
 
 // Replace with actual path to your images
-const icon1 = require("../assets/images/icon.png");
+import FSL_sign from '@/assets/svgs/FSL_sign.svg'
 
 
 export default function Index() {
@@ -13,7 +13,7 @@ export default function Index() {
   return (
   <SafeAreaView style = {styles.container}>
      <View >
-        <Image source={icon1} style ={styles.image}/>
+       <FSL_sign width={300} height={300} />
     </View>
   </SafeAreaView>
   );
@@ -26,8 +26,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  image: {
-    width: 300,
-    height: 300,
-  },
+ 
 });
