@@ -1,30 +1,23 @@
-import React from 'react';
-import { StyleSheet, Image } from 'react-native';
-
+import React from "react";
+import { StyleSheet, useWindowDimensions } from "react-native";
+import Profile from "@/assets/svgs/Profile.svg";
+import Profile_Locked from "@/assets/svgs/Profile_locked.svg";
 type IconProp = {
   focused: boolean;
 };
 
 const ProfileIcon: React.FC<IconProp> = ({ focused }) => {
-
-  const path = ()=>{
-      if(focused){
-        return require('../assets/images/profile.png')
-    }else{
-        return require('../assets/images/ProfileGray.png')
+  const { width } = useWindowDimensions();
+  const svgSize = width < 768 ? 24 : 50;
+  const path = () => {
+    if (focused) {
+      return <Profile width={svgSize} height={svgSize} />;
+    } else {
+      return <Profile_Locked width={svgSize} height={svgSize} />;
     }
-  }
+  };
 
-  return (
-    <Image
-      source={path()}
-      style={{
-        width: 20,
-        height: 20,
-       
-      }}
-    />
-  );
+  return path();
 };
 
 export default ProfileIcon;

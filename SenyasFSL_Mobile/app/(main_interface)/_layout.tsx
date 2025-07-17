@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, TouchableOpacity } from 'react-native';
+import { Text, View, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Tabs, useRouter } from 'expo-router';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -29,7 +29,8 @@ export default function RootLayout() {
 function TabsWithBottomSheet() {
   const { bottomSheetRef, handleSheetChanges, isSheetOpen, sheet } = useBottomSheet();
   const router = useRouter();
-
+  const {width} = useWindowDimensions()
+  const titleSize = width < 768 ? 12 : 18
   const getSnapPoints = () => {
   switch (sheet) {
     case 'streak':
@@ -82,6 +83,14 @@ function TabsWithBottomSheet() {
             
             tabBarIcon: ({ focused }) => <HomeIcon focused={focused} />,
             title: 'Home',
+            tabBarLabelStyle:{
+              fontSize: titleSize,
+            },
+            tabBarLabelPosition: 'below-icon',
+            tabBarIconStyle:{
+              marginTop: 4
+            },
+            
           }}
         />
         <Tabs.Screen
@@ -90,6 +99,13 @@ function TabsWithBottomSheet() {
             
             tabBarIcon: ({ focused }) => <TreasureIcon focused={focused} />,
             title: 'Treasure',
+            tabBarLabelStyle:{
+              fontSize: titleSize,
+            },
+            tabBarLabelPosition: 'below-icon',
+             tabBarIconStyle:{
+              marginTop: 4
+            },
           }}
         />
         <Tabs.Screen
@@ -98,6 +114,13 @@ function TabsWithBottomSheet() {
            
             tabBarIcon: ({ focused }) => <DictionaryIcon focused={focused} />,
             title: 'Dictionary',
+            tabBarLabelStyle:{
+              fontSize: titleSize,
+            },
+            tabBarLabelPosition: 'below-icon',
+             tabBarIconStyle:{
+              marginTop: 4
+            },
           }}
         />
         <Tabs.Screen
@@ -106,6 +129,13 @@ function TabsWithBottomSheet() {
          
             tabBarIcon: ({ focused }) => <ProfileIcon focused={focused} />,
             title: 'Profile',
+            tabBarLabelStyle:{
+              fontSize: titleSize,
+            },
+            tabBarLabelPosition: 'below-icon',
+             tabBarIconStyle:{
+              marginTop: 4
+            },
           }}
         />
       </Tabs>

@@ -1,26 +1,24 @@
 import React from 'react';
-import { StyleSheet, Image } from 'react-native';
-
+import { StyleSheet, useWindowDimensions } from 'react-native';
+import Dictionary from '@/assets/svgs/Dictionary.svg'
+import Dictionary_locked from '@/assets/svgs/Dictionary_locked.svg'
 type IconProp = {
   focused: boolean;
 };
 
 const DictionaryIcon: React.FC<IconProp> = ({ focused }) => {
 
+  const {width} = useWindowDimensions()
+  const svgSize = width < 768 ? 24 : 50
   const path = ()=>{
       if(focused){
-        return require('../assets/images/dictionary.png')
+        return <Dictionary width={svgSize} height={svgSize}/>
     }else{
-        return require('../assets/images/DictionaryGrey.png')
+        return <Dictionary_locked width={svgSize} height={svgSize}/>
     }
   }
 
-  return (
-    <Image
-      source={path()}
-     
-    />
-  );
+  return path();
 };
 
 export default DictionaryIcon;

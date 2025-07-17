@@ -1,30 +1,26 @@
-import React from 'react';
-import { StyleSheet, View, Image } from 'react-native';
+import React from "react";
+import { StyleSheet, useWindowDimensions } from "react-native";
+import Home from "@/assets/svgs/Home.svg";
+import Home_Locked from "@/assets/svgs/Home_locked.svg";
+import Profile from "@/assets/svgs/Profile.svg";
+import Profile_Locked from "@/assets/svgs/Profile_locked.svg";
 
 type IconProp = {
   focused: boolean;
 };
 
 const HomeIcon: React.FC<IconProp> = ({ focused }) => {
-
-  const path = ()=>{
-      if(focused){
-        return require('../assets/images/home.png')
-    }else{
-        return require('../assets/images/homeGrey.png')
+  const { width } = useWindowDimensions();
+  const svgSize = width < 768 ? 24 : 50;
+  const path = () => {
+    if (focused) {
+      return <Home width={svgSize} height={svgSize} />;
+    } else {
+      return <Home_Locked width={svgSize} height={svgSize} />;
     }
-  }
+  };
 
-  return (
-    <Image
-      source={path()}
-      style={{
-        width: 20,
-        height: 20,
-       
-      }}
-    />
-  );
+  return path();
 };
 
 export default HomeIcon;

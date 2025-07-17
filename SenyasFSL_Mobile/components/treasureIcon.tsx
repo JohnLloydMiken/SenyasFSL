@@ -1,5 +1,7 @@
 import React from 'react';
-import { StyleSheet, Image } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
+import Treasure from '@/assets/svgs/Treasue.svg'
+import Treasure_Locked from '@/assets/svgs/Treasure_locked.svg'
 
 type IconProp = {
   focused: boolean;
@@ -7,20 +9,17 @@ type IconProp = {
 
 const TreasureIcon: React.FC<IconProp> = ({ focused }) => {
 
+  const {width} = useWindowDimensions()
+  const svgSize = width < 768 ? 24 : 50
   const path = ()=>{
       if(focused){
-        return require('../assets/images/treasure.png')
+        return <Treasure width={svgSize} height={svgSize}/>
     }else{
-        return require('../assets/images/Treasue.png')
+        return <Treasure_Locked width={svgSize} height={svgSize}/>
     }
   }
 
-  return (
-    <Image
-      source={path()}
-    
-    />
-  );
+  return path();
 };
 
 export default TreasureIcon;
