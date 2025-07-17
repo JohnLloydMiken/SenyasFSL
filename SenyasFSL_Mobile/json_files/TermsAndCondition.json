@@ -1,0 +1,49 @@
+[
+    {
+        "termTitle": "Use of the App",
+        "termSpecifics":[
+            "SenyasFSL is designed for educational purposes to help users learn Filipino Sign Language (FSL).",
+            "Do not misuse the app (e.g., reverse engineering, exploiting, or copying content without permission)."
+        ]
+    },
+      {
+        "termTitle": " User Content",
+        "termSpecifics":[
+            "Any content you upload (e.g., recordings, custom signs) remains yours, but you give us a license to use it for improving the app (e.g., for training models or analysis), unless you opt out."
+            
+        ]
+    },
+     {
+        "termTitle": "Offline Use",
+        "termSpecifics":[
+            "Some features of SenyasFSL are available offline (e.g., FSL dictionary videos), but full functionality requires internet access."
+            
+        ]
+    },
+    {
+        "termTitle": "Intellectual Property",
+        "termSpecifics":[
+            "All content (videos, illustrations, app UI/UX) is protected by copyright and may not be reused without permission.",
+            "SenyasFSL and its logo are trademarks of the app developers."
+            
+        ]
+    },
+     {
+        "termTitle": "Updates and Modifications",
+        "termSpecifics":[
+            "We may update the app or these Terms at any time. Continued use means you accept the new terms."
+        ]
+    },
+      {
+        "termTitle": "Termination",
+        "termSpecifics":[
+            "We reserve the right to suspend or terminate access to users who violate these Terms."
+        ]
+    },
+      {
+        "termTitle": "Limitation of Liability",
+        "termSpecifics":[
+            "SenyasFSL is provided as is. We are not responsible for damages or losses resulting from use or inability to use the app."
+        ]
+    }
+]

@@ -1,0 +1,51 @@
+[
+  {
+    "policyTitle": "Information We Collect",
+    "policySpecifics": [
+      "Account Info: Email, username (if you register).",
+      "Usage Data: How you interact with the app (e.g., which lessons you take, scores).",
+      "Media Data: Hand gesture videos you upload (if applicable), for training and feedback.",
+      "Device Info: Type of device, OS version, and crash logs (used to improve performance)."
+    ]
+  },
+  {
+    "policyTitle": "How We Use Your Data",
+    "policySpecifics": [
+      "To personalize your learning experience.",
+      "To analyze app performance and improve features.",
+      "To train our gesture recognition model (for learning and gameplay).",
+      "To provide offline content where available."
+    ]
+  },
+  {
+    "policyTitle": "Data Storage & Security",
+    "policySpecifics": [
+      "Data is stored securely on [e.g., Firebase / local storage].",
+      "Offline dictionary and training data are stored locally on your device.",
+      "We use encryption and access control to protect sensitive data."
+    ]
+  },
+  {
+    "policyTitle": "Your Rights",
+    "policySpecifics": [
+      "You can request access to or deletion of your data at any time.",
+      "You may opt out of analytics or data collection features in Settings."
+    ]
+  },
+  {
+    "termTpolicyTitleitle": "Third-party Services",
+    "policySpecifics": [
+      "We may use third-party services (e.g., Firebase, Expo) that have their own privacy policies."
+    ]
+  },
+  {
+    "policyTitle": "Changes",
+    "policySpecifics": [
+      "We may update this Privacy Policy. We'll notify you of significant changes through the app."
+    ]
+  },
+  {
+    "policyTitle": "Contact",
+    "policySpecifics": ["If you have any questions, email us at:"]
+  }
+]
