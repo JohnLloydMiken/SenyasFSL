@@ -2,37 +2,37 @@
     {
         "id": 1,
         "Fact_title": "What is the PFD?",
-        "image": "fact_folder.png",
+        "image": "PFD.svg",
         "unlocked": true
     },
      {
          "id": 1,
         "Fact_title": "SenyasFact?",
-        "image": "fact_locked.png",
+        "image": "fact_lock.svg",
         "unlocked": false
     },
      {
          "id": 1,
         "Fact_title": "SenyasFact",
-        "image": "fact_locked.png",
+        "image": "fact_lock.svg",
         "unlocked": false
     },
      {
          "id": 1,
         "Fact_title": "SenyasFact",
-        "image": "fact_locked.png",
+        "image": "fact_lock.svg",
         "unlocked": false
     },
      {
         "id": 1,
         "Fact_title": "SenyasFact",
-        "image": "fact_locked.png",
+        "image": "fact_lock.svg",
         "unlocked": false
     },
      {
         "id": 1,
         "Fact_title": "SenyasFact",
-        "image": "fact_locked.png",
+        "image": "fact_lock.svg",
         "unlocked": false
     }
     
