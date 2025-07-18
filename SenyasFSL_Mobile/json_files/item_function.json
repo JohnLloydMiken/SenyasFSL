@@ -2,22 +2,27 @@
 
     {
         "item_name": "XP Multiply",
-        "item_description": "Doubles the XP earned for a limited time or specific question."
+        "item_description": "Doubles the XP earned for a limited time or specific question.",
+        "item_image": "Potion.svg"
     },
      {
         "item_name": "Bomb",
-        "item_description": "used to remove an incorrect option in the choices, helping users guess more accurately."
+        "item_description": "used to remove an incorrect option in the choices, helping users guess more accurately.",
+         "item_image": "Bomb.svg"
     },
      {
         "item_name": "Skip",
-        "item_description": "Lets the player skip a question without penalty, useful when unsure of the correct sign."
+        "item_description": "Lets the player skip a question without penalty, useful when unsure of the correct sign.",
+         "item_image": "Next.svg"
     },
      {
         "item_name": "2x Try",
-        "item_description": "Gives the player an extra attempt on a question, especially valuable in levels where mistakes could reduce progress or health."
+        "item_description": "Gives the player an extra attempt on a question, especially valuable in levels where mistakes could reduce progress or health.",
+         "item_image": "Retry.svg"
     },
      {
         "item_name": "Streak Protect",
-        "item_description": "Protects the user’s streak if they failed to login and play the game."
+        "item_description": "Protects the user’s streak if they failed to login and play the game.",
+         "item_image": "Protection.svg"
     }
 ]
