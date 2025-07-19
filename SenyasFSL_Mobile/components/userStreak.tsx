@@ -1,7 +1,9 @@
-import { View, Text, Image } from "react-native";
+import { View, Text, useWindowDimensions } from "react-native";
 import React from "react";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
+import Streak from "@/assets/svgs/Streak.svg";
+import Protection from "@/assets/svgs/Protection.svg";
 interface streakProps {
   streakCount: number;
   protectionCount: number;
@@ -22,82 +24,76 @@ const UserStreak: React.FC<streakProps> = ({
     "Saturday",
   ];
   const today = days[now.getDay()];
-
+  const { width } = useWindowDimensions();
+  const svgStreak = width < 768 ? 150 : 200;
+  const svgProtection = width < 768 ? 35 : 50;
   return (
-    <View className="bg-[#FAF3E0] w-full rounded-xl p-8  relative ">
-      <View className="absolute left-[38%] -top-28 z-0">
-        <Image
-          source={require("../assets/images/fire.png")}
-          className="w-40 h-40  z-0   relative "
-        />
-      </View>
-      {/* Streak count on fire */}
-      <MaskedView
-        style={{ zIndex: 50, position: "absolute", left: "59%", top: -5 }}
-        maskElement={
-          <Text className="text-2xl font-PoppinsBold ">{streakCount}</Text>
-        }
-      >
-        <LinearGradient
-          colors={["#FB990F", "#EA0505"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 0.8 }}
-        >
-          {/* Invisible text only to preserve size */}
-          <Text style={{ opacity: 0 }} className="text-2xl font-PoppinsBold  ">
-            {streakCount}
-          </Text>
-        </LinearGradient>
-      </MaskedView>
-
-      <View>
-        <View className="flex flex-row justify-center items-center absolute -right-2 -top-4">
-          <Image source={require("../assets/images/sunProtection.png")} />
-          <MaskedView
-            maskElement={
-              <Text className="text-3xl font-PoppinsBold ">
-                {protectionCount}
-              </Text>
-            }
-          >
-            <LinearGradient
-              colors={["#2DE2E2", "#0922A0"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 0.8 }}
-            >
-              {/* Invisible text only to preserve size */}
-              <Text
-                style={{ opacity: 0 }}
-                className="text-3xl font-PoppinsBold  "
-              >
-                {protectionCount}
-              </Text>
-            </LinearGradient>
-          </MaskedView>
+    <View className="w-11/12 p-2 bg-[#FAF3E0] rounded-2xl">
+      {/*Streak Count*/}
+      <View className=" w-1/2 absolute -top-2/3 left-[31%]">
+        <View>
+          <Streak width={svgStreak} height={svgStreak} />
         </View>
-        {/* Streak Count */}
-        <Text className="text-center font-PoppinsBold text-3xl my-8">
-          {streakCount} Day Streak!
+        <MaskedView
+          style={{ zIndex: 50, position: "absolute", left: "43%", top: "70%" }}
+          maskElement={
+            <Text className="text-2xl font-PoppinsBold ">{streakCount}</Text>
+          }
+        >
+          <LinearGradient
+            colors={["#FB990F", "#EA0505"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 0.8 }}
+          >
+            <Text
+              style={{ opacity: 0 }}
+              className="text-2xl font-PoppinsBold  "
+            >
+              {streakCount}
+            </Text>
+          </LinearGradient>
+        </MaskedView>
+      </View>
+      {/*Protection Count*/}
+      <View className="flex-row justify-center items-center absolute right-3 top-3">
+        <View>
+          <Protection width={svgProtection} height={svgProtection} />
+        </View>
+        <MaskedView
+          maskElement={
+            <Text className="text-2xl font-PoppinsBold ">
+              {protectionCount}
+            </Text>
+          }
+        >
+          <LinearGradient
+            colors={["#2DE2E2", "#0922A0"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 0.8 }}
+          >
+            <Text
+              style={{ opacity: 0 }}
+              className="text-2xl font-PoppinsBold  "
+            >
+              {protectionCount}
+            </Text>
+          </LinearGradient>
+        </MaskedView>
+      </View>
+
+      <View className="mb-4 mt-10">
+        <Text className="text-center font-PoppinsBold text-2xl md:text-3xl my-3">
+          {streakCount} day streak!
         </Text>
-
-        <View className="flex flex-row justify-around items-center">
-          {/* Monday */}
-          <View>
-            <View className="w-10 h-10 rounded-full border-2 border-[#FFC38B] relative">
-              {today === "Monday" ? (
-                <Image
-                  source={require("../assets/images/fire.png")}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    position: "absolute",
-                    left: -10,
-                    top: -15,
-                  }}
-                />
-              ) : null}
+        {/*Calendar Container */}
+        <View className=" flex-row w-11/12 justify-between items-center mx-auto">
+          {/*Monday */}
+          <View className="flex-col justify-center items-center">
+            <View className="w-10 h-10 rounded-full border-[#FFC38B] border-2 bg-white">
+              <View className="absolute -top-3 -left-3">
+                {today === "Monday" ? <Streak width={50} height={50} /> : null}
+              </View>
             </View>
-
             {today === "Monday" ? (
               <MaskedView
                 maskElement={
@@ -111,7 +107,6 @@ const UserStreak: React.FC<streakProps> = ({
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 0.8 }}
                 >
-                  {/* Invisible text only to preserve size */}
                   <Text
                     className="text-center text-xl font-PoppinsSemiBold"
                     style={{ opacity: 0 }}
@@ -126,23 +121,14 @@ const UserStreak: React.FC<streakProps> = ({
               </Text>
             )}
           </View>
-          {/* Tuesday */}
-          <View>
-            <View className="w-10 h-10 rounded-full border-2 border-[#FFC38B] relative">
-              {today === "Tuesday" ? (
-                <Image
-                  source={require("../assets/images/fire.png")}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    position: "absolute",
-                    left: -10,
-                    top: -15,
-                  }}
-                />
-              ) : null}
-            </View>
 
+          {/*Tuesday */}
+          <View className="flex-col justify-center items-center">
+            <View className="w-10 h-10 rounded-full border-[#FFC38B] border-2 bg-white">
+              <View className="absolute -top-3 -left-3">
+                {today === "Tuesday" ? <Streak width={50} height={50} /> : null}
+              </View>
+            </View>
             {today === "Tuesday" ? (
               <MaskedView
                 maskElement={
@@ -156,38 +142,30 @@ const UserStreak: React.FC<streakProps> = ({
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 0.8 }}
                 >
-                  {/* Invisible text only to preserve size */}
                   <Text
                     className="text-center text-xl font-PoppinsSemiBold"
                     style={{ opacity: 0 }}
                   >
-                    Mo
+                    TU
                   </Text>
                 </LinearGradient>
               </MaskedView>
             ) : (
               <Text className="text-center text-xl font-PoppinsSemiBold text-[#888888]">
-                Tu
+                TU
               </Text>
             )}
           </View>
-          {/* Wednesday */}
-          <View>
-            <View className="w-10 h-10 rounded-full border-2 border-[#FFC38B] relative">
-              {today === "Wednesday" ? (
-                <Image
-                  source={require("../assets/images/fire.png")}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    position: "absolute",
-                    left: -10,
-                    top: -15,
-                  }}
-                />
-              ) : null}
-            </View>
 
+          {/*Wednesday */}
+          <View className="flex-col justify-center items-center">
+            <View className="w-10 h-10 rounded-full border-[#FFC38B] border-2 bg-white">
+              <View className="absolute -top-3 -left-3">
+                {today === "Wednesday" ? (
+                  <Streak width={50} height={50} />
+                ) : null}
+              </View>
+            </View>
             {today === "Wednesday" ? (
               <MaskedView
                 maskElement={
@@ -201,12 +179,11 @@ const UserStreak: React.FC<streakProps> = ({
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 0.8 }}
                 >
-                  {/* Invisible text only to preserve size */}
                   <Text
                     className="text-center text-xl font-PoppinsSemiBold"
                     style={{ opacity: 0 }}
                   >
-                    Mo
+                    We
                   </Text>
                 </LinearGradient>
               </MaskedView>
@@ -216,23 +193,16 @@ const UserStreak: React.FC<streakProps> = ({
               </Text>
             )}
           </View>
-          {/* Thursday */}
-          <View>
-            <View className="w-10 h-10 rounded-full border-2 border-[#FFC38B] relative">
-              {today === "Thursday" ? (
-                <Image
-                  source={require("../assets/images/fire.png")}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    position: "absolute",
-                    left: -10,
-                    top: -15,
-                  }}
-                />
-              ) : null}
-            </View>
 
+          {/*Thursday */}
+          <View className="flex-col justify-center items-center">
+            <View className="w-10 h-10 rounded-full border-[#FFC38B] border-2 bg-white">
+              <View className="absolute -top-3 -left-3">
+                {today === "Thursday" ? (
+                  <Streak width={50} height={50} />
+                ) : null}
+              </View>
+            </View>
             {today === "Thursday" ? (
               <MaskedView
                 maskElement={
@@ -246,12 +216,11 @@ const UserStreak: React.FC<streakProps> = ({
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 0.8 }}
                 >
-                  {/* Invisible text only to preserve size */}
                   <Text
                     className="text-center text-xl font-PoppinsSemiBold"
                     style={{ opacity: 0 }}
                   >
-                    Mo
+                    Th
                   </Text>
                 </LinearGradient>
               </MaskedView>
@@ -261,23 +230,14 @@ const UserStreak: React.FC<streakProps> = ({
               </Text>
             )}
           </View>
-          {/* Friday */}
-          <View>
-            <View className="w-10 h-10 rounded-full border-2 border-[#FFC38B] relative">
-              {today === "Friday" ? (
-                <Image
-                  source={require("../assets/images/fire.png")}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    position: "absolute",
-                    left: -10,
-                    top: -15,
-                  }}
-                />
-              ) : null}
-            </View>
 
+          {/*Friday */}
+          <View className="flex-col justify-center items-center">
+            <View className="w-10 h-10 rounded-full border-[#FFC38B] border-2 bg-white">
+              <View className="absolute -top-3 -left-3">
+                {today === "Friday" ? <Streak width={50} height={50} /> : null}
+              </View>
+            </View>
             {today === "Friday" ? (
               <MaskedView
                 maskElement={
@@ -291,12 +251,11 @@ const UserStreak: React.FC<streakProps> = ({
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 0.8 }}
                 >
-                  {/* Invisible text only to preserve size */}
                   <Text
                     className="text-center text-xl font-PoppinsSemiBold"
                     style={{ opacity: 0 }}
                   >
-                    Mo
+                    Fr
                   </Text>
                 </LinearGradient>
               </MaskedView>
@@ -306,23 +265,16 @@ const UserStreak: React.FC<streakProps> = ({
               </Text>
             )}
           </View>
-          {/* Saturday */}
-          <View>
-            <View className="w-10 h-10 rounded-full border-2 border-[#FFC38B] relative">
-              {today === "Saturday" ? (
-                <Image
-                  source={require("../assets/images/fire.png")}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    position: "absolute",
-                    left: -10,
-                    top: -15,
-                  }}
-                />
-              ) : null}
-            </View>
 
+          {/*Satruday */}
+          <View className="flex-col justify-center items-center">
+            <View className="w-10 h-10 rounded-full border-[#FFC38B] border-2 bg-white relative">
+              <View className="absolute -top-3 -left-3">
+                {today === "Saturday" ? (
+                  <Streak width={50} height={50} />
+                ) : null}
+              </View>
+            </View>
             {today === "Saturday" ? (
               <MaskedView
                 maskElement={
@@ -336,12 +288,11 @@ const UserStreak: React.FC<streakProps> = ({
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 0.8 }}
                 >
-                  {/* Invisible text only to preserve size */}
                   <Text
                     className="text-center text-xl font-PoppinsSemiBold"
                     style={{ opacity: 0 }}
                   >
-                    Mo
+                    Sa
                   </Text>
                 </LinearGradient>
               </MaskedView>
@@ -351,23 +302,14 @@ const UserStreak: React.FC<streakProps> = ({
               </Text>
             )}
           </View>
-          {/* Sunday */}
-          <View>
-            <View className="w-10 h-10 rounded-full border-2 border-[#FFC38B] relative">
-              {today === "Sunday" ? (
-                <Image
-                  source={require("../assets/images/fire.png")}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    position: "absolute",
-                    left: -10,
-                    top: -15,
-                  }}
-                />
-              ) : null}
-            </View>
 
+          {/*Sunday */}
+          <View className="flex-col justify-center items-center">
+            <View className="w-10 h-10 rounded-full border-[#FFC38B] border-2 bg-white">
+              <View className="absolute -top-3 -left-3">
+                {today === "Sunday" ? <Streak width={50} height={50} /> : null}
+              </View>
+            </View>
             {today === "Sunday" ? (
               <MaskedView
                 maskElement={
@@ -381,7 +323,6 @@ const UserStreak: React.FC<streakProps> = ({
                   start={{ x: 0, y: 0 }}
                   end={{ x: 0, y: 0.8 }}
                 >
-                  {/* Invisible text only to preserve size */}
                   <Text
                     className="text-center text-xl font-PoppinsSemiBold"
                     style={{ opacity: 0 }}
@@ -403,3 +344,4 @@ const UserStreak: React.FC<streakProps> = ({
 };
 
 export default UserStreak;
+

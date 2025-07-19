@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { Text, View, TouchableOpacity, useWindowDimensions, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Tabs, useRouter } from 'expo-router';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
@@ -10,7 +10,7 @@ import HomeIcon from '@/components/homeIcon';
 import ProfileIcon from '@/components/profileIcon';
 import DictionaryIcon from '@/components/dictionaryIcon';
 import TreasureIcon from '@/components/treasureIcon';
-import UserStreak from '@/modules/userStreak';
+import UserStreak from '@/components/userStreak';
 import UserInput from '@/components/userInput';
 import Authbutton from '@/components/button';
 
@@ -148,24 +148,17 @@ function TabsWithBottomSheet() {
         enablePanDownToClose
       >
         <BottomSheetView
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            width: '100%',
-            alignItems: 'center',
-            flexDirection: 'column',
-            gap: 10,
-            height: '100%',
-          }}
+          style={styles.container}
         >
           {sheet === 'streak' && (
             <>
-               <View className="w-11/12 ">
+               <View className="w-full  relative flex-col justify-center items-center  h-full">
                 <UserStreak streakCount={1} protectionCount={1} />
-            </View>
-              <TouchableOpacity className="w-11/12 p-4 bg-[#FB990F] rounded-xl mx-auto absolute bottom-5">
+           
+              <TouchableOpacity className="w-11/12 p-4 bg-[#FB990F] rounded-xl  absolute bottom-4">
                 <Text className="font-PoppinsBold text-2xl text-center text-white">Share your Streak</Text>
               </TouchableOpacity>
+               </View>
             </>
           )}
 
@@ -204,4 +197,14 @@ function TabsWithBottomSheet() {
   );
 }
 
-
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    position: 'relative',
+    width: '100%',
+    height: '100%'
+  
+  },
+  
+});

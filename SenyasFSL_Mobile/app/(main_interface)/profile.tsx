@@ -10,7 +10,7 @@ import {
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
-import UserStreak from "@/modules/userStreak";
+import UserStreak from "@/components/userStreak";
 
 import { useBottomSheet } from "@/modules/contextProvider";
 
@@ -19,9 +19,6 @@ export default function Profile() {
   const [editPassword, setEditPassword] = useState(false);
 
   const { handleSheetRender, openSheet } = useBottomSheet();
-
-
- 
 
   return (
     <>
@@ -62,7 +59,7 @@ export default function Profile() {
           </Text>
         </View>
 
-        <View className="w-11/12 mt-28 mb-4">
+        <View className="w-full  flex items-center justify-center mt-32 mb-4">
           <UserStreak streakCount={10} protectionCount={1} />
         </View>
 
