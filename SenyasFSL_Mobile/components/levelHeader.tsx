@@ -1,6 +1,7 @@
-import { StyleSheet, Text, ImageBackground, View, Image } from 'react-native'
+import { StyleSheet, Text,  View, useWindowDimensions } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import React from 'react'
-
+import Book from '@/assets/svgs/A-Z.svg'
 
 
 type levelHeaderProps = {
@@ -10,23 +11,35 @@ type levelHeaderProps = {
 }
 
 const levelHeader: React.FC<levelHeaderProps>=({title, section, level})=> {
+  const {width} = useWindowDimensions();
+  const svgSize = width <768 ? 30 : 50;
+   const height = width <768 ? '9%' : '25%';
   return (
-            <View className='w-11/12 h-20  mt-4 flex flex-row justify-between items-center'>
-                <ImageBackground 
-            style={styles.container}
-            source={require('../assets/images/Section1.png')}
-            imageStyle ={{borderRadius: 10, width: '100%' }}
-            >
+            <LinearGradient
+                 colors={["#41BABA", "#3E58D9"]} // orange to red
+                 start={{ x: 0, y: -0.1 }}
+                 end={{ x: 0, y: 0.8 }}
+                 style={{
+                   borderRadius: 12,
+                   padding: 8, // This controls the thickness of the border
+                   width: '90%',
+                   height: height,
+                   marginTop: 16,
+                   backgroundColor: "white",
+                   elevation: 8,
+                 }}>
                   
-            </ImageBackground> 
-                   <View className='p-4'>
-                     <Text className='text-white text-sm font-PoppinsRegular'>Section {section}, Level {level}</Text>
-                   <Text className='text-white text-lg font-PoppinsBold'>{title}</Text>
+                 <View className='w-full flex-row justify-between items-center  h-full'>
+                      <View >
+                     <Text className='text-white text-lg md:text-xl font-PoppinsMedium'>Section {section}, Level {level}</Text>
+                   <Text className='text-white text-xl md:text-2xl font-PoppinsBold'>{title}</Text>
                   </View>
-                  <View className='p-4'>
-                    <Image source={require('../assets/images/book.png')}/>
+                  <View >
+                    <Book width={svgSize} height={svgSize}/>
                   </View>
-            </View>  
+                 </View>
+                  
+                   </LinearGradient>
   )
 }
 
@@ -41,3 +54,14 @@ const styles = StyleSheet.create({
 })
 
 export default  levelHeader
+
+/*
+ <View className='p-4'>
+                     <Text className='text-white text-sm font-PoppinsRegular'>Section {section}, Level {level}</Text>
+                   <Text className='text-white text-lg font-PoppinsBold'>{title}</Text>
+                  </View>
+                  <View className='p-4'>
+                    <Image source={require('../assets/images/book.png')}/>
+                  </View>
+
+*/
