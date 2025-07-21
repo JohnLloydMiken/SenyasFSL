@@ -12,6 +12,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import Item from "@/components/items";
 import Item_function from "@/json_files/item_function.json";
 import Tutorial from "@/assets/svgs/Tutorial.svg";
+import BG from '@/assets/svgs/bg 1.svg'
 export default function treasure() {
   const videoSource = require("@/assets/videos/Treasure.mp4");
   const [haveChest, setHaveChest] = useState(false);
@@ -26,10 +27,7 @@ export default function treasure() {
 
   return (
     <View className="bg-white flex-1 items-center relative">
-      <Image
-        source={require("../../assets/images/phBG.png")}
-        className="absolute top-0 left-0 w-full h-full"
-      />
+             <View className='w-full h-full absolute top-0 left-0 '><BG width={'100%'} height={'100%'} scaleX={1.2} scaleY={1.2} /></View>
       <View className="w-11/12 h-max mx-auto my-0 flex justify-center items-center flex-col mb-4">
         <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
           You have no chests right now, get 7 questions right in a row to open

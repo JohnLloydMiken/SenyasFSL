@@ -26,7 +26,8 @@ const levelHeader: React.FC<levelHeaderProps>=({title, section, level})=> {
                    height: height,
                    marginTop: 16,
                    backgroundColor: "white",
-                   elevation: 8,
+                   elevation: 15,
+                   shadowColor: 'black'
                  }}>
                   
                  <View className='w-full flex-row justify-between items-center  h-full'>
