@@ -16,7 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
-import Sound from "@/assets/svgs/sound.svg";
+import Sound from "@/assets/svgs/sound.svg";  
 import Music from "@/assets/svgs/Music.svg";
 export default function index() {
   const [context, setContext] = useState(tutorial[0])
@@ -57,7 +57,7 @@ export default function index() {
       <View className="w-full h-full absolute top-0 left-0 ">
         <BG width={"100%"} height={"100%"} scaleX={1.2} scaleY={1.2} />
       </View>
-      <LevelHeader title="Learn The Alphabets" section={1} level={1} />
+    {/*  <LevelHeader title="Learn The Alphabets" section={1} level={1} /> */}
 
       <View className="flex-col justify-center items-center absolute bottom-2 left-2 gap-2">
         <TouchableOpacity onPress={()=> setTutorialPressed(!tutorialPressed)}>
