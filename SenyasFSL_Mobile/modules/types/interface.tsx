@@ -4,7 +4,6 @@ export interface Level {
   section: number;
   isBoss: boolean;
   isUnlocked: boolean;
-  difficulty: number;
 }
 
 export interface LevelSection {
@@ -20,4 +19,6 @@ export interface LevelItemProps {
 
 export interface SectionHeaderProps {
   title: string;
+  level: number;
+  section: number;
 }

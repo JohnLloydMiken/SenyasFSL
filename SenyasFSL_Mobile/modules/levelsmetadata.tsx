@@ -15,7 +15,7 @@ export const generateLevelData = (totalLevels: number = 50): Level[] => {
       section: sectionNumber,
       isBoss: isBossLevel,
       isUnlocked: levelNumber === 3,
-      difficulty: Math.floor((levelNumber - 1) / LEVELS_PER_SECTION) + 1
+     
     };
   });
 };
