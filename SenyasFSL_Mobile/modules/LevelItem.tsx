@@ -35,14 +35,14 @@ const LevelItem: React.FC<LevelItemProps> = ({
   return (
     <View style={styles.levelRow}>
       {/* Empty space for right-aligned levels */}
-      {isEven && <View  />}
+      {isEven && <View style ={{position: 'relative'}} />}
 
-      <TouchableOpacity disabled={!level.isUnlocked} onPress={handlePress}>
+      <TouchableOpacity disabled={!level.isUnlocked} onPress={handlePress} style = {{position: 'relative'}}>
         {getLevelIcon()}
       </TouchableOpacity>
 
       {/* Empty space for left-aligned levels */}
-      {!isEven && <View style={{marginLeft: 100}}   />}
+      {!isEven && <View style={{marginLeft: 100, position: 'relative'}}   />}
     </View>
   );
 };
@@ -54,6 +54,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     alignItems: "center",
     justifyContent: 'center',
+    position: 'relative'
   } as ViewStyle,
   levelContainer: {
     width: 80,
@@ -74,19 +75,7 @@ const styles = StyleSheet.create({
     marginRight: 20,
   } as ViewStyle,
 
-  levelNumber: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "white",
-  } as TextStyle,
-  starContainer: {
-    flexDirection: "row",
-    marginTop: 5,
-  } as ViewStyle,
-  star: {
-    fontSize: 12,
-    marginHorizontal: 1,
-  } as TextStyle,
+ 
 });
 
 export default LevelItem;

@@ -19,6 +19,7 @@ import LevelHeader from "@/components/levelHeader";
 
 const LevelsScreen: React.FC = () => {
   const [levels, setLevels] = useState<Level[]>(generateLevelData(50));
+  const [currentSection, setCurrentSection] = useState(0);
 
   // Group levels into sections of 5
   const sectionsData = useMemo(() => {
@@ -60,7 +61,7 @@ const LevelsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <SectionList
-        sections={sectionsData}
+        sections={[sectionsData[currentSection]]}
         renderItem={renderLevelItem}
         renderSectionHeader={renderSectionHeader}
         keyExtractor={keyExtractor}
