@@ -11,7 +11,7 @@ import { router } from "expo-router";
 import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
 export default function welcome() {
   const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 300 : 500;
+  const svgSize = width < 768 ? 450 : 500;
   return (
     <View
       className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8"

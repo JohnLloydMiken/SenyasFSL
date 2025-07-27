@@ -14,7 +14,7 @@ export const generateLevelData = (totalLevels: number = 50): Level[] => {
       id: levelNumber,
       section: sectionNumber,
       isBoss: isBossLevel,
-      isUnlocked: levelNumber === 3,
+      isUnlocked: levelNumber === 1,
      
     };
   });

@@ -8,6 +8,8 @@ export interface Level {
 
 export interface LevelSection {
   title: string;
+  index: number
+  currentLevel: number
   data: Level[];
 }
 
