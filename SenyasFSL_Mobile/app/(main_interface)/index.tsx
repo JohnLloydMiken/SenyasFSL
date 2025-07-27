@@ -24,7 +24,7 @@ export default function index() {
         <BG width={"100%"} height={"100%"} scaleX={1.2} scaleY={1.2} />
       </View>
       <RenderLevel/>
-      <View className="flex-col justify-center items-center absolute bottom-2 left-2 gap-2">
+      <View className="flex-col justify-center items-center absolute bottom-2 left-2 gap-2 z-50">
         <TouchableOpacity onPress={() => setTutorialPressed(!tutorialPressed)}>
           <TutorialSVG />
         </TouchableOpacity>

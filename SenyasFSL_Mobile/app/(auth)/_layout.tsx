@@ -5,6 +5,7 @@ export default function GetStartedLayout() {
   const { width } = useWindowDimensions();
   const progressbarWidth = width < 768 ? 280 : 600;
   const progressbarHeight = width < 768 ? 20 : 30;
+    const progressbarCp= width < 768 ? 70 : 150;
 
   return (
     <Stack>
@@ -61,7 +62,7 @@ export default function GetStartedLayout() {
               <View
                 style={{
                   height: progressbarHeight,
-                  width: 150,
+                  width: progressbarCp,
                   backgroundColor: "#FB990F",
                   borderRadius: 20,
                 }}
@@ -100,7 +101,7 @@ export default function GetStartedLayout() {
               <View
                 style={{
                   height: progressbarHeight,
-                  width: 300,
+                  width: progressbarCp * 2,
                   backgroundColor: "#FB990F",
                   borderRadius: 20,
                 }}
@@ -139,7 +140,7 @@ export default function GetStartedLayout() {
               <View
                 style={{
                   height: progressbarHeight,
-                  width: 450,
+                  width: progressbarCp * 3,
                   backgroundColor: "#FB990F",
                   borderRadius: 20,
                 }}
@@ -178,7 +179,7 @@ export default function GetStartedLayout() {
               <View
                 style={{
                   height: progressbarHeight,
-                  width: 600,
+                  width: progressbarCp * 4,
                   backgroundColor: "#FB990F",
                   borderRadius: 20,
                 }}

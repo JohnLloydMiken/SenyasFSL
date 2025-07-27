@@ -6,7 +6,7 @@ import Authbutton from "@/components/button";
 
 export default function register() {
   const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 300 : 600;
+  const svgSize = width < 768 ? 450 : 600;
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-16">
       <FSL_Hi width={svgSize} height={svgSize} />

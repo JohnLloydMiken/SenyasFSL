@@ -15,7 +15,7 @@ import Tutorial from "@/assets/svgs/Tutorial.svg";
 import BG from '@/assets/svgs/bg 1.svg'
 export default function treasure() {
   const videoSource = require("@/assets/videos/Treasure.mp4");
-  const [haveChest, setHaveChest] = useState(false);
+  const [haveChest, setHaveChest] = useState(true);
   const [isShown, setIsShown] = useState(false);
   const { width } = useWindowDimensions();
   const svgSize = width < 768 ? 44 : 60;

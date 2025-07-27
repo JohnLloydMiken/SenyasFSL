@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   useWindowDimensions
 } from "react-native";
+import { router } from "expo-router";
 import { Level, LevelSection } from "../modules/types/interface";
 import {
   generateLevelData,
@@ -24,7 +25,7 @@ const RenderLevel: React.FC = () => {
   const [levels, setLevels] = useState<Level[]>(generateLevelData(50));
   const [currentSection, setCurrentSection] = useState(0);
     const {width} =useWindowDimensions()
-    const FSLHiSize = width < 768 ? 200 : 200;
+    const FSLHiSize = width < 768 ? 175 : 300;
     const BtnSize = width < 768 ? 40 : 80;
   const handleScrollDown = () =>{
     setCurrentSection( (prev) =>  Math.min(sectionsData.length - 1, prev + 1))
@@ -52,7 +53,7 @@ const RenderLevel: React.FC = () => {
   const handleLevelPress = useCallback((level: Level): void => {
     console.log("Level pressed:", level.id);
     // Navigate to level or start game logic here
-    // navigation.navigate('GameScreen', { level });
+        router.push('/levels/levelOne')
   }, []);
 
   const renderLevelItem: SectionListRenderItem<Level, LevelSection> = ({
@@ -106,6 +107,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
+    height: '100%',
     zIndex: 50,
     position: 'relative',
   
