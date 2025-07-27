@@ -5,7 +5,7 @@ import Authbutton from '@/components/button'
 import { router } from 'expo-router'
 export default function congrast() {
   const {width} = useWindowDimensions()
-  const svgSize = width < 768 ? 300 : 500;
+  const svgSize = width < 768 ? 450 : 500;
   return (
     <View className='flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8' style={{paddingTop: StatusBar.currentHeight}}>
         <View className='w-11/12  mt-4'>

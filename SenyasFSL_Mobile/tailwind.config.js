@@ -13,7 +13,9 @@ module.exports = {
        PoppinsRegular: ['Poppins-Black'],
        PoppinsBold: ['Poppins-Bold'],
        PoppinsSemiBold: ['Poppins-SemiBold'],
-       PoppinsMedium: ['Poppins-Medium']
+       PoppinsMedium: ['Poppins-Medium'],
+       LilyScriptOneRegular: ["LilyScriptOne-Regular"],
+       NunitoBold: ["Nunito-Bold"]
       }
     },
     screens: {

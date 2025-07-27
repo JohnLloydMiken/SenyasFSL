@@ -16,7 +16,7 @@ import FSL_start from "@/assets/svgs/FSL_start.svg";
 export default function getStarted() {
   const { width } = useWindowDimensions();
 
-  const svgSize = width < 768 ? 300 : 600;
+  const svgSize = width < 768 ? 450 : 600;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -24,15 +24,15 @@ export default function getStarted() {
         <FSL_start width={svgSize} height={svgSize} />
       </View>
       <View className="w-11/12 ">
-        <Text className=" text-center font-PoppinsRegular text-xl md:text-3xl">
+        <Text className=" text-center font-PoppinsRegular text-2xl md:text-3xl">
           Start Learning
         </Text>
-        <Text className="font-PoppinsBold text-center md:text-4xl p-2">
+        <Text className="font-PoppinsBold text-center text-3xl md:text-4xl p-2">
           Filipino Sign Language
         </Text>
       </View>
 
-      <View className=" w-11/12">
+      <View className=" w-11/12 absolute bottom-12">
         <Authbutton
           content="Get Started"
           onPress={() => router.push("./register")}
