@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import FSL from "@/assets/svgs/FSL.svg";
 import { Animated } from "react-native";
 
-export default function levelOne() {
+export default function LevelSplashScreen() {
   const { width } = useWindowDimensions();
   const svgSize = width < 768 ? 130 : 160;
 
