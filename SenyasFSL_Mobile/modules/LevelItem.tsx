@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   levelRow: {
     flexDirection: "row",
     width: "100%",
-    marginVertical: 20,
+    marginVertical: 15,
     alignItems: "center",
     justifyContent: 'center',
     position: 'relative'

@@ -16,7 +16,7 @@ import FSL_start from "@/assets/svgs/FSL_start.svg";
 export default function getStarted() {
   const { width } = useWindowDimensions();
 
-  const svgSize = width < 768 ? 450 : 600;
+  const svgSize = width < 768 ? 400 : 600;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -35,10 +35,10 @@ export default function getStarted() {
       <View className=" w-11/12 absolute bottom-12">
         <Authbutton
           content="Get Started"
-          onPress={() => router.push("./register")}
+          onPress={() => router.replace("./register")}
         />
         <TouchableOpacity
-          onPress={() => router.push("./login")}
+          onPress={() => router.replace("./login")}
           className="w-full md:p-6 p-4 bg-[#FAF3E0] rounded-md border-[4px]  border-[#FB990F] "
         >
           <Text className="text-2xl md:text-3xl text-center text-[#FB990F] font-PoppinsBold">

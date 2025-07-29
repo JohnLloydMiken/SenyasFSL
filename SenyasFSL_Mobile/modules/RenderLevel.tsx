@@ -53,7 +53,7 @@ const RenderLevel: React.FC = () => {
   const handleLevelPress = useCallback((level: Level): void => {
     console.log("Level pressed:", level.id);
     // Navigate to level or start game logic here
-        router.push('/levels/levelOne')
+   
   }, []);
 
   const renderLevelItem: SectionListRenderItem<Level, LevelSection> = ({
@@ -107,9 +107,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
-    height: '100%',
-    zIndex: 50,
+    zIndex: 30,
     position: 'relative',
+ 
   
   } as ViewStyle,
   contentContainer: {
