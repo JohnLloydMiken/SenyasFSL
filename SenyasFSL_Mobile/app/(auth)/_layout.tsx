@@ -21,7 +21,7 @@ export default function GetStartedLayout() {
         options={({ navigation }) => ({
           headerTitle: "",
           headerLeft: () => (
-            <GoBackBTN onPress={() => navigation.replace("index")} />
+            <GoBackBTN onPress={() => navigation.push("index")} />
           ),
           headerStyle: {
             backgroundColor: "#FAF3E0",
@@ -36,7 +36,7 @@ export default function GetStartedLayout() {
         options={({ navigation }) => ({
           headerTitle: "",
           headerLeft: () => (
-            <GoBackBTN onPress={() => navigation.replace("index")} />
+            <GoBackBTN onPress={() => navigation.push("index")} />
           ),
           headerStyle: {
             backgroundColor: "#FAF3E0",
@@ -70,7 +70,7 @@ export default function GetStartedLayout() {
             </View>
           ),
           headerLeft: () => (
-            <GoBackBTN onPress={() => navigation.replace("register")} />
+            <GoBackBTN onPress={() => navigation.push("register")} />
           ),
 
           headerRight: () => (
@@ -109,7 +109,7 @@ export default function GetStartedLayout() {
             </View>
           ),
           headerLeft: () => (
-            <GoBackBTN onPress={() => navigation.replace("register_whyFSL")} />
+            <GoBackBTN onPress={() => navigation.push("register_whyFSL")} />
           ),
 
           headerRight: () => (
@@ -148,7 +148,7 @@ export default function GetStartedLayout() {
             </View>
           ),
           headerLeft: () => (
-            <GoBackBTN onPress={() => navigation.replace("register_how")} />
+            <GoBackBTN onPress={() => navigation.push("register_how")} />
           ),
 
           headerRight: () => (
@@ -187,7 +187,7 @@ export default function GetStartedLayout() {
             </View>
           ),
           headerLeft: () => (
-            <GoBackBTN onPress={() => navigation.replace("register_last")} />
+            <GoBackBTN onPress={() => navigation.push("register_last")} />
           ),
 
           headerRight: () => (
