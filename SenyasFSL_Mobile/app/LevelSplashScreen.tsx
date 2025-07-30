@@ -1,11 +1,12 @@
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import React from "react";
+import React, { useCallback } from "react";
 import { useState, useRef, useEffect } from "react";
 import FSL_splash from "@/assets/svgs/FSL_loading_screen.svg";
 import { LinearGradient } from "expo-linear-gradient";
 import FSL from "@/assets/svgs/FSL.svg";
 import { Animated } from "react-native";
-
+import { useLocalSearchParams, router } from 'expo-router';
+import { Level } from "../modules/types/interface";
 export default function LevelSplashScreen() {
   const { width } = useWindowDimensions();
   const svgSize = width < 768 ? 130 : 160;
@@ -50,15 +51,26 @@ export default function LevelSplashScreen() {
 
 const ProgressBar = () => {
   const [progress, setProgress] = useState(0);
+ 
   const animatedValue = React.useRef(new Animated.Value(progress)).current;
+ const { nextRoute } = useLocalSearchParams<{ nextRoute?: string }>();
 
+ const lvl = useCallback((level: Level)=>{
+      return level.id
+ }, [])
   React.useEffect(() => {
     Animated.timing(animatedValue, {
       toValue: 100,
       duration: 4000,
       useNativeDriver: false,
-    }).start();
-  }, []);
+    }).start(()=> {
+      if(nextRoute === 'level' ){
+        router.push('/levels/[levelsId]')
+      }else {
+        router.back();
+      }
+    });
+  }, [nextRoute]);
 
   const widthInterpolated = animatedValue.interpolate({
     inputRange: [0, 100],
