@@ -20,13 +20,20 @@ import LevelItem from "../modules/LevelItem";
 import BtnUp from "@/assets/svgs/BtnUp.svg";
 import BtnDown from "@/assets/svgs/BtnDown.svg";
 import LevelHeader from "@/components/levelHeader";
-import FSL_Hi from '@/assets/svgs/FSL_hello.svg'
+import FSL_Hi from '@/assets/svgs/FSL_hello.svg';
+import LevelSplashScreen from "@/app/LevelSplashScreen";
+
+
 const RenderLevel: React.FC = () => {
   const [levels, setLevels] = useState<Level[]>(generateLevelData(50));
   const [currentSection, setCurrentSection] = useState(0);
     const {width} =useWindowDimensions()
     const FSLHiSize = width < 768 ? 175 : 300;
     const BtnSize = width < 768 ? 40 : 80;
+  const [currentView, setCurrentView] = useState('loading')
+    const handleSplashComplete = () => {
+    setCurrentView('levelContent');
+  };
   const handleScrollDown = () =>{
     setCurrentSection( (prev) =>  Math.min(sectionsData.length - 1, prev + 1))
   }
@@ -52,8 +59,10 @@ const RenderLevel: React.FC = () => {
 
   const handleLevelPress = useCallback((level: Level): void => {
     console.log("Level pressed:", level.id);
-    // Navigate to level or start game logic here
-   
+    
+    router.push(`/LevelSplashScreen?nextRoute=level`);
+ 
+    
   }, []);
 
   const renderLevelItem: SectionListRenderItem<Level, LevelSection> = ({
