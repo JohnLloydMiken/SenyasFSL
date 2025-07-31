@@ -60,7 +60,7 @@ const RenderLevel: React.FC = () => {
   const handleLevelPress = useCallback((level: Level): void => {
     console.log("Level pressed:", level.id);
     
-    router.push(`/LevelSplashScreen?nextRoute=level`);
+    router.push(`/LevelSplashScreen?nextRoute=level&levelId=${level.id}`);
  
     
   }, []);

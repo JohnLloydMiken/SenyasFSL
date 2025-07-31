@@ -44,13 +44,7 @@ function TabsWithBottomSheet() {
 };
 
 
-  const commonTabOptions = {
-    tabBarLabelStyle: {
-      fontWeight: 'bold',
-      fontSize: 12,
-    },
-  };
-
+ 
   return (
     <>
       <Tabs
@@ -178,6 +172,21 @@ function TabsWithBottomSheet() {
           )}
 
           {sheet === 'editPass' && (
+            <>
+              <UserInput
+              title="Edit personal data"
+                usernameTitle="Username"
+                userEmailTitle="Email"
+                userPasswordTitle="Current password"
+                passwordTitleDescription="Type in your password to update your email"
+              />
+              <View className="w-11/12 absolute bottom-1">
+                <Authbutton content="Update password" onPress={() => bottomSheetRef.current?.close()} />
+              </View>
+            </>
+          )}
+
+           {sheet === 'backToMain' && (
             <>
               <UserInput
               title="Edit personal data"
