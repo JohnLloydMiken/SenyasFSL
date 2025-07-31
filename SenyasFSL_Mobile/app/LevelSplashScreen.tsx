@@ -53,24 +53,25 @@ const ProgressBar = () => {
   const [progress, setProgress] = useState(0);
  
   const animatedValue = React.useRef(new Animated.Value(progress)).current;
- const { nextRoute } = useLocalSearchParams<{ nextRoute?: string }>();
+ const { nextRoute, levelId } = useLocalSearchParams<{ 
+  nextRoute?: string
+  levelId: string
+ }>();
 
- const lvl = useCallback((level: Level)=>{
-      return level.id
- }, [])
+
   React.useEffect(() => {
     Animated.timing(animatedValue, {
       toValue: 100,
       duration: 4000,
       useNativeDriver: false,
     }).start(()=> {
-      if(nextRoute === 'level' ){
-        router.push('/levels/[levelsId]')
+      if(nextRoute === 'level' && levelId ){
+        router.push(`/levels/${levelId}`)
       }else {
         router.back();
       }
     });
-  }, [nextRoute]);
+  }, [nextRoute, levelId]);
 
   const widthInterpolated = animatedValue.interpolate({
     inputRange: [0, 100],
