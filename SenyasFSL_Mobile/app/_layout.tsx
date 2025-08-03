@@ -13,7 +13,8 @@ export default function RootLayout() {
     "Poppins-SemiBold": require("../assets/fonts/Poppins-SemiBold.ttf"),
     "Poppins-Medium": require("../assets/fonts/Poppins-Medium.ttf"),
     "LilyScriptOne-Regular": require("../assets/fonts/LilyScriptOne-Regular.ttf"),
-      "Nunito-Bold": require("../assets/fonts/Nunito-Bold.ttf")
+      "Nunito-Bold": require("../assets/fonts/Nunito-Bold.ttf"),
+      "Poppins-LightItalic": require("../assets/fonts/Poppins-LightItalic.ttf")
   });
 
   useEffect(() => {
