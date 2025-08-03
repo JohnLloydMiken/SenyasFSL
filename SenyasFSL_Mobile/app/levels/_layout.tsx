@@ -39,7 +39,7 @@ const BottomView = () => {
             <Slow/>
           </TouchableOpacity>,
           headerTitle: () => <View className="w-11/12 h-6 rounded-full bg-[#FFEEB9] mx-auto"/>,
-          headerShadowVisible: true
+         headerShadowVisible: false
         }}
       />
 
