@@ -9,6 +9,7 @@ interface MultipleChoiceBTNnProps {
   EnglishText: string;
   FilipinoText: string;
   clicked: boolean;
+
   onPress: () => void;
 }
 import MaskedView from "@react-native-masked-view/masked-view";
@@ -41,6 +42,7 @@ export const MultipleChoiceBTN: React.FC<MultipleChoiceBTNnProps> = ({
   FilipinoText,
   onPress,
   clicked,
+ 
 }) => {
   return (
     <>
@@ -55,12 +57,15 @@ export const MultipleChoiceBTN: React.FC<MultipleChoiceBTNnProps> = ({
             backgroundColor: "trasnparent",
             elevation: 5,
             padding: 1,
+            marginTop: 10,
+            marginBottom: 10
           }}
         >
           {/* Invisible text only to preserve size */}
           <TouchableOpacity
             onPress={onPress}
             className="bg-white rounded-full w-full p-2"
+          
           >
             {/* English Text */}
             <MaskedView
@@ -106,7 +111,7 @@ export const MultipleChoiceBTN: React.FC<MultipleChoiceBTNnProps> = ({
       ) : (
         <TouchableOpacity
           onPress={onPress}
-          className="w-full p-2 border border-[#F7D674] rounded-full"
+          className="w-full p-2 border border-[#F7D674] rounded-full my-3"
         >
           <Text className="text-xl md:text-2xl font-PoppinsBold text-[#8B8B8B] text-center">
             {EnglishText}
@@ -119,5 +124,6 @@ export const MultipleChoiceBTN: React.FC<MultipleChoiceBTNnProps> = ({
     </>
   );
 };
+
 
 export default LevelContentBtn;
