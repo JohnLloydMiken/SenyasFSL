@@ -7,39 +7,36 @@ import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
+import MCContent from '@/json_files/MutlipleChoiceContent.json'
+import Inventory from "../Inventory";
 interface MultipleChoiceProps {
-  videoUrl: any;
   title: string;
-  correctAnswer: string;
-  optionOne: string;
-  optionOneFil: string;
-  optoptionTwo: string;
-  optionTwoFil: string;
+
 }
 
 const MultipleChoice: React.FC<MultipleChoiceProps> = ({
-  videoUrl,
+
   title,
-  correctAnswer,
-  optionOne,
-  optionOneFil,
-  optionTwoFil,
-  optoptionTwo,
+
+ 
 }) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [choice, setChoice] = useState("");
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
-  const videoSource = videoUrl;
+  const [choice, setChoice] =  useState<string | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const source = MCContent[0].MCNum1
+  const videoSource = videoMap[source.question]
+
+
 
   const player = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
     player.muted = true;
-    player.play();
+    player.pause();
   });
 
   const handleBG = () => {
-    setIsCorrect(choice === correctAnswer);
+    setIsCorrect(choice === source.correctAnswer);
   };
 
   return (
@@ -59,24 +56,41 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
       </View>
 
       <View className="w-11/12 mx-auto">
-        <MultipleChoiceBTN
-          id={1}
-          EnglishText={optionOne}
-          FilipinoText={`"${optionOneFil}"`}
-          onPress={() => {
-            setChoice(optionOne);
-          }}
-          clicked={choice === optionOne}
-        />
+        
+        {source.options.map((item ,index) => 
+        
+        {
+            const isOptionCorrect = source.correctAnswer === choice;
+          return(
+              <MultipleChoiceBTN
+            key={index}
+            EnglishText= {source.options[index][0]}
+            FilipinoText= {`"${source.options[index][1]}"`}
+            onPress={() => {
+            setChoice(source.options[index][0])
+        
 
-        <MultipleChoiceBTN
-          id={2}
-          EnglishText={optoptionTwo}
-          FilipinoText={`"${optoptionTwo}"`}
-          onPress={() => {
-            setChoice(optoptionTwo);
           }}
-          clicked={choice === optoptionTwo}
+           clicked={choice === source.options[index][0]}
+      isChecked={isCorrect !== null}
+      isCorrect={isCorrect !== null ? isOptionCorrect : null}
+            />
+          )
+        }
+        )}
+
+       
+      </View>
+
+      <View className="w-full p-4 mx-auto absolute bottom-28 z-50">
+        <Inventory
+          onPress={() => setIsClicked(!isClicked)}
+          XpPotion={1}
+          Bomb={0}
+          Retry={2}
+          Skip={1}
+          isPressed={isClicked}
+          onClose={() => setIsClicked(false)}
         />
       </View>
 
@@ -84,12 +98,16 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
         {isCorrect === true ? (
           <View className=" flex-row mx-auto justify-center items-center gap-2">
             <CorrectIcon />
-            <Text className="font-PoppinsBold text-lg md:text-xl text-white">Correct!</Text>
+            <Text className="font-PoppinsBold text-lg md:text-xl text-white">
+              Correct!
+            </Text>
           </View>
         ) : isCorrect === false ? (
           <View className=" flex-row mx-auto justify-center items-center gap-2">
             <Incorrect />
-            <Text className="font-PoppinsBold text-lg md:text-xl text-white">Incorrect!</Text>
+            <Text className="font-PoppinsBold text-lg md:text-xl text-white">
+              Incorrect!
+            </Text>
           </View>
         ) : null}
         <LevelContentBtn text="Check" onPress={handleBG} />
@@ -106,6 +124,11 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
       </View>
     </View>
   );
+};
+
+const videoMap: Record<string, any> = {
+  "FSL_A.mp4": require("@/assets/videos/FSL_A.mp4"),
+
 };
 
 export default MultipleChoice;
