@@ -33,7 +33,7 @@ const LearnASign: React.FC<LearnASignProps> = ({videoUrl, title}) => {
 
       <View className="w-11/12 mx-auto">
         <MultipleChoiceBTN
-            id={0}
+            
           EnglishText="Letter A"
           FilipinoText={`"Letrang A"`}
           onPress={() => {

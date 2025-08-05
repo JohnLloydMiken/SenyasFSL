@@ -100,4 +100,75 @@ const Item: React.FC<itemCardProps> = ({ itemName, itemCost, itemIcon }) => {
   );
 };
 
+export const ItemInGame: React.FC<itemCardProps> = ({itemName, itemCost, itemIcon})=>{
+   const SvgIcon = svgMap[itemIcon];
+  const { width } = useWindowDimensions();
+  const svgSize = width < 768 ? 20 : 50;
+  const svgStar = width < 768 ? 15 : 30;
+  const containerWidth = width < 768 ? 80 : 120;
+  const containerHeight = width < 768 ? 80 : 120;
+return(
+  <LinearGradient
+      colors={["#FB990F", "#EA0505"]} // orange to red
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={{
+        borderRadius: 16,
+        padding: 2, // This controls the thickness of the border
+        width: containerWidth,
+        height: containerHeight,
+       
+      }}
+    >
+      <TouchableOpacity className="w-full h-full bg-[#FAF3E0] rounded-2xl p-4 flex justify-center items-center flex-col mx-auto my-0  gap-1">
+        {SvgIcon && <SvgIcon width={svgSize} height={svgSize} />}
+        <MaskedView
+          maskElement={
+            <View className="w-full bg-transparent items-center">
+              <Text className="font-PoppinsBold text-sm md:text-xl text-center">
+                {itemName}
+              </Text>
+            </View>
+          }
+        >
+          <LinearGradient
+            colors={["#2DE2E2", "#0922A0"]}
+            start={{ x: 0, y: -0.1 }}
+            end={{ x: 0, y: 0.8 }}
+            className="w-full items-center"
+          >
+            <Text className="font-PoppinsBold text-sm md:text-xl opacity-0">
+              {itemName}
+            </Text>
+          </LinearGradient>
+        </MaskedView>
+
+        <View className="w-full flex justify-evenly items-center flex-row md:justify-center md:gap-2">
+          <Star width={svgStar} height={svgStar} />
+          <MaskedView
+            maskElement={
+              <View className="w-full bg-transparent items-center">
+                <Text className="font-PoppinsBold text-lg md:text-2xl ">
+                  {itemCost}
+                </Text>
+              </View>
+            }
+          >
+            <LinearGradient
+              colors={["#FB990F", "#EA0505"]}
+              start={{ x: 0, y: -0.1 }}
+              end={{ x: 0, y: 0.8 }}
+              className="w-full items-center"
+            >
+              <Text className="font-PoppinsBold text-lg opacity-0 md:text-2xl">
+                {itemCost}
+              </Text>
+            </LinearGradient>
+          </MaskedView>
+        </View>
+      </TouchableOpacity>
+    </LinearGradient>
+)
+}
+
 export default Item;
