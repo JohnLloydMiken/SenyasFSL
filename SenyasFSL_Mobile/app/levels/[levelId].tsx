@@ -1,23 +1,13 @@
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
-
+import { useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-import LearnASign from "@/components/Game_Modes/LearnASign";
-import MultipleChoice from "@/components/Game_Modes/MultipleChoice";
+import ViewMC from "@/components/Game_Modes/VideoMC";
+
 export default function LevelContent() {
- 
+  const { levelId } = useLocalSearchParams();
   return (
     <View className="flex-1  relative bg-white">
-        <MultipleChoice 
-        videoUrl={require('@/assets/videos/FSL_A.mp4')}  
-        title="Choice the right Sign"
-        correctAnswer="Letter A"
-        optionOne="Letter A"
-        optionOneFil="Letrang A"
-        optoptionTwo="Letter B"
-        optionTwoFil="Letrang B"
-        />
-        
-      
+      <ViewMC />
     </View>
   );
 }
