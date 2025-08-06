@@ -1,7 +1,7 @@
 import { View, Text } from "react-native";
 import React, { useState } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
-import LevelContentBtn, { MultipleChoiceBTN } from "../LevelContentBtn";
+import LevelContentBtn, { MCBTN } from "../LevelContentBtn";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
@@ -9,25 +9,21 @@ import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import MCContent from '@/json_files/MutlipleChoiceContent.json'
 import Inventory from "../Inventory";
+
 interface MultipleChoiceProps {
   title: string;
-
 }
 
 const MultipleChoice: React.FC<MultipleChoiceProps> = ({
-
   title,
-
- 
 }) => {
   const [isClicked, setIsClicked] = useState(false);
-
-  const [choice, setChoice] =  useState<string | null>(null);
+  const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const source = MCContent[0].MCNum1
-  const videoSource = videoMap[source.question]
-
-
+  const [hasChecked, setHasChecked] = useState(false); // New state to track if "Check" was pressed
+  const [opacity, setOpacity] = useState(100)
+  const source = MCContent[0].MCNum1;
+  const videoSource = videoMap[source.question];
 
   const player = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
@@ -36,7 +32,11 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
   });
 
   const handleBG = () => {
-    setIsCorrect(choice === source.correctAnswer);
+    if (choice) {
+      setIsCorrect(choice === source.correctAnswer);
+      setHasChecked(true); // Mark that check button was pressed
+      setOpacity(0)
+    }
   };
 
   return (
@@ -53,36 +53,31 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
           allowsPictureInPicture={false}
           nativeControls={false}
         />
+        <View className= {`bg-white/60 w-full p-4 absolute bottom-0 ${hasChecked && 'opacity-100'} opacity-0`}><Text className="text-sm text-center font-PoppinsRegular">{source.correctAnswer}</Text></View>
       </View>
 
-      <View className="w-11/12 mx-auto">
-        
-        {source.options.map((item ,index) => 
-        
-        {
-            const isOptionCorrect = source.correctAnswer === choice;
-          return(
-              <MultipleChoiceBTN
-            key={index}
-            EnglishText= {source.options[index][0]}
-            FilipinoText= {`"${source.options[index][1]}"`}
-            onPress={() => {
-            setChoice(source.options[index][0])
-        
-
-          }}
-           clicked={choice === source.options[index][0]}
-      isChecked={isCorrect !== null}
-      isCorrect={isCorrect !== null ? isOptionCorrect : null}
+      <View className="w-11/12 mx-auto ">
+        {source.options.map((item, index) => {
+          return (
+            <MCBTN
+              key={index}
+              EnglishText={source.options[index][0]}
+              FilipinoText={`"${source.options[index][1]}"`}
+              onPress={() => {
+                if (!hasChecked) { // Only allow selection if not checked yet
+                  setChoice(source.options[index][0]);
+                }
+              }}
+              clicked={hasChecked} // Keep for backward compatibility
+              isCorrect={source.options[index][0] === source.correctAnswer} // Each button knows if it's the correct answer
+              isSelected={choice === source.options[index][0]} // New prop: is this button selected
+              hasChecked={hasChecked} // New prop: has check button been pressed
             />
-          )
-        }
-        )}
-
-       
+          );
+        })}
       </View>
 
-      <View className="w-full p-4 mx-auto absolute bottom-28 z-50">
+      <View className= {`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}>
         <Inventory
           onPress={() => setIsClicked(!isClicked)}
           XpPotion={1}
@@ -110,7 +105,11 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
             </Text>
           </View>
         ) : null}
-        <LevelContentBtn text="Check" onPress={handleBG} />
+        
+
+        {choice && !hasChecked ? (
+          <LevelContentBtn text="Check" onPress={handleBG} />
+        ): hasChecked && ((  <LevelContentBtn text="Next" onPress={()=> console.log("clicked")} />))}
       </View>
 
       <View className="absolute w-full bottom-0 z-10">
@@ -128,7 +127,6 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
 
 const videoMap: Record<string, any> = {
   "FSL_A.mp4": require("@/assets/videos/FSL_A.mp4"),
-
 };
 
 export default MultipleChoice;
