@@ -7,21 +7,19 @@ import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
-import MCContent from '@/json_files/MutlipleChoiceContent.json'
+import MCContent from "@/json_files/MutlipleChoiceContent.json";
 import Inventory from "../Inventory";
 
 interface MultipleChoiceProps {
   title: string;
 }
 
-const MultipleChoice: React.FC<MultipleChoiceProps> = ({
-  title,
-}) => {
+const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false); // New state to track if "Check" was pressed
-  const [opacity, setOpacity] = useState(100)
+  const [opacity, setOpacity] = useState(100);
   const source = MCContent[0].MCNum1;
   const videoSource = videoMap[source.question];
 
@@ -35,7 +33,7 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
     if (choice) {
       setIsCorrect(choice === source.correctAnswer);
       setHasChecked(true); // Mark that check button was pressed
-      setOpacity(0)
+      setOpacity(0);
     }
   };
 
@@ -53,7 +51,13 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
           allowsPictureInPicture={false}
           nativeControls={false}
         />
-        <View className= {`bg-white/60 w-full p-4 absolute bottom-0 ${hasChecked && 'opacity-100'} opacity-0`}><Text className="text-sm text-center font-PoppinsRegular">{source.correctAnswer}</Text></View>
+        <View
+          className={`bg-white/60 w-full p-4 absolute bottom-0 ${hasChecked && "opacity-100"} opacity-0`}
+        >
+          <Text className="text-sm text-center font-PoppinsRegular">
+            {source.correctAnswer}
+          </Text>
+        </View>
       </View>
 
       <View className="w-11/12 mx-auto ">
@@ -64,7 +68,8 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
               EnglishText={source.options[index][0]}
               FilipinoText={`"${source.options[index][1]}"`}
               onPress={() => {
-                if (!hasChecked) { // Only allow selection if not checked yet
+                if (!hasChecked) {
+                  // Only allow selection if not checked yet
                   setChoice(source.options[index][0]);
                 }
               }}
@@ -77,7 +82,9 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
         })}
       </View>
 
-      <View className= {`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}>
+      <View
+        className={`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}
+      >
         <Inventory
           onPress={() => setIsClicked(!isClicked)}
           XpPotion={1}
@@ -105,11 +112,17 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
             </Text>
           </View>
         ) : null}
-        
 
         {choice && !hasChecked ? (
           <LevelContentBtn text="Check" onPress={handleBG} />
-        ): hasChecked && ((  <LevelContentBtn text="Next" onPress={()=> console.log("clicked")} />))}
+        ) : (
+          hasChecked && (
+            <LevelContentBtn
+              text="Next"
+              onPress={() => console.log("clicked")}
+            />
+          )
+        )}
       </View>
 
       <View className="absolute w-full bottom-0 z-10">
