@@ -4,6 +4,7 @@ import { useState } from "react";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { useVideoPlayer, VideoView } from "expo-video";
+import { Ionicons } from "@expo/vector-icons";
 interface ButtonProps {
   text: string;
   onPress: () => void;
@@ -325,7 +326,22 @@ export const VideoMCBTN: React.FC<VideoMCBTNProps> = ({answer, isCorrect, hasChe
 
     if(!isSelected && !hasChecked){
       return(
-        <View className="w-full h-[216px]  bg-[#7B7B7B] rounded-2xl relative overflow-hidden flex items-center justify-center">
+         <LinearGradient
+        colors={[`#7B7B7B`, `#7B7B7B`]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.8 }}
+        style={{
+          width: "100%",
+          height: 216,
+          borderRadius: 16,
+          backgroundColor: "transparent",
+          elevation: 5,
+          padding: 1,
+          marginTop: 10,
+          marginBottom: 10,
+        }}
+      >
+           <TouchableOpacity className="w-full   relative overflow-hidden flex items-center justify-center" onPress={onPress}>
          <VideoView
                   style={{ width: "98%", height: "100%" , borderRadius: 16, }}
                   player={player}
@@ -344,7 +360,59 @@ export const VideoMCBTN: React.FC<VideoMCBTNProps> = ({answer, isCorrect, hasChe
                     {`"${answer[1]}"`}
                   </Text>
                 </View>
-      </View>
+
+                <View className= {`w-10 h-10 border-2 border-[#7B7B7B] rounded-md absolute bg-white  right-3 top-3 flex justify-center items-center`}>
+                 
+                </View>
+      </TouchableOpacity>
+      </LinearGradient>
+       
+      )
+    }
+
+    if( isSelected && !hasChecked){
+         return(
+         <LinearGradient
+        colors={[`#FB990F`, `#FB990F`]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.8 }}
+        style={{
+          width: "100%",
+          height: 216,
+          borderRadius: 16,
+          backgroundColor: "transparent",
+          elevation: 5,
+          padding: 1,
+          marginTop: 10,
+          marginBottom: 10,
+        }}
+      >
+           <TouchableOpacity className="w-full   relative overflow-hidden flex items-center justify-center" onPress={onPress}>
+         <VideoView
+                  style={{ width: "98%", height: "100%" , borderRadius: 16, }}
+                  player={player}
+                  allowsFullscreen={false}
+                  allowsPictureInPicture={false}
+                  nativeControls={false}
+                  
+                />
+                <View
+                  className={`bg-white/60 w-full p-4 absolute bottom-0 ${hasChecked && "opacity-100"} opacity-0`}
+                >
+                  <Text className="text-sm text-center font-PoppinsRegular">
+                    {answer[0]}
+                  </Text>
+                   <Text className="text-sm text-center font-PoppinsRegular">
+                    {`"${answer[1]}"`}
+                  </Text>
+                </View>
+
+                <View className= {`w-10 h-10 border-2 border-[#7B7B7B] rounded-md absolute bg-white  right-3 top-3 flex justify-center items-center`}>
+                 
+                </View>
+      </TouchableOpacity>
+      </LinearGradient>
+       
       )
     }
 

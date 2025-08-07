@@ -4,9 +4,8 @@
             "id": 1,
             "title": "Choose the FSL sign Letter E",
             "option": [["Letter E", "Lettang E"], ["Letter G" , "Letrang G"]],
-            "videoSource1": "FSL_A.mp4",
-            "videoSource2": "FSL_A.mp4",
-            "correctAnswer": ["Letter A", "Letrang A"]
+            "videoSources": ["FSL_A.mp4", "FSL_A.mp4"],
+            "correctAnswer": ["Letter E", "Letrang E"]
         }
     }
 ]
