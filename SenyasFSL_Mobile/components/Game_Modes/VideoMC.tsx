@@ -34,7 +34,7 @@ const ViewMC = () => {
           return (
             <VideoMCBTN
               key={index}
-              answer={source.correctAnswer}
+              answer={source.option[index]}
               isCorrect={source.option[index][0] === source.correctAnswer[0]}
               hasChecked={hasChecked}
               clicked={hasChecked}
@@ -68,14 +68,14 @@ const ViewMC = () => {
      
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
        
-          <View className= {`flex-row mx-auto justify-center items-center gap-2 ${isCorrect ==  null ? 'opacity-0': 'opacity-100'}`}>
+          <View className= {`flex-row mx-auto justify-center items-center gap-2 ${isCorrect ==  null ? "hidden" : (isCorrect === true ? 'flex': 'hidden')}`}>
             <CorrectIcon />
             <Text className="font-PoppinsBold text-lg md:text-xl text-white">
               Correct!
             </Text>
           </View>
     
-          <View className= {`flex-row mx-auto justify-center items-center gap-2 ${isCorrect ==  null ? 'opacity-0': 'opacity-100'}`}>
+          <View className= {`flex-row mx-auto justify-center items-center gap-2 ${isCorrect ==  null ? "hidden" : (isCorrect === false ? 'flex': 'hidden')}`}>
             <Incorrect />
             <Text className="font-PoppinsBold text-lg md:text-xl text-white">
               Incorrect!
