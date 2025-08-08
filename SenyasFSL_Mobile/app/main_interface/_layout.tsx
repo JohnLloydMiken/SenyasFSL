@@ -4,15 +4,15 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Tabs, useRouter } from 'expo-router';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
-import Curency from '@/components/curency';
-import HeaderRightBtn from '@/components/headerRightBtn';
-import HomeIcon from '@/components/homeIcon';
-import ProfileIcon from '@/components/profileIcon';
-import DictionaryIcon from '@/components/dictionaryIcon';
-import TreasureIcon from '@/components/treasureIcon';
-import UserStreak from '@/components/userStreak';
-import UserInput from '@/components/userInput';
-import Authbutton from '@/components/button';
+import Curency from '@/components/main_interface/curency';
+import HeaderRightBtn from '@/components/authentication/headerRightBtn';
+import HomeIcon from '@/components/main_interface/homeIcon';
+import ProfileIcon from '@/components/main_interface/profileIcon';
+import DictionaryIcon from '@/components/main_interface/dictionaryIcon';
+import TreasureIcon from '@/components/main_interface/treasureIcon';
+import UserStreak from '@/components/main_interface/userStreak';
+import UserInput from '@/components/authentication/userInput';
+import Authbutton from '@/components/authentication/button';
 
 import { BottomSheetProvider, useBottomSheet } from '@/modules/contextProvider';
 

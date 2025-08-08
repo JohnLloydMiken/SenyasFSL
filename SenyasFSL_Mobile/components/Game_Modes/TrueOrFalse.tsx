@@ -7,21 +7,17 @@ import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
-import MCContent from "@/json_files/MutlipleChoiceContent.json";
 import Inventory from "../main_interface/Inventory";
-
-interface MultipleChoiceProps {
-  title: string;
-}
-
-const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
+import TOrF from "@/json_files/TrueOrFalse.json";
+const TrueOrFalse = () => {
+  const source = TOrF[0].TOFNum1;
   const [isClicked, setIsClicked] = useState(false);
   const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false); // New state to track if "Check" was pressed
   const [opacity, setOpacity] = useState(100);
-  const source = MCContent[0].MCNum1;
-  const videoSource = videoMap[source.question];
+
+  const videoSource = videoMap[source.VideSource];
 
   const player = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
@@ -31,51 +27,64 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
 
   const handleBG = () => {
     if (choice) {
-      setIsCorrect(choice === source.correctAnswer);
+      setIsCorrect(choice === source.CorrectAnswer[0]);
       setHasChecked(true); // Mark that check button was pressed
       setOpacity(0);
     }
   };
-
   return (
-    <View className="flex-1 relative">
-      <Text className="text-center text-2xl md:text-3xl font-PoppinsBold my-2">
-        {title}
-      </Text>
+    <View className="flex-1 relative items-center">
+      <View className="w-10/12">
+        <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">
+          {" "}
+          <Text className="text-[#FB990F]">{source.EngTitle}</Text>{" "}
+          {source.EngQuestion}
+        </Text>
+        <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">
+          {" "}
+          <Text className="text-[#FB990F]">{source.FilTitle}</Text>{" "}
+          {source.FilQuestion}
+        </Text>
+      </View>
 
-      <View className="w-full h-[30%] relative -top-1">
-        <VideoView
-          style={{ width: "100%", height: "100%" }}
-          player={player}
-          allowsFullscreen={false}
-          allowsPictureInPicture={false}
-          nativeControls={false}
-        />
-        <View
-          className={`bg-white/60 w-full p-4 absolute bottom-0 ${hasChecked && "opacity-100"} opacity-0`}
-        >
-          <Text className="text-sm text-center font-PoppinsRegular">
-            {source.correctAnswer}
-          </Text>
+      <View className="w-full h-56 flex-row items-center justify-around  ">
+        <View className="w-48 h-36 relative  ">
+          <VideoView
+            style={{ width: "100%", height: "100%" }}
+            player={player}
+            allowsFullscreen={false}
+            allowsPictureInPicture={false}
+            nativeControls={false}
+          />
+        </View>
+
+        <View className="w-48 h-36 relative  ">
+          <VideoView
+            style={{ width: "100%", height: "100%" }}
+            player={player}
+            allowsFullscreen={false}
+            allowsPictureInPicture={false}
+            nativeControls={false}
+          />
         </View>
       </View>
 
-      <View className="w-11/12 mx-auto ">
-        {source.options.map((item, index) => {
+      <View className="w-11/12 mx-auto">
+        {source.Options.map((_, index) => {
           return (
             <MCBTN
               key={index}
-              EnglishText={source.options[index][0]}
-              FilipinoText={`"${source.options[index][1]}"`}
+              EnglishText={source.Options[index][0]}
+              FilipinoText={`"${source.Options[index][1]}"`}
               onPress={() => {
                 if (!hasChecked) {
                   // Only allow selection if not checked yet
-                  setChoice(source.options[index][0]);
+                  setChoice(source.Options[index][0]);
                 }
               }}
               clicked={hasChecked} // Keep for backward compatibility
-              isCorrect={source.options[index][0] === source.correctAnswer} // Each button knows if it's the correct answer
-              isSelected={choice === source.options[index][0]} // New prop: is this button selected
+              isCorrect={source.Options[index][0] === source.CorrectAnswer[0]} // Each button knows if it's the correct answer
+              isSelected={choice === source.Options[index][0]} // New prop: is this button selected
               hasChecked={hasChecked} // New prop: has check button been pressed
               rounded={50}
             />
@@ -83,7 +92,7 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
         })}
       </View>
 
-      <View
+  <View
         className={`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}
       >
         <Inventory
@@ -135,12 +144,11 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
           <LevelBg />
         )}
       </View>
+
     </View>
   );
 };
-
 const videoMap: Record<string, any> = {
   "FSL_A.mp4": require("@/assets/videos/FSL_A.mp4"),
 };
-
-export default MultipleChoice;
+export default TrueOrFalse;

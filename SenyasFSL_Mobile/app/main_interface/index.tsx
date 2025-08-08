@@ -8,11 +8,11 @@ import {
 import React from "react";
 import BG from "@/assets/svgs/bg 1.svg";
 import TutorialSVG from "@/assets/svgs/Tutorial.svg";
-import Settings from "@/components/Settings";
+import Settings from "@/components/main_interface/Settings";
 import { useState } from "react";
 
-import SoundSettings from "@/components/SoundSettings";
-import Tutorial from "@/components/Tutorial";
+import SoundSettings from "@/components/main_interface/SoundSettings";
+import Tutorial from "@/components/main_interface/Tutorial";
 import RenderLevel from "@/modules/RenderLevel";
 export default function index() {
   const [isPressed, setIsPressed] = useState(false);

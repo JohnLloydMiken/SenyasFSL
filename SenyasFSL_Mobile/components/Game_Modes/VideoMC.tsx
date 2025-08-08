@@ -6,8 +6,8 @@ import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
-import LevelContentBtn, { VideoMCBTN } from "../LevelContentBtn";
-import Inventory from "../Inventory";
+import LevelContentBtn, { VideoMCBTN } from "../LevelContent/LevelContentBtn";
+import Inventory from "../main_interface/Inventory";
 const ViewMC = () => {
   const source = VideoMC[0].VideoMCNum1;
   const [isClicked, setIsClicked] = useState(false);

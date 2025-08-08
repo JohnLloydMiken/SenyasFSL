@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { View, StyleSheet, Animated } from "react-native";
 
-import Splash1 from "../components/splash1";
-import Splash2 from "../components/splashScreen";
+import Splash1 from "../components/authentication/splash1";
+import Splash2 from "../components/authentication/splashScreen";
 import GetStarted from "@/app/(auth)/index";
 
 export default function Splash() {

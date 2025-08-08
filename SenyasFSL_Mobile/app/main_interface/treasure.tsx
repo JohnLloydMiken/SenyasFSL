@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
-import Item from "@/components/items";
+import Item from "@/components/main_interface/items";
 import Item_function from "@/json_files/item_function.json";
 import Tutorial from "@/assets/svgs/Tutorial.svg";
 import BG from '@/assets/svgs/bg 1.svg'

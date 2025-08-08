@@ -26,6 +26,7 @@ interface MCBTNProps {
   isCorrect: boolean;
   isSelected: boolean; // New: is this specific button selected
   hasChecked: boolean; // New: has the check button been pressed
+  rounded: number;
 }
 
 interface VideoMCBTNProps {
@@ -155,13 +156,14 @@ export const MCBTN: React.FC<MCBTNProps> = ({
   isCorrect,
   isSelected, // New prop to track if this specific button is selected
   hasChecked, // New prop to track if check button was pressed
+  rounded
 }) => {
   // State 1: Default (not selected, not checked)
   if (!isSelected && !hasChecked) {
     return (
       <TouchableOpacity
         onPress={onPress}
-        className="w-full p-2 border border-[#F7D674] rounded-full my-3"  
+        className={`w-full p-2 border bg-white border-[#F7D674] ${rounded && 'rounded-full'} my-3 z-50`}  
       >
         <Text className="text-xl md:text-2xl font-PoppinsBold text-[#8B8B8B] text-center">
           {EnglishText}
@@ -182,17 +184,18 @@ export const MCBTN: React.FC<MCBTNProps> = ({
         end={{ x: 0, y: 0.8 }}
         style={{
           width: "100%",
-          borderRadius: 50,
+          borderRadius: rounded,
           backgroundColor: "transparent",
           elevation: 5,
-          padding: 1,
+          padding: 2,
           marginTop: 10,
           marginBottom: 10,
+          zIndex: 50
         }}
       >
         <TouchableOpacity
           onPress={onPress}
-          className="bg-white rounded-full w-full p-2"
+          className={`bg-white ${rounded && 'rounded-full'} w-full p-2`}
         >
           {/* English Text with MaskedView */}
           <MaskedView
@@ -215,7 +218,8 @@ export const MCBTN: React.FC<MCBTNProps> = ({
           </MaskedView>
 
           {/* Filipino Text with MaskedView */}
-          <MaskedView
+         {FilipinoText === "" ?  null :(
+             <MaskedView
             maskElement={
               <Text className="text-center font-PoppinsLightItallic text-lg md:text-xl text-[#8B8B8B]">
                 {FilipinoText}
@@ -233,6 +237,7 @@ export const MCBTN: React.FC<MCBTNProps> = ({
               </Text>
             </LinearGradient>
           </MaskedView>
+         )}
         </TouchableOpacity>
       </LinearGradient>
     );
@@ -247,12 +252,13 @@ export const MCBTN: React.FC<MCBTNProps> = ({
         end={{ x: 0, y: 0.8 }}
         style={{
           width: "100%",
-          borderRadius: 50,
+          borderRadius: rounded,
           backgroundColor: "transparent",
           elevation: 5,
           padding: 1,
           marginTop: 10,
           marginBottom: 10,
+           zIndex: 50
         }}
       >
         <TouchableOpacity
@@ -262,9 +268,9 @@ export const MCBTN: React.FC<MCBTNProps> = ({
           <Text className="text-xl md:text-2xl font-PoppinsBold text-white text-center">
             {EnglishText}
           </Text>
-          <Text className="text-center font-PoppinsLightItallic text-lg md:text-xl text-white">
-            {FilipinoText}
-          </Text>
+         {FilipinoText === "" ? null :   <Text className="text-center font-PoppinsLightItallic text-lg md:text-xl text-white">
+          {FilipinoText}
+        </Text>}
         </TouchableOpacity>
       </LinearGradient>
     );
@@ -279,12 +285,13 @@ export const MCBTN: React.FC<MCBTNProps> = ({
         end={{ x: 0, y: 0.8 }}
         style={{
           width: "100%",
-          borderRadius: 50,
+          borderRadius: rounded,
           backgroundColor: "transparent",
           elevation: 5,
           padding: 1,
           marginTop: 10,
           marginBottom: 10,
+           zIndex: 50
         }}
       >
         <TouchableOpacity
@@ -294,9 +301,9 @@ export const MCBTN: React.FC<MCBTNProps> = ({
           <Text className="text-xl md:text-2xl font-PoppinsBold text-white text-center">
             {EnglishText}
           </Text>
-          <Text className="text-center font-PoppinsLightItallic text-lg md:text-xl text-white">
-            {FilipinoText}
-          </Text>
+          {FilipinoText === "" ? null :   <Text className="text-center font-PoppinsLightItallic text-lg md:text-xl text-white">
+          {FilipinoText}
+        </Text>}
         </TouchableOpacity>
       </LinearGradient>
     );

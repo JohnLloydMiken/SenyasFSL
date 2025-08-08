@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View , useWindowDimensions, StatusBar} from 'react-native'
 import FSL_Hi from '@/assets/svgs/FSL_Hi.svg'
 import React from 'react'
-import Authbutton from '@/components/button'
+import Authbutton from '@/components/authentication/button'
 import { router } from 'expo-router'
 export default function congrast() {
   const {width} = useWindowDimensions()

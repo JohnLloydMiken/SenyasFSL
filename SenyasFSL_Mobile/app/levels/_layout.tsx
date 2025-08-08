@@ -1,12 +1,12 @@
 import { StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 
 import { Stack } from "expo-router";
-import BackToLevelsBtn from "@/components/BackToLevelsBtn";
+import BackToLevelsBtn from "@/components/authentication/BackToLevelsBtn";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import Authbutton from "@/components/button";
+import Authbutton from "@/components/authentication/button";
 import Wait from '@/assets/svgs/Wait.svg'
 import Slow from '@/assets/svgs/Slow.svg'
 export default function _layout() {

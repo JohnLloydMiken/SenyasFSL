@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { router } from "expo-router";
 import React from "react";
 import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
-import Authbutton from "@/components/button";
+import Authbutton from "@/components/authentication/button";
 
 export default function register() {
   const { width } = useWindowDimensions();
