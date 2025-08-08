@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import GoBackBTN from "@/components/GoBackBTN";
+import GoBackBTN from "@/components/authentication/GoBackBTN";
 import { View, Text, useWindowDimensions } from "react-native";
 export default function GetStartedLayout() {
   const { width } = useWindowDimensions();

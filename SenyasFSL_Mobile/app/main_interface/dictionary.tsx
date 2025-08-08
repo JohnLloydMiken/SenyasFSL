@@ -15,7 +15,7 @@ import {
 } from "../../modules/levelsmetadata";
 import LevelItem from "../../modules/LevelItem";
 
-import LevelHeader from "@/components/levelHeader";
+import LevelHeader from "@/components/LevelContent/levelHeader";
 
 const LevelsScreen: React.FC = () => {
   const [levels, setLevels] = useState<Level[]>(generateLevelData(50));

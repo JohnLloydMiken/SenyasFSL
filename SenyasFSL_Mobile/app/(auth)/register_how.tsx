@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import React from "react";
-import Authbutton from "@/components/button";
+import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 import Bride from "@/assets/svgs/bridge.svg";
 import Dumbell from "@/assets/svgs/dumbell.svg";

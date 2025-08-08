@@ -19,7 +19,7 @@ import {
 import LevelItem from "../modules/LevelItem";
 import BtnUp from "@/assets/svgs/BtnUp.svg";
 import BtnDown from "@/assets/svgs/BtnDown.svg";
-import LevelHeader from "@/components/levelHeader";
+import LevelHeader from "@/components/LevelContent/levelHeader";
 import FSL_Hi from '@/assets/svgs/FSL_hello.svg';
 import LevelSplashScreen from "@/app/LevelSplashScreen";
 

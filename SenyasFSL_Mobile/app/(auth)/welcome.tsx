@@ -6,7 +6,7 @@ import {
   StatusBar,
 } from "react-native";
 import React from "react";
-import Authbutton from "@/components/button";
+import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
 export default function welcome() {

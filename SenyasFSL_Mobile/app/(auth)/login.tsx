@@ -1,7 +1,7 @@
 import { Text, View, TextInput, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import "@/global.css";
-import Authbutton from "@/components/button";
+import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 
 export default function login() {

@@ -7,7 +7,7 @@ import {
   FlatList,
 } from "react-native";
 import React from "react";
-import Authbutton from "@/components/button";
+import Authbutton from "@/components/authentication/button";
 import whyFSL_choices from "@/json_files/whylearnFSL.json";
 import { useState } from "react";
 import { router } from "expo-router";
