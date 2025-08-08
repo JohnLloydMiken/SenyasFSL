@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import React from "react";
-import Authbutton from "@/components/button";
+import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 import Last from "@/assets/svgs/FSL_last.svg";
 export default function register_last() {

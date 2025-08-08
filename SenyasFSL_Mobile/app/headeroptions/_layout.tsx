@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
-import BackBTN from '@/components/headeroptionBackBTN'
+import BackBTN from '@/components/authentication/headeroptionBackBTN'
 import { View } from "react-native";
 export default function LeaderboardsLayout(){
 

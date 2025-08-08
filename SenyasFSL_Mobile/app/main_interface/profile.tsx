@@ -10,7 +10,7 @@ import {
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
-import UserStreak from "@/components/userStreak";
+import UserStreak from "@/components/main_interface/userStreak";
 
 import { useBottomSheet } from "@/modules/contextProvider";
 

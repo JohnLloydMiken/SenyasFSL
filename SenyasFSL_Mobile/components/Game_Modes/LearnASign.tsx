@@ -1,7 +1,7 @@
 import { View, Text } from "react-native";
 import React, { useState } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
-import LevelContentBtn, { MultipleChoiceBTN } from "../LevelContentBtn";
+import LevelContentBtn, { LearnAsignBTN } from "../LevelContent/LevelContentBtn";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 interface LearnASignProps {
   videoUrl: any;
@@ -32,7 +32,7 @@ const LearnASign: React.FC<LearnASignProps> = ({videoUrl, title}) => {
       </View>
 
       <View className="w-11/12 mx-auto">
-        <MultipleChoiceBTN
+        <LearnAsignBTN
             
           EnglishText="Letter A"
           FilipinoText={`"Letrang A"`}

@@ -5,13 +5,13 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from "react-native";
-import Authbutton from "@/components/button";
+import Authbutton from "@/components/authentication/button";
 import React from "react";
 import { router } from "expo-router";
 import { useState } from "react";
-import UserInput from "@/components/userInput";
-import Modal_Terms from "@/components/Modal_Terms";
-import Modal_Privacy from "@/components/Modal_Privacy";
+import UserInput from "@/components/authentication/userInput";
+import Modal_Terms from "@/components/authentication/Modal_Terms";
+import Modal_Privacy from "@/components/authentication/Modal_Privacy";
 import Informtaion from "@/assets/svgs/information.svg";
 export default function sign_up() {
   const [isTermsPressed, setIsTermsPressed] = useState(false);
