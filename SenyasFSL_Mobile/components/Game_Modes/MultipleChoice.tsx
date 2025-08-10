@@ -12,16 +12,23 @@ import Inventory from "../main_interface/Inventory";
 
 interface MultipleChoiceProps {
   title: string;
-}
+  videoUrl: string
+  choices: string[]
+  correctAnswer: string
+  onPress: () => void
 
-const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
+}
+const videoMap: Record<string, any> = {
+  "FSL_A.mp4": require("@/assets/videos/FSL_A.mp4"),
+};
+
+const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choices, onPress , correctAnswer }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false); // New state to track if "Check" was pressed
   const [opacity, setOpacity] = useState(100);
-  const source = MCContent[0].MCNum1;
-  const videoSource = videoMap[source.question];
+ const videoSource = videoMap[videoUrl]
 
   const player = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
@@ -31,14 +38,14 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
 
   const handleBG = () => {
     if (choice) {
-      setIsCorrect(choice === source.correctAnswer);
+      setIsCorrect(choice === correctAnswer);
       setHasChecked(true); // Mark that check button was pressed
       setOpacity(0);
     }
   };
 
   return (
-    <View className="flex-1 relative">
+    <View className="flex-1 relative bg-white">
       <Text className="text-center text-2xl md:text-3xl font-PoppinsBold my-2">
         {title}
       </Text>
@@ -55,27 +62,27 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
           className={`bg-white/60 w-full p-4 absolute bottom-0 ${hasChecked && "opacity-100"} opacity-0`}
         >
           <Text className="text-sm text-center font-PoppinsRegular">
-            {source.correctAnswer}
+            {correctAnswer}
           </Text>
         </View>
       </View>
 
       <View className="w-11/12 mx-auto ">
-        {source.options.map((item, index) => {
+        {choices.map((item, index) => {
           return (
             <MCBTN
               key={index}
-              EnglishText={source.options[index][0]}
-              FilipinoText={`"${source.options[index][1]}"`}
+              EnglishText={choices[index][0]}
+              FilipinoText={`"${choices[index][1]}"`}
               onPress={() => {
                 if (!hasChecked) {
                   // Only allow selection if not checked yet
-                  setChoice(source.options[index][0]);
+                  setChoice(choices[index][0]);
                 }
               }}
               clicked={hasChecked} // Keep for backward compatibility
-              isCorrect={source.options[index][0] === source.correctAnswer} // Each button knows if it's the correct answer
-              isSelected={choice === source.options[index][0]} // New prop: is this button selected
+              isCorrect={choices[index][0] === correctAnswer} // Each button knows if it's the correct answer
+              isSelected={choice === choices[index][0]} // New prop: is this button selected
               hasChecked={hasChecked} // New prop: has check button been pressed
               rounded={50}
             />
@@ -120,7 +127,7 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
           hasChecked && (
             <LevelContentBtn
               text="Next"
-              onPress={() => console.log("clicked")}
+              onPress={onPress}
             />
           )
         )}
@@ -139,8 +146,6 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title }) => {
   );
 };
 
-const videoMap: Record<string, any> = {
-  "FSL_A.mp4": require("@/assets/videos/FSL_A.mp4"),
-};
+
 
 export default MultipleChoice;

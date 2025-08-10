@@ -1,26 +1,19 @@
-// components/LevelItem.tsx
-import React from "react";
+import React, { JSX } from "react";
 import {
   TouchableOpacity,
-  Text,
   View,
   StyleSheet,
   ViewStyle,
-  TextStyle,
 } from "react-native";
 import { Level, LevelItemProps } from "./types/interface";
 import Locked from "@/assets/svgs/locked.svg";
 import Unlocked from "@/assets/svgs/Unlock.svg";
 import Boss from "@/assets/svgs/boss.svg";
 
-const LevelItem: React.FC<LevelItemProps> = ({
-  level,
-  index,
-  onLevelPress,
-}) => {
+const LevelItem: React.FC<LevelItemProps> = ({ level, onLevelPress }) => {
   const isEven = level.id % 2 === 0;
 
-  const getLevelIcon = (): any => {
+  const getLevelIcon = (): JSX.Element => {
     if (level.isBoss) return <Boss />;
     if (!level.isUnlocked) return <Locked />;
     return <Unlocked />;
@@ -34,15 +27,20 @@ const LevelItem: React.FC<LevelItemProps> = ({
 
   return (
     <View style={styles.levelRow}>
-      {/* Empty space for right-aligned levels */}
-      {isEven && <View style ={{position: 'relative'}} />}
+      {/* Left placeholder for even levels */}
+      {isEven && <View  />}
 
-      <TouchableOpacity disabled={!level.isUnlocked} onPress={handlePress} style = {{position: 'relative'}}>
+      {/* Icon container */}
+      <TouchableOpacity
+        disabled={!level.isUnlocked}
+        onPress={handlePress}
+        style={styles.iconWrapper}
+      >
         {getLevelIcon()}
       </TouchableOpacity>
 
-      {/* Empty space for left-aligned levels */}
-      {!isEven && <View style={{marginLeft: 100, position: 'relative'}}   />}
+      {/* Right placeholder for odd levels */}
+      {!isEven && <View  />}
     </View>
   );
 };
@@ -50,13 +48,13 @@ const LevelItem: React.FC<LevelItemProps> = ({
 const styles = StyleSheet.create({
   levelRow: {
     flexDirection: "row",
-    width: "100%",
-    marginVertical: 15,
+    width: "70%",
+    marginVertical: 20,
     alignItems: "center",
-    justifyContent: 'center',
-    position: 'relative'
+    justifyContent: "space-evenly",
+    marginHorizontal: "auto"
   } as ViewStyle,
-  levelContainer: {
+  iconWrapper: {
     width: 80,
     height: 80,
     borderRadius: 40,
@@ -67,15 +65,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    backgroundColor: "transparent",
   } as ViewStyle,
-  leftAligned: {
-    marginLeft: 20,
+  flexSpace: {
+    flex: 1, // takes up remaining space to push icon to one side
   } as ViewStyle,
-  rightAligned: {
-    marginRight: 20,
-  } as ViewStyle,
-
- 
 });
 
 export default LevelItem;
