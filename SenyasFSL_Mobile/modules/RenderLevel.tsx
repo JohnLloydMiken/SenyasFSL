@@ -28,7 +28,7 @@ const RenderLevel: React.FC = () => {
   const [levels, setLevels] = useState<Level[]>(generateLevelData(50));
   const [currentSection, setCurrentSection] = useState(0);
     const {width} =useWindowDimensions()
-    const FSLHiSize = width < 768 ? 175 : 300;
+    const FSLHiSize = width < 768 ? 160 : 300;
     const BtnSize = width < 768 ? 40 : 80;
   const [currentView, setCurrentView] = useState('loading')
     const handleSplashComplete = () => {
@@ -105,7 +105,7 @@ const RenderLevel: React.FC = () => {
           </TouchableOpacity>
         )}
       </View>
-      <View className="absolute right-0 top-1/2 ">
+      <View className="absolute right-0 top-1/2  ">
         <FSL_Hi width={FSLHiSize} height={FSLHiSize}/>
       </View>
     </View>

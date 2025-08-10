@@ -53,7 +53,7 @@ const LevelContentBtn: React.FC<ButtonProps> = ({ text, onPress }) => {
       }}
     >
       {/* Invisible text only to preserve size */}
-      <TouchableOpacity onPress={onPress} className="p-4">
+      <TouchableOpacity onPress={onPress} className="p-4" >
         <Text className="font-PoppinsBold text-xl md:text-2xl text-center text-white">
           {text}
         </Text>
