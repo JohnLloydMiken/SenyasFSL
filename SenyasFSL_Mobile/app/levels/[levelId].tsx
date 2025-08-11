@@ -6,36 +6,23 @@ import TrueOrFalse from "@/components/Game_Modes/TrueOrFalse";
 import LearnASign from "@/components/Game_Modes/LearnASign";
 import MultipleChoice from "@/components/Game_Modes/MultipleChoice";
 import ViewMC from "@/components/Game_Modes/VideoMC";
-
+import FillTheGap from "@/components/Game_Modes/FillTheGap";
 export default function LevelContent() {
   const { levelId } = useLocalSearchParams();
-  const  steps = LevelConfig[levelId as keyof typeof LevelConfig] || [];
-   const [currentStep, setCurrentStep] = useState(0);
-    const step = steps[currentStep]
+  const steps = LevelConfig[levelId as keyof typeof LevelConfig] || [];
+  const [currentStep, setCurrentStep] = useState(0);
+  const step = steps[currentStep];
 
-   const renderStep= ()=>{
-    switch(step.type){
-      case "LearnASign": 
-      return (
-        <LearnASign 
-        title={step.data.title}
-        videoUrl={step.data.videoUrl}
-        EnglishText={step.data.EnglishText}
-        FilipinoText= {step.data.FilipinoText}
-        onPress={()=> setCurrentStep(prev => prev+1)}/>
-      )
-      case "MultipleChoice" : 
-      return (
-        <MultipleChoice 
-        title={step.data.title}
-        videoUrl= {step.data.videoUrl}
-        choices={step.data.choices}
-        correctAnswer={step.data.correctAnswer}
-        onPress={()=>console.log("dwqd")}/>
-      )
+  const renderStep = () => {
+    switch (step.type) {
+      case "LearnASign": return <LearnASign {...step.data} onPress={() => setCurrentStep((prev) => prev + 1)}/>
+      case "MultipleChoice": return <MultipleChoice {...step.data} onPress={() => setCurrentStep((prev) => prev + 1)}/>
+      case "VideoMultipleChoice": return <ViewMC {...step.data} onPress={() => setCurrentStep((prev) => prev + 1)} />
+      case "FillTheGap": return <FillTheGap {...step.data} onPress={() => setCurrentStep((prev) => prev + 1)}/>
+      case "TrueOrFalse": return <TrueOrFalse {...step.data} onPress={() => setCurrentStep((prev) => prev + 1)}/>
     }
-   } 
-  return renderStep()
+  };
+  return renderStep();
 }
 
 const styles = StyleSheet.create({});

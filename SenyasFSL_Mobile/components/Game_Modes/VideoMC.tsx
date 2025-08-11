@@ -8,8 +8,17 @@ import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import LevelContentBtn, { VideoMCBTN } from "../LevelContent/LevelContentBtn";
 import Inventory from "../main_interface/Inventory";
-const ViewMC = () => {
-  const source = VideoMC[0].VideoMCNum1;
+
+interface ViewMCProps {
+  title: string;
+  choices: ReadonlyArray<readonly [string, string]>;
+  videoSources: readonly string[];
+  correctAnswer: string;
+  onPress: () => void
+}
+
+const ViewMC: React.FC <ViewMCProps> = ({title, choices, videoSources, correctAnswer , onPress}) => {
+
   const [isClicked, setIsClicked] = useState(false);
   const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -18,34 +27,34 @@ const ViewMC = () => {
 
   const handleBG = () => {
     if (choice) {
-      setIsCorrect(choice === source.correctAnswer[0]);
+      setIsCorrect(choice === correctAnswer);
       setHasChecked(true); // Mark that check button was pressed
       setOpacity(0);
     }
   };
   return (
-    <View className="flex-1 relative items-center">
+    <View className="flex-1 relative items-center bg-white">
       <Text className="text-center font-PoppinsBold my-2 text-2xl md:text-3xl">
-        {source.title}
+        {title}
       </Text>
 
       <View className="w-11/12">
-        {source.option.map((_, index) => {
+        {choices.map((_, index) => {
           return (
             <VideoMCBTN
               key={index}
-              answer={source.option[index]}
-              isCorrect={source.option[index][0] === source.correctAnswer[0]}
+              answer={choices[index]}
+              isCorrect={choices[index][0] === correctAnswer}
               hasChecked={hasChecked}
               clicked={hasChecked}
-              isSelected={choice === source.option[index][0]}
+              isSelected={choice === choices[index][0]}
               onPress={() => {
                 if (!hasChecked) {
                   // Only allow selection if not checked yet
-                  setChoice(source.option[index][0]);
+                  setChoice(choices[index][0]);
                 }
               }}
-              videoSource={source.videoSources[index]}
+              videoSource={videoSources[index]}
             />
           );
         })}
@@ -65,23 +74,24 @@ const ViewMC = () => {
         />
       </View>
 
-     
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
-       
-          <View className= {`flex-row mx-auto justify-center items-center gap-2 ${isCorrect ==  null ? "hidden" : (isCorrect === true ? 'flex': 'hidden')}`}>
-            <CorrectIcon />
-            <Text className="font-PoppinsBold text-lg md:text-xl text-white">
-              Correct!
-            </Text>
-          </View>
-    
-          <View className= {`flex-row mx-auto justify-center items-center gap-2 ${isCorrect ==  null ? "hidden" : (isCorrect === false ? 'flex': 'hidden')}`}>
-            <Incorrect />
-            <Text className="font-PoppinsBold text-lg md:text-xl text-white">
-              Incorrect!
-            </Text>
-          </View>
-    
+        <View
+          className={`flex-row mx-auto justify-center items-center gap-2 ${isCorrect == null ? "hidden" : isCorrect === true ? "flex" : "hidden"}`}
+        >
+          <CorrectIcon />
+          <Text className="font-PoppinsBold text-lg md:text-xl text-white">
+            Correct!
+          </Text>
+        </View>
+
+        <View
+          className={`flex-row mx-auto justify-center items-center gap-2 ${isCorrect == null ? "hidden" : isCorrect === false ? "flex" : "hidden"}`}
+        >
+          <Incorrect />
+          <Text className="font-PoppinsBold text-lg md:text-xl text-white">
+            Incorrect!
+          </Text>
+        </View>
 
         {choice && !hasChecked ? (
           <LevelContentBtn text="Check" onPress={handleBG} />
@@ -89,7 +99,7 @@ const ViewMC = () => {
           hasChecked && (
             <LevelContentBtn
               text="Next"
-              onPress={() => console.log("clicked")}
+              onPress={onPress}
             />
           )
         )}
