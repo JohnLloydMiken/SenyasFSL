@@ -3,7 +3,7 @@
         "VideoMCNum1": {
             "id": 1,
             "title": "Choose the FSL sign Letter E",
-            "option": [["Letter E", "Lettang E"], ["Letter G" , "Letrang G"]],
+            "option": [["Letter E", "Letrang E"], ["Letter G" , "Letrang G"]],
             "videoSources": ["FSL_A.mp4", "FSL_A.mp4"],
             "correctAnswer": ["Letter E", "Letrang E"]
         }

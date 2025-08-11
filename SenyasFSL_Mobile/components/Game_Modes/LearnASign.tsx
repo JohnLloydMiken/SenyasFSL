@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
 import LevelContentBtn, { LearnAsignBTN } from "../LevelContent/LevelContentBtn";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
+import { videoMap } from "@/modules/LevelContentConfig";
 interface LearnASignProps {
   videoUrl: any;
   title: string;
@@ -10,9 +11,7 @@ interface LearnASignProps {
   FilipinoText: string;
   onPress: ()=> void
 }
-const videoMap: Record<string, any> = {
-  "FSL_A.mp4": require("@/assets/videos/FSL_A.mp4"),
-};
+
 const LearnASign: React.FC<LearnASignProps> = ({videoUrl, title, EnglishText, FilipinoText, onPress}) => {
   const [isClicked, setIsClicked] = useState(false);
   const videoSource = videoMap[videoUrl];

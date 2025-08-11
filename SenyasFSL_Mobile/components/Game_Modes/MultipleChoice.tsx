@@ -9,18 +9,15 @@ import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import MCContent from "@/json_files/MutlipleChoiceContent.json";
 import Inventory from "../main_interface/Inventory";
-
+import { videoMap } from "@/modules/LevelContentConfig";
 interface MultipleChoiceProps {
   title: string;
   videoUrl: string
-  choices: string[]
+  choices: ReadonlyArray<readonly [string, string]>
   correctAnswer: string
   onPress: () => void
 
 }
-const videoMap: Record<string, any> = {
-  "FSL_A.mp4": require("@/assets/videos/FSL_A.mp4"),
-};
 
 const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choices, onPress , correctAnswer }) => {
   const [isClicked, setIsClicked] = useState(false);
