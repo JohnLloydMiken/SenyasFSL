@@ -8,95 +8,93 @@ import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import Inventory from "../main_interface/Inventory";
-import TOrF from "@/json_files/TrueOrFalse.json";
-const TrueOrFalse = () => {
-  const source = TOrF[0].TOFNum1;
+import { videoMap } from "@/modules/LevelContentConfig";
+
+interface TrueOrFalseProps {
+  title: readonly string[];
+  question: readonly string[];
+  videoSource: string;
+  choices: ReadonlyArray<readonly [string, string]>;
+  correctAnswer: string;
+  onPress: () => void;
+}
+
+const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
+  title,
+  question,
+  videoSource,
+  choices,
+  correctAnswer,
+  onPress,
+}) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [choice, setChoice] = useState<string | null>(null);
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [hasChecked, setHasChecked] = useState(false); // New state to track if "Check" was pressed
-  const [opacity, setOpacity] = useState(100);
+  const [hasChecked, setHasChecked] = useState(false);
+  const [opacity, setOpacity] = useState(1); // use number between 0–1 for style
 
-  const videoSource = videoMap[source.VideSource];
-
-  const player = useVideoPlayer(videoSource, (player) => {
-    player.loop = true;
-    player.muted = true;
-    player.pause();
+  const player = useVideoPlayer(videoMap[videoSource], (p) => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
   });
 
-  const handleBG = () => {
-    if (choice) {
-      setIsCorrect(choice === source.CorrectAnswer[0]);
-      setHasChecked(true); // Mark that check button was pressed
+  const handleCheck = () => {
+    if (selectedChoice) {
+      setIsCorrect(selectedChoice === correctAnswer);
+      setHasChecked(true);
       setOpacity(0);
     }
   };
+
   return (
-    <View className="flex-1 relative items-center">
+    <View className="flex-1 relative items-center bg-white">
+      {/* Question */}
       <View className="w-10/12">
         <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">
-          {" "}
-          <Text className="text-[#FB990F]">{source.EngTitle}</Text>{" "}
-          {source.EngQuestion}
+          <Text className="text-[#FB990F]">{title[0]}</Text> {question[0]}
         </Text>
         <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">
-          {" "}
-          <Text className="text-[#FB990F]">{source.FilTitle}</Text>{" "}
-          {source.FilQuestion}
+          <Text className="text-[#FB990F]">{title[1]}</Text> {question[1]}
         </Text>
       </View>
 
-      <View className="w-full h-56 flex-row items-center justify-around  ">
-        <View className="w-48 h-36 relative  ">
-          <VideoView
-            style={{ width: "100%", height: "100%" }}
-            player={player}
-            allowsFullscreen={false}
-            allowsPictureInPicture={false}
-            nativeControls={false}
-          />
-        </View>
-
-        <View className="w-48 h-36 relative  ">
-          <VideoView
-            style={{ width: "100%", height: "100%" }}
-            player={player}
-            allowsFullscreen={false}
-            allowsPictureInPicture={false}
-            nativeControls={false}
-          />
-        </View>
-      </View>
-
-      <View className="w-11/12 mx-auto">
-        {source.Options.map((_, index) => {
-          return (
-            <MCBTN
-              key={index}
-              EnglishText={source.Options[index][0]}
-              FilipinoText={`"${source.Options[index][1]}"`}
-              onPress={() => {
-                if (!hasChecked) {
-                  // Only allow selection if not checked yet
-                  setChoice(source.Options[index][0]);
-                }
-              }}
-              clicked={hasChecked} // Keep for backward compatibility
-              isCorrect={source.Options[index][0] === source.CorrectAnswer[0]} // Each button knows if it's the correct answer
-              isSelected={choice === source.Options[index][0]} // New prop: is this button selected
-              hasChecked={hasChecked} // New prop: has check button been pressed
-              rounded={50}
+      {/* Video Section */}
+      <View className="w-full h-56 flex-row items-center justify-around">
+        {[0, 1].map((i) => (
+          <View key={i} className="w-48 h-36">
+            <VideoView
+              style={{ width: "100%", height: "100%" }}
+              player={player}
+              allowsFullscreen={false}
+              allowsPictureInPicture={false}
+              nativeControls={false}
             />
-          );
-        })}
+          </View>
+        ))}
       </View>
 
-  <View
-        className={`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}
-      >
+      {/* Choices */}
+      <View className="w-11/12 mx-auto">
+        {choices.map(([eng, fil], index) => (
+          <MCBTN
+            key={index}
+            EnglishText={eng}
+            FilipinoText={`"${fil}"`}
+            onPress={() => !hasChecked && setSelectedChoice(eng)}
+            clicked={hasChecked}
+            isCorrect={eng === correctAnswer}
+            isSelected={selectedChoice === eng}
+            hasChecked={hasChecked}
+            rounded={50}
+          />
+        ))}
+      </View>
+
+      {/* Inventory */}
+      <View style={{ opacity }} className="w-full p-4 mx-auto absolute bottom-28 z-50">
         <Inventory
-          onPress={() => setIsClicked(!isClicked)}
+          onPress={() => setIsClicked((prev) => !prev)}
           XpPotion={1}
           Bomb={0}
           Retry={2}
@@ -106,49 +104,30 @@ const TrueOrFalse = () => {
         />
       </View>
 
+      {/* Feedback & Actions */}
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
-        {isCorrect === true ? (
-          <View className=" flex-row mx-auto justify-center items-center gap-2">
-            <CorrectIcon />
+        {isCorrect !== null && (
+          <View className="flex-row mx-auto justify-center items-center gap-2">
+            {isCorrect ? <CorrectIcon /> : <Incorrect />}
             <Text className="font-PoppinsBold text-lg md:text-xl text-white">
-              Correct!
+              {isCorrect ? "Correct!" : "Incorrect!"}
             </Text>
           </View>
-        ) : isCorrect === false ? (
-          <View className=" flex-row mx-auto justify-center items-center gap-2">
-            <Incorrect />
-            <Text className="font-PoppinsBold text-lg md:text-xl text-white">
-              Incorrect!
-            </Text>
-          </View>
+        )}
+
+        {selectedChoice && !hasChecked ? (
+          <LevelContentBtn text="Check" onPress={handleCheck} />
+        ) : hasChecked ? (
+          <LevelContentBtn text="Next" onPress={onPress} />
         ) : null}
-
-        {choice && !hasChecked ? (
-          <LevelContentBtn text="Check" onPress={handleBG} />
-        ) : (
-          hasChecked && (
-            <LevelContentBtn
-              text="Next"
-              onPress={() => console.log("clicked")}
-            />
-          )
-        )}
       </View>
 
+      {/* Backgrounds */}
       <View className="absolute w-full bottom-0 z-10">
-        {isCorrect === true ? (
-          <CorrectBG />
-        ) : isCorrect === false ? (
-          <WrongBG />
-        ) : (
-          <LevelBg />
-        )}
+        {isCorrect === true ? <CorrectBG /> : isCorrect === false ? <WrongBG /> : <LevelBg />}
       </View>
-
     </View>
   );
 };
-const videoMap: Record<string, any> = {
-  "FSL_A.mp4": require("@/assets/videos/FSL_A.mp4"),
-};
+
 export default TrueOrFalse;

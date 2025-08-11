@@ -10,6 +10,7 @@ import Locked from "@/assets/svgs/locked.svg";
 import Unlocked from "@/assets/svgs/Unlock.svg";
 import Boss from "@/assets/svgs/boss.svg";
 
+
 const LevelItem: React.FC<LevelItemProps> = ({ level, onLevelPress }) => {
   const isEven = level.id % 2 === 0;
 

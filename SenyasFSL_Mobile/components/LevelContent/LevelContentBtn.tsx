@@ -7,6 +7,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import ViDSelected from '@/assets/svgs/VidSelected.svg'
 import ViDCorrect from '@/assets/svgs/VidCorrect.svg'
 import VidWrong from '@/assets/svgs/VidWrong.svg'
+import { videoMap } from "@/modules/LevelContentConfig";
 interface ButtonProps {
   text: string;
   onPress: () => void;
@@ -30,8 +31,8 @@ interface MCBTNProps {
 }
 
 interface VideoMCBTNProps {
-  answer: string[];
-  videoSource: any;
+  answer: readonly [string, string];
+  videoSource: string;
   hasChecked: boolean;
   isCorrect: boolean;
   clicked: boolean;
@@ -163,7 +164,7 @@ export const MCBTN: React.FC<MCBTNProps> = ({
     return (
       <TouchableOpacity
         onPress={onPress}
-        className={`w-full p-2 border bg-white border-[#F7D674] ${rounded && 'rounded-full'} my-3 z-50`}  
+        className={`w-full p-2 border bg-white border-[#F7D674] ${rounded === 6 ? 'rounded-md' : 'rounded-full'}  my-3 z-50`}  
       >
         <Text className="text-xl md:text-2xl font-PoppinsBold text-[#8B8B8B] text-center">
           {EnglishText}
@@ -195,7 +196,7 @@ export const MCBTN: React.FC<MCBTNProps> = ({
       >
         <TouchableOpacity
           onPress={onPress}
-          className={`bg-white ${rounded && 'rounded-full'} w-full p-2`}
+          className={`bg-white ${rounded === 6 ? 'rounded-md' : 'rounded-full'} w-full p-2`}
         >
           {/* English Text with MaskedView */}
           <MaskedView
@@ -364,7 +365,7 @@ export const VideoMCBTN: React.FC<VideoMCBTNProps> = ({
       end={{ x: 0, y: 0.8 }}
       style={{
         width: "100%",
-        height: 216,
+        height: 208,
         borderRadius: 16,
         backgroundColor: "transparent",
         elevation: 5,
@@ -385,7 +386,7 @@ export const VideoMCBTN: React.FC<VideoMCBTNProps> = ({
           nativeControls={false}
         />
         <View
-          className={`bg-white/60 w-[98%] p-4 absolute bottom-0 ${hasChecked && "opacity-100"} opacity-0 rounded-xl`}
+          className={`bg-white/60 w-[98%] p-4 absolute bottom-1 ${hasChecked && "opacity-100"} opacity-0 rounded-xl`}
         >
           <Text className="text-sm text-center font-PoppinsRegular">
             {answer[0]}
@@ -427,6 +428,4 @@ export const VideoMCBTN: React.FC<VideoMCBTNProps> = ({
 };
 
 export default LevelContentBtn;
-const videoMap: Record<string, any> = {
-  "FSL_A.mp4": require("@/assets/videos/FSL_A.mp4"),
-};
+
