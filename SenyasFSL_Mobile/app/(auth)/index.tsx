@@ -1,17 +1,16 @@
+import FSL_start from "@/assets/svgs/FSL_start.svg";
+import Authbutton from "@/components/authentication/button";
+import { router } from "expo-router";
+import React from "react";
 import {
+  SafeAreaView,
   StyleSheet,
   Text,
-  View,
-  SafeAreaView,
-  useWindowDimensions,
   TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
-import { router } from "expo-router";
-import { useFonts } from "expo-font";
-import React from "react";
 import "../../global.css";
-import Authbutton from "@/components/authentication/button";
-import FSL_start from "@/assets/svgs/FSL_start.svg";
 
 export default function getStarted() {
   const { width } = useWindowDimensions();

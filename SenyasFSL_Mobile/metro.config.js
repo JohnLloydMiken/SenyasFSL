@@ -1,25 +1,38 @@
+// metro.config.js
 const { getDefaultConfig } = require("expo/metro-config");
 const { withNativeWind } = require("nativewind/metro");
 
 module.exports = (() => {
-  // Step 1: Get default Expo config
   const config = getDefaultConfig(__dirname);
 
-  // Step 2: Apply NativeWind first
-  const nativeWindConfig = withNativeWind(config, { input: './global.css' });
+  // Get defaults
+  const { assetExts, sourceExts } = config.resolver;
 
-  // Step 3: Update transformer for SVG
-  nativeWindConfig.transformer = {
-    ...nativeWindConfig.transformer,
+  config.resolver = {
+    ...config.resolver,
+    assetExts: [
+      ...assetExts.filter((ext) => ext !== "svg"),
+      // ✅ Add ML / binary formats
+      "tflite",
+      "bin",
+      "pb",
+      "onnx",
+      "mlmodel",
+      "h5",
+      "dat",
+      "weights",
+    ],
+    sourceExts: [...new Set([...sourceExts, "svg"])],
+    platforms: ["ios", "android", "web"],
+    resolverMainFields: ["react-native", "browser", "main"],
+  };
+
+  config.transformer = {
+    ...config.transformer,
     babelTransformerPath: require.resolve("react-native-svg-transformer/expo"),
+    assetPlugins: ["expo-asset/tools/hashAssetFiles"],
+    maxWorkers: 2,
   };
 
-  // Step 4: Update resolver to support .svg
-  nativeWindConfig.resolver = {
-    ...nativeWindConfig.resolver,
-    assetExts: nativeWindConfig.resolver.assetExts.filter((ext) => ext !== "svg"),
-    sourceExts: [...nativeWindConfig.resolver.sourceExts, "svg"],
-  };
-
-  return nativeWindConfig;
+  return withNativeWind(config, { input: "./global.css" });
 })();

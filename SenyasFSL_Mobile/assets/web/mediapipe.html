@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script>
+let videoElement;
+
+async function init() {
+  videoElement = document.createElement("video");
+  document.body.appendChild(videoElement);
+
+  const hands = new Hands({locateFile: file => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+  }});
+  hands.setOptions({
+    maxNumHands: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.7
+  });
+
+  hands.onResults(results => {
+    if (results.multiHandLandmarks.length > 0) {
+      const landmarks = results.multiHandLandmarks[0];
+      window.ReactNativeWebView.postMessage(JSON.stringify(landmarks));
+    }
+  });
+
+  const camera = new Camera(videoElement, {
+    onFrame: async () => { await hands.send({image: videoElement}); },
+    width: 640,
+    height: 480
+  });
+  camera.start();
+}
+
+window.onload = init;
+</script>
+</head>
+<body></body>
+</html>
