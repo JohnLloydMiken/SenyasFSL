@@ -24,7 +24,7 @@ const DictionaryCategories = () => {
             <TouchableOpacity
             onPress={()=> router.push({
               pathname: '/dictionary/[contentId]',
-              params: {contentId : item.id.toString()}
+              params: {contentId : item.id}
             })}
               key={item.id}
               style={{
