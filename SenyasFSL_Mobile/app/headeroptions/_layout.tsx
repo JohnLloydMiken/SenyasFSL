@@ -22,7 +22,7 @@ export default function LeaderboardsLayout(){
                     />
                 )
                 ,
-                headerLeft: ()=> <BackBTN onPress={()=> router.replace('../(main_interface)/')}/>,
+                headerLeft: ()=> <BackBTN onPress={()=> router.replace('../main_interface/')}/>,
                 headerRight: () => <View style={{ width: 50 }} />,
                 headerTitleStyle: {
                     fontFamily: 'Poppins-Bold',
@@ -37,10 +37,15 @@ export default function LeaderboardsLayout(){
               name="leaderboards"
             options={{
                 headerTitle: "Leaderboards",
-                headerStyle:{
-                    backgroundColor: '#4D2300'
-                },
-                headerLeft: ()=> <BackBTN onPress={()=> router.replace('../(main_interface)/')}/>,
+                headerBackground:() => (
+                      <LinearGradient
+                        colors={['#FB990F', '#EA0505']} // blue shades top to bottom
+                        style={{ flex: 1, position: 'relative' }}
+                        start={{ x: 0, y: -0.1 }}
+                        end={{ x: 0, y: 0.9 }}
+                    />
+                ),
+                headerLeft: ()=> <BackBTN onPress={()=> router.replace('../main_interface/')}/>,
                 headerRight: () => <View style={{ width: 50 }} />,
                 headerTitleStyle: {
                     fontFamily: 'Poppins-Bold',

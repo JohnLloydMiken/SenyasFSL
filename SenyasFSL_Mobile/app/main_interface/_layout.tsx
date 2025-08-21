@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import { Text, View, TouchableOpacity, useWindowDimensions, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Tabs, useRouter } from 'expo-router';
@@ -31,17 +31,18 @@ function TabsWithBottomSheet() {
   const router = useRouter();
   const {width} = useWindowDimensions()
   const titleSize = width < 768 ? 12 : 18
-  const getSnapPoints = () => {
+ const snapPoints = useMemo(() => {
   switch (sheet) {
-    case 'streak':
-      return ['50%']; // shorter content
-    case 'editData':
-    case 'editPass':
-      return ['60%']; // forms take more space
+    case "streak":
+      return ["50%"]; // shorter content
+    case "editData":
+    case "editPass":
+      return ["60%"]; // forms take more space
     default:
-      return ['1%']; // or a closed value; used when sheet is null
+      return ["1"]; // closed by default
   }
-};
+}, [sheet]);
+
 
 
  
@@ -138,7 +139,7 @@ function TabsWithBottomSheet() {
         ref={bottomSheetRef}
         onChange={handleSheetChanges}
          index={sheet === null ? -1 : 0}
-        snapPoints={getSnapPoints()}
+        snapPoints={snapPoints}
         enablePanDownToClose
       >
         <BottomSheetView
