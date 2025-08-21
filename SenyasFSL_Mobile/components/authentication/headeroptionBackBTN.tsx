@@ -9,7 +9,7 @@ type BtnProps = {
 const GoBackBTN: React.FC<BtnProps> = ({ onPress, }) => {
   return (
     <TouchableOpacity onPress={onPress} className='= mb-4 mr-4'>
-        <Image source={require('@/assets/images/headerBackBTN.png')} className=''/>
+        <Image source={require('@/assets/images/headerBackBTN.png')} />
     </TouchableOpacity>
   )
 }
