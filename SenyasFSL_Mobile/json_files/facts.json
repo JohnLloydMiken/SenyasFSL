@@ -3,37 +3,48 @@
         "id": 1,
         "Fact_title": "What is the PFD?",
         "image": "PFD.svg",
-        "unlocked": true
+        "unlocked": true,
+        "content": "The Philippine Federation of the Deaf (PFD) is a national organization that advocates for the rights, inclusion, and empowerment of the Filipino Deaf community, focusing on Filipino Sign Language (FSL) recognition, accessibility, and equal opportunities.",
+        "funFact": "It works through policy advocacy, education, training, and awareness campaigns to fight discrimination, promote Deaf leadership, and strengthen the cultural identity of Deaf Filipinos."
     },
-     {
-         "id": 1,
-        "Fact_title": "SenyasFact?",
+    {
+        "id": 2,
+        "Fact_title": "Water Safety Basics",
         "image": "fact_lock.svg",
-        "unlocked": false
+        "unlocked": false,
+        "content": "Learn the fundamental principles of staying safe around water, including proper swimming techniques and emergency procedures.",
+        "funFact": "The buddy system reduces water-related accidents by 70%!"
     },
-     {
-         "id": 1,
-        "Fact_title": "SenyasFact",
+    {
+        "id": 3,
+        "Fact_title": "Marine Weather Signs",
         "image": "fact_lock.svg",
-        "unlocked": false
+        "unlocked": false,
+        "content": "Understanding cloud formations, wind patterns, and other natural indicators can help predict dangerous weather conditions on the water.",
+        "funFact": "A ring around the moon often indicates rain within 24-48 hours!"
     },
-     {
-         "id": 1,
-        "Fact_title": "SenyasFact",
+    {
+        "id": 4,
+        "Fact_title": "Emergency Signaling",
         "image": "fact_lock.svg",
-        "unlocked": false
+        "unlocked": false,
+        "content": "Various methods to signal for help in emergency situations, including visual, audio, and electronic signaling devices.",
+        "funFact": "Three of anything (whistle blasts, mirror flashes, etc.) is the universal distress signal!"
     },
-     {
-        "id": 1,
-        "Fact_title": "SenyasFact",
+    {
+        "id": 5,
+        "Fact_title": "Boat Navigation Basics",
         "image": "fact_lock.svg",
-        "unlocked": false
+        "unlocked": false,
+        "content": "Essential knowledge about reading nautical charts, using compass bearings, and understanding navigation aids.",
+        "funFact": "Red navigation markers should be kept on your right when returning to harbor - 'Red Right Returning'!"
     },
-     {
-        "id": 1,
-        "Fact_title": "SenyasFact",
+    {
+        "id": 6,
+        "Fact_title": "Knots and Rope Work",
         "image": "fact_lock.svg",
-        "unlocked": false
+        "unlocked": false,
+        "content": "Important knots every boater should know, including bowline, cleat hitch, and clove hitch for various marine applications.",
+        "funFact": "The bowline knot is called the 'king of knots' because it never slips and is easy to untie even after being under load!"
     }
-    
 ]

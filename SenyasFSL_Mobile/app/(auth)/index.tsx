@@ -1,7 +1,7 @@
 import FSL_start from "@/assets/svgs/FSL_start.svg";
 import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   SafeAreaView,
   StyleSheet,
@@ -11,12 +11,18 @@ import {
   View,
 } from "react-native";
 import "../../global.css";
-
+import { testRead, testWrite } from "@/test";
 export default function getStarted() {
   const { width } = useWindowDimensions();
 
   const svgSize = width < 768 ? 400 : 600;
-
+useEffect(() => {
+    const runTest = async () => {
+      await testWrite();
+      await testRead();
+    };
+    runTest();
+  }, []);
   return (
     <SafeAreaView style={styles.container}>
       <View>
