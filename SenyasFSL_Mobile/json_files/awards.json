@@ -1,33 +1,51 @@
 [
     {
-    "award_title": "Hello",
-    "AwardImage" : "awards_lock.svg"
-    
+        "id": 1,
+        "award_title": "First Steps",
+        "AwardImage": "awards_lock.svg",
+        "unlocked": true,
+        "description": "Congratulations on starting your safety journey! This award recognizes your commitment to learning important safety skills.",
+        "requirements": "Complete your first safety lesson",
+        "dateEarned": "2024-08-22"
     },
-        {
-    "award_title": "Hello",
-    "AwardImage" : "awards_lock.svg"
-    
+    {
+        "id": 2,
+        "award_title": "Safety Scholar",
+        "AwardImage": "awards_lock.svg",
+        "unlocked": false,
+        "description": "Awarded to those who demonstrate comprehensive knowledge of safety protocols and procedures.",
+        "requirements": "Complete 5 safety lessons and pass the knowledge test with 90% or higher"
     },
-        {
-    "award_title": "Hello",
-    "AwardImage" : "awards_lock.svg"
-    
+    {
+        "id": 3,
+        "award_title": "Water Guardian",
+        "AwardImage": "awards_lock.svg",
+        "unlocked": false,
+        "description": "Recognizes mastery of water safety skills and the ability to help others stay safe around water.",
+        "requirements": "Complete all water safety modules and demonstrate rescue techniques"
     },
-        {
-    "award_title": "Hello",
-    "AwardImage" : "awards_lock.svg"
-    
+    {
+        "id": 4,
+        "award_title": "Navigation Expert",
+        "AwardImage": "awards_lock.svg",
+        "unlocked": false,
+        "description": "For those who have mastered the art of marine navigation and can safely guide others.",
+        "requirements": "Complete navigation training and successfully plan a multi-point route"
     },
-        {
-    "award_title": "Hello",
-    "AwardImage" : "awards_lock.svg"
-    
+    {
+        "id": 5,
+        "award_title": "Emergency Response Hero",
+        "AwardImage": "awards_lock.svg",
+        "unlocked": false,
+        "description": "Awarded to individuals who are prepared to handle emergency situations with confidence and skill.",
+        "requirements": "Complete emergency response training and pass practical assessment"
     },
-        {
-    "award_title": "Hello",
-    "AwardImage" : "awards_lock.svg"
-    
+    {
+        "id": 6,
+        "award_title": "Master Mariner",
+        "AwardImage": "awards_lock.svg",
+        "unlocked": false,
+        "description": "The highest achievement - recognizing complete mastery of all marine safety and navigation skills.",
+        "requirements": "Unlock all other awards and mentor 3 new learners"
     }
-    
 ]
