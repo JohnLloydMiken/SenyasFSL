@@ -27,9 +27,9 @@
     "plugins": [
       "expo-router",
       [
-        "react-native-vision-camera",
+        "expo-camera",
         {
-          "cameraPermissionText": "We need access to your camera for FSL recognition."
+          "cameraPermission": "Allow SenyasFSL to access your camera for sign language recognition."
         }
       ],
       "expo-font",
@@ -39,14 +39,8 @@
           "supportsBackgroundPlayback": true,
           "supportsPictureInPicture": true
         }
-      ],
-      [
-        "react-native-fast-tflite",
-        {
-          "enableCoreMLDelegate": true,
-          "enableAndroidGpuLibraries": true
-        }
       ]
+     
     ],
     "experiments": {
       "typedRoutes": true
