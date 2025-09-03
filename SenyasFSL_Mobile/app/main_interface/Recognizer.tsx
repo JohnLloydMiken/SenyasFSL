@@ -1,10 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import HandTestingComponent from '../components/HandTestingComponent'
+import SignLanguageScreen from '../components/SignLanguageScreen'
 const Recognizer = () => {
   return (
    
-    <HandTestingComponent/>
+    <SignLanguageScreen/>
   )
 }
 
