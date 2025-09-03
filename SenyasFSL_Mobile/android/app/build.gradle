@@ -150,6 +150,20 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    //TensorFlow Lite dependency
+    implementation 'org.tensorflow:tensorflow-lite:2.14.0'
+    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0'
+    
+    //MediaPipe dependencies - CORRECTED
+    implementation 'com.google.mediapipe:tasks-vision:0.10.14'
+    
+    //CameraX (for camera access)
+    implementation "androidx.camera:camera-core:1.2.3"
+    implementation "androidx.camera:camera-camera2:1.2.3"
+    implementation "androidx.camera:camera-lifecycle:1.2.3"
+    implementation "androidx.camera:camera-view:1.2.3"
+
+   
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
