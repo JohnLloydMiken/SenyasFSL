@@ -11,6 +11,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.facebook.react.uimanager.ThemedReactContext
+import com.facebook.react.uimanager.events.RCTEventEmitter
 import java.util.concurrent.Executors
 import java.io.ByteArrayOutputStream
 
@@ -20,121 +22,82 @@ class SignLanguageCameraView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
-    private val previewView: PreviewView = PreviewView(context)
     private val cameraExecutor = Executors.newSingleThreadExecutor()
+    private var cameraProvider: ProcessCameraProvider? = null
+    private var isInitialized = false
 
     init {
-        addView(previewView)
+        // ⛔ No PreviewView added, we skip rendering
+        Log.d("SignLanguageCameraView", "Camera view initialized ✅ (headless)")
     }
 
     fun startCamera(lifecycleOwner: LifecycleOwner) {
-        Log.d("SignLanguageCameraView", "Camera started")
+        Log.d("SignLanguageCameraView", "Camera start requested")
+        if (isInitialized) return
+
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
             try {
-                val cameraProvider = cameraProviderFuture.get()
+                cameraProvider = cameraProviderFuture.get()
 
-                val preview = Preview.Builder()
-                    .build()
-                    .also { it.setSurfaceProvider(previewView.surfaceProvider) }
-
-                val analysis = ImageAnalysis.Builder()
+                // ❌ Removed Preview
+                val imageAnalyzer = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .setTargetResolution(android.util.Size(640, 480))
                     .build()
-
-                analysis.setAnalyzer(cameraExecutor) { imageProxy: ImageProxy ->
-                    try {
-                        Log.d("SignLanguageCameraView", "Frame received: ${imageProxy.width}x${imageProxy.height}, rotation: ${imageProxy.imageInfo.rotationDegrees}")
-
-                        val bitmap = imageProxy.toBitmap()
-                        if (bitmap != null) {
-                            // Rotate and mirror
-                            val rotationDegrees = imageProxy.imageInfo.rotationDegrees.toFloat()
-                            var processedBitmap = bitmap.rotate(rotationDegrees)
-                            // Mirror for front camera
-                            processedBitmap = processedBitmap.mirror()
-
-                            val timestampMs = SystemClock.uptimeMillis()
-                            SignLanguageModule.getInstance()?.processFrame(processedBitmap, timestampMs)
+                    .also {
+                        it.setAnalyzer(cameraExecutor) { imageProxy ->
+                            processImageProxy(imageProxy)
                         }
-                    } catch (e: Exception) {
-                        Log.e("SignLanguageCameraView", "Frame processing error", e)
-                    } finally {
-                        imageProxy.close()
                     }
-                }
 
                 val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    analysis
+                cameraProvider?.unbindAll()
+                cameraProvider?.bindToLifecycle(
+                    lifecycleOwner, cameraSelector, imageAnalyzer
                 )
-            } catch (e: Exception) {
-                Log.e("SignLanguageCameraView", "startCamera failed", e)
+
+                isInitialized = true
+                Log.d("SignLanguageCameraView", "Camera bound successfully 🎥 (headless)")
+
+                // ✅ Tell JS camera is ready
+                if (context is ThemedReactContext) {
+                    val reactContext = context as ThemedReactContext
+                    reactContext
+                        .getJSModule(RCTEventEmitter::class.java)
+                        .receiveEvent(id, "onCameraReady", null)
+                }
+
+            } catch (exc: Exception) {
+                Log.e("SignLanguageCameraView", "Use case binding failed", exc)
             }
         }, ContextCompat.getMainExecutor(context))
     }
 
+    private fun processImageProxy(imageProxy: ImageProxy) {
+        try {
+            val bitmap = imageProxy.toBitmap()
+            if (bitmap != null) {
+                val timestamp = SystemClock.uptimeMillis()
+                val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+                SignLanguageModule.getInstance()?.processFrame(bitmap, rotationDegrees, timestamp)
+            }
+        } catch (e: Exception) {
+            Log.e("SignLanguageCameraView", "Frame processing error", e)
+        } finally {
+            imageProxy.close()
+        }
+    }
+
     fun stopCamera() {
         try {
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-            val cameraProvider = cameraProviderFuture.get()
-            cameraProvider.unbindAll()
+            cameraProvider?.unbindAll()
+            isInitialized = false
+            Log.d("SignLanguageCameraView", "Camera stopped")
         } catch (e: Exception) {
             Log.e("SignLanguageCameraView", "stopCamera failed", e)
         }
     }
-
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        cameraExecutor.shutdown()
-    }
 }
 
-// YUV to Bitmap conversion without RenderScript
-private fun ImageProxy.toBitmap(): Bitmap? {
-    if (format != ImageFormat.YUV_420_888) {
-        Log.e("SignLanguageCameraView", "Unsupported format: $format")
-        return null
-    }
-
-    try {
-        val yBuffer = planes[0].buffer
-        val uBuffer = planes[1].buffer
-        val vBuffer = planes[2].buffer
-
-        val ySize = yBuffer.remaining()
-        val uSize = uBuffer.remaining()
-        val vSize = vBuffer.remaining()
-
-        val nv21 = ByteArray(ySize + uSize + vSize)
-        yBuffer.get(nv21, 0, ySize)
-        vBuffer.get(nv21, ySize, vSize) // NV21: V then U
-        uBuffer.get(nv21, ySize + vSize, uSize)
-
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
-        val out = ByteArrayOutputStream()
-        yuvImage.compressToJpeg(Rect(0, 0, width, height), 90, out)
-        val imageBytes = out.toByteArray()
-        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-    } catch (e: Exception) {
-        Log.e("SignLanguageCameraView", "toBitmap failed", e)
-        return null
-    }
-}
-
-// Bitmap extensions
-private fun Bitmap.rotate(degrees: Float): Bitmap {
-    if (degrees == 0f) return this
-    val matrix = Matrix().apply { postRotate(degrees) }
-    return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
-}
-
-private fun Bitmap.mirror(): Bitmap {
-    val matrix = Matrix().apply { postScale(-1f, 1f, width / 2f, height / 2f) }
-    return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
-}
