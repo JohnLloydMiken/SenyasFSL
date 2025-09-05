@@ -84,6 +84,7 @@ def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 android {
     ndkVersion rootProject.ext.ndkVersion
 
+    
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
@@ -94,6 +95,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
+         ndk {
+      abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+    }
     }
     signingConfigs {
         debug {
@@ -125,6 +129,8 @@ android {
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
     }
+
+    
 }
 
 // Apply static values from `gradle.properties` to the `android.packagingOptions`
@@ -163,6 +169,7 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:1.2.3"
     implementation "androidx.camera:camera-view:1.2.3"
 
+     implementation project(':react-native-vision-camera')
    
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
