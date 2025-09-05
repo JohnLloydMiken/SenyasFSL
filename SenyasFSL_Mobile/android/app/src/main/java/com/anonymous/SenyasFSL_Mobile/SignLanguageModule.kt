@@ -1,5 +1,7 @@
 package com.anonymous.SenyasFSL_Mobile
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.facebook.react.bridge.*
 import com.facebook.react.modules.core.DeviceEventManagerModule
@@ -8,8 +10,6 @@ import java.io.FileInputStream
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 import java.util.ArrayDeque
-
-// MediaPipe Tasks Vision
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.core.ImageProcessingOptions
@@ -19,19 +19,15 @@ import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.framework.image.MPImage
 import android.graphics.Bitmap
 
-// Interface called by CameraView
-interface FrameProcessor {
-    fun processFrame(bitmap: Bitmap, rotationDegrees: Int, timestampMs: Long)
-}
-
 class SignLanguageModule(private val reactContext: ReactApplicationContext) :
-    ReactContextBaseJavaModule(reactContext), LifecycleEventListener, FrameProcessor {
+    ReactContextBaseJavaModule(reactContext), LifecycleEventListener {
 
     override fun getName(): String = "SignLanguageModule"
 
     private var interpreter: Interpreter? = null
     private var handLandmarker: HandLandmarker? = null
     private val landmarkBuffer: ArrayDeque<FloatArray> = ArrayDeque()
+    private var isInitialized = false
 
     private val labels = arrayOf(
         "A","B","C","D","E","F","G","H","I",
@@ -57,14 +53,16 @@ class SignLanguageModule(private val reactContext: ReactApplicationContext) :
         setInstance(this)
     }
 
-    // ---- RN emitter stubs (prevents warnings / throttling) ----
+    // ---- RN emitter stubs ----
     @ReactMethod fun addListener(eventName: String) { jsListenerCount += 1 }
     @ReactMethod fun removeListeners(count: Int) { jsListenerCount = (jsListenerCount - count).coerceAtLeast(0) }
-    // -----------------------------------------------------------
+    // ---------------------------
 
     @ReactMethod
     fun initialize(promise: Promise) {
         try {
+            Log.d("SignLanguageModule", "Initializing TFLite and Mediapipe...")
+
             interpreter = Interpreter(loadModelFile("FSL_Letter_Model.tflite"))
 
             val baseOptions = BaseOptions.builder()
@@ -83,16 +81,23 @@ class SignLanguageModule(private val reactContext: ReactApplicationContext) :
                 .build()
 
             handLandmarker = HandLandmarker.createFromOptions(reactContext, options)
+
+            isInitialized = true
+            Log.d("SignLanguageModule", "✅ Initialization successful")
             promise.resolve(true)
         } catch (e: Exception) {
-            Log.e("SignLanguageModule", "initialize failed", e)
+            Log.e("SignLanguageModule", "❌ Initialization failed", e)
             promise.reject("INIT_ERROR", e)
         }
     }
 
-    // Called each frame by the CameraView (with rotation from CameraX)
-    override fun processFrame(bitmap: Bitmap, rotationDegrees: Int, timestampMs: Long) {
+    fun processFrame(bitmap: Bitmap, rotationDegrees: Int, timestampMs: Long) {
+        if (!isInitialized || handLandmarker == null) {
+            Log.w("SignLanguageModule", "processFrame called before initialization")
+            return
+        }
         try {
+            Log.d("SignLanguageModule", "Processing frame @ $timestampMs")
             val mpImage = BitmapImageBuilder(bitmap).build()
             val imgOpts = ImageProcessingOptions.builder()
                 .setRotationDegrees(rotationDegrees)
@@ -100,22 +105,6 @@ class SignLanguageModule(private val reactContext: ReactApplicationContext) :
             handLandmarker?.detectAsync(mpImage, imgOpts, timestampMs)
         } catch (e: Exception) {
             Log.e("SignLanguageModule", "processFrame failed", e)
-        }
-    }
-
-    @ReactMethod
-    fun getStatus(promise: Promise) {
-        try {
-            promise.resolve(Arguments.createMap().apply {
-                putBoolean("initialized", interpreter != null && handLandmarker != null)
-                putBoolean("interpreterReady", interpreter != null)
-                putBoolean("handLandmarkerReady", handLandmarker != null)
-                putInt("bufferSize", landmarkBuffer.size)
-                putInt("maxBufferSize", SEQUENCE_LENGTH)
-                putInt("listeners", jsListenerCount)
-            })
-        } catch (e: Exception) {
-            promise.reject("STATUS_ERROR", e)
         }
     }
 
@@ -127,7 +116,6 @@ class SignLanguageModule(private val reactContext: ReactApplicationContext) :
                 Log.d("SignLanguageModule", "No hands detected")
                 return
             }
-            Log.d("SignLanguageModule", "Hands detected: ${hands.size}")
 
             val lmks = hands[0]
             if (lmks.size < 21) return
@@ -143,7 +131,6 @@ class SignLanguageModule(private val reactContext: ReactApplicationContext) :
             synchronized(landmarkBuffer) {
                 landmarkBuffer.add(flat)
                 if (landmarkBuffer.size > SEQUENCE_LENGTH) landmarkBuffer.removeFirst()
-                Log.d("SignLanguageModule", "buffer size=${landmarkBuffer.size}")
 
                 if (landmarkBuffer.size == SEQUENCE_LENGTH) {
                     val inputArr = Array(1) { Array(SEQUENCE_LENGTH) { FloatArray(63) } }
@@ -153,6 +140,7 @@ class SignLanguageModule(private val reactContext: ReactApplicationContext) :
                     val output = Array(1) { FloatArray(labels.size) }
                     try {
                         interpreter?.run(inputArr, output)
+                        Log.d("SignLanguageModule", "Inference completed")
                     } catch (e: Exception) {
                         Log.e("SignLanguageModule", "TFLite inference error", e)
                         return
@@ -161,11 +149,17 @@ class SignLanguageModule(private val reactContext: ReactApplicationContext) :
                     val probs = output[0]
                     var maxIdx = 0
                     var maxVal = probs[0]
-                    for (i in 1 until probs.size) { if (probs[i] > maxVal) { maxVal = probs[i]; maxIdx = i } }
+                    for (i in 1 until probs.size) {
+                        if (probs[i] > maxVal) {
+                            maxVal = probs[i]
+                            maxIdx = i
+                        }
+                    }
 
                     if (maxVal >= CONFIDENCE_THRESHOLD) {
                         emitPrediction(labels[maxIdx], maxVal)
-                        landmarkBuffer.clear() // gate next stable sequence
+                        landmarkBuffer.clear()
+                        Log.d("SignLanguageModule", "✅ Prediction: ${labels[maxIdx]} ($maxVal)")
                     } else {
                         Log.d("SignLanguageModule", "Low confidence: $maxVal")
                     }
@@ -186,6 +180,7 @@ class SignLanguageModule(private val reactContext: ReactApplicationContext) :
             reactContext
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
                 .emit("onPrediction", map)
+            Log.d("SignLanguageModule", "JS Event emitted: $label ($conf)")
         } catch (e: Exception) {
             Log.e("SignLanguageModule", "emitPrediction failed", e)
         }
@@ -201,12 +196,14 @@ class SignLanguageModule(private val reactContext: ReactApplicationContext) :
     override fun onHostResume() {}
     override fun onHostPause() {}
     override fun onHostDestroy() {
-    try {
-        interpreter?.close()
-        handLandmarker?.close()
-        instance = null // ✅ no "companion."
-    } catch (e: Exception) {
-        Log.e("SignLanguageModule", "onHostDestroy error", e)
+        try {
+            interpreter?.close()
+            handLandmarker?.close()
+            isInitialized = false
+            Log.d("SignLanguageModule", "Cleaned up on destroy")
+            instance = null
+        } catch (e: Exception) {
+            Log.e("SignLanguageModule", "onHostDestroy error", e)
+        }
     }
-}
 }
