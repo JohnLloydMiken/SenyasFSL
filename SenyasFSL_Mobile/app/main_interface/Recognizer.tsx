@@ -1,10 +1,9 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import SignLanguageScreen from '../components/SignLanguageScreen'
+import TestSocket from '../components/TestSocket'
 const Recognizer = () => {
   return (
-   
-    <SignLanguageScreen/>
+    <TestSocket/>
   )
 }
 
