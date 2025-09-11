@@ -21,13 +21,17 @@ def reactNativeAndroidDir = new File(
 )
 
 allprojects {
-    repositories {
-        google()
-        mavenCentral()  // MediaPipe artifacts are now hosted here
-        maven { url("$rootDir/../node_modules/react-native/android") } // React Native local binaries
+  repositories {
+    maven {
+      // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+      url(reactNativeAndroidDir)
     }
-}
 
+    google()
+    mavenCentral()
+    maven { url 'https://www.jitpack.io' }
+  }
+}
 
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
