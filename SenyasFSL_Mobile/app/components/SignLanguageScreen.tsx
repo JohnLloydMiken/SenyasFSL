@@ -7,18 +7,11 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import { 
-  Camera, 
-  useCameraDevice, 
-  useCameraPermission, 
-  useFrameProcessor 
-} from 'react-native-vision-camera';
-import { VisionCameraProxy } from 'react-native-vision-camera';
-import 'react-native-worklets-core'; // Import for worklets
+import { Camera } from 'expo-camera'; // or your camera library
 import FSLApiService, { PredictionResponse, LandmarkPoint } from './FSLApiService';
 
 const { width, height } = Dimensions.get('window');
-type LandmarkData = [number, number, number][];
+
 interface FSLRecognitionProps {
   apiUrl?: string;
 }
@@ -31,13 +24,10 @@ interface RecognitionState {
   status: string;
 }
 
-const plugin = VisionCameraProxy.initFrameProcessorPlugin('XyzFrameProcessorPlugin', {}); // From native plugin
-
 const FSLRecognition: React.FC<FSLRecognitionProps> = ({ 
-  apiUrl = 'http://localhost:5000' 
+  apiUrl = 'http://192.168.0.107:5000' 
 }) => {
-  const device = useCameraDevice('front');
-  const { hasPermission, requestPermission } = useCameraPermission();
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [state, setState] = useState<RecognitionState>({
     isLoading: false,
     serverConnected: false,
@@ -51,8 +41,16 @@ const FSLRecognition: React.FC<FSLRecognitionProps> = ({
   const lastPredictionTime = useRef<number>(0);
   const predictionCooldown = 1500; // 1.5 seconds
 
+  // Request camera permission
   useEffect(() => {
-    requestPermission();
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
+  // Check server connection on mount
+  useEffect(() => {
     checkServerConnection();
   }, []);
 
@@ -91,38 +89,35 @@ const FSLRecognition: React.FC<FSLRecognitionProps> = ({
     }
   };
 
+  // This would be called when MediaPipe detects hand landmarks
+  const onHandLandmarksDetected = async (landmarks: LandmarkPoint[]): Promise<void> => {
+    try {
+      if (!state.serverConnected) return;
 
-const frameProcessor = useFrameProcessor((frame) => {
-    'worklet';
-    if (!frame || !plugin) {
-      return; // Exit if frame or plugin is not available
-    }
+      // Flatten landmarks to match model input format
+      const flattenedLandmarks = FSLApiService.flattenLandmarks(landmarks);
+      landmarkBuffer.current.push(flattenedLandmarks);
 
-    const landmarksData = plugin.call(frame) as unknown as LandmarkData | null; // Cast to expected type
-    if (landmarksData && Array.isArray(landmarksData) && landmarksData.length === 21) {
-      const wrist = landmarksData[0];
-      const normalized = landmarksData.map(point => ({
-        x: point[0] - wrist[0],
-        y: point[1] - wrist[1],
-        z: point[2] - wrist[2],
-      }));
-      const flattened = FSLApiService.flattenLandmarks(normalized);
-      landmarkBuffer.current.push(flattened);
+      // Keep only last 30 frames
       if (landmarkBuffer.current.length > 30) {
-        landmarkBuffer.current.shift();
+        landmarkBuffer.current = landmarkBuffer.current.slice(-30);
       }
-    } else {
-      landmarkBuffer.current = [];
-    }
-  }, []);
 
-  // Effect to handle prediction outside worklet
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (landmarkBuffer.current.length === 30 && state.serverConnected) {
+      // Only predict when we have exactly 30 frames and cooldown has passed
+      if (landmarkBuffer.current.length === 30) {
+        const currentTime = Date.now();
+        
+        if (currentTime - lastPredictionTime.current < predictionCooldown) {
+          return;
+        }
+
+        setState(prev => ({ ...prev, isLoading: true, status: 'Analyzing gesture...' }));
+
         try {
-          setState(prev => ({ ...prev, isLoading: true, status: 'Analyzing gesture...' }));
-          const prediction = await apiService.current.predictSign(landmarkBuffer.current);
+          const prediction: PredictionResponse = await apiService.current.predictSign(
+            landmarkBuffer.current
+          );
+
           if (prediction.is_confident && prediction.predicted_letter) {
             setState(prev => ({
               ...prev,
@@ -131,38 +126,98 @@ const frameProcessor = useFrameProcessor((frame) => {
               status: `Recognized: ${prediction.predicted_letter}`,
               isLoading: false,
             }));
-            lastPredictionTime.current = Date.now();
+            
+            lastPredictionTime.current = currentTime;
+            
+            console.log(`🎯 Prediction: ${prediction.predicted_letter} (${(prediction.confidence * 100).toFixed(1)}%)`);
           } else {
-            setState(prev => ({ ...prev, status: 'Gesture not recognized clearly', isLoading: false }));
+            setState(prev => ({
+              ...prev,
+              status: 'Gesture not recognized clearly',
+              isLoading: false,
+            }));
           }
-          landmarkBuffer.current = []; // Reset after prediction
-        } catch (e) {
-          setState(prev => ({ ...prev, status: 'Prediction failed', isLoading: false }));
+        } catch (predictionError) {
+          console.error('Prediction error:', predictionError);
+          setState(prev => ({
+            ...prev,
+            status: 'Prediction failed',
+            isLoading: false,
+          }));
         }
+      } else {
+        setState(prev => ({
+          ...prev,
+          status: `Collecting gesture data... (${landmarkBuffer.current.length}/30)`,
+        }));
       }
-    }, 500); // Poll buffer
-    return () => clearInterval(interval);
-  }, [state.serverConnected]);
+    } catch (error) {
+      console.error('Landmark processing error:', error);
+    }
+  };
 
-  if (!hasPermission) return <View style={styles.container}><Text>No camera permission</Text></View>;
-  if (device == null) return <View style={styles.container}><Text>No device</Text></View>;
+  if (hasPermission === null) {
+    return (
+      <View style={styles.container}>
+        <Text>Requesting camera permission...</Text>
+      </View>
+    );
+  }
+
+  if (hasPermission === false) {
+    return (
+      <View style={styles.container}>
+        <Text>No access to camera</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Camera
-        style={styles.cameraContainer}
-        device={device}
-        isActive={true}
-        frameProcessor={frameProcessor}
-        pixelFormat="rgb" // Or 'yuv' for Android
-        fps={30} // For performance
-      />
-      {/* Status and Results - unchanged */}
+      {/* Camera View */}
+      <View style={styles.cameraContainer}>
+        {/* Your camera component here */}
+        {/* This is where you'd integrate with MediaPipe */}
+        <View style={styles.cameraPlaceholder}>
+          <Text style={styles.placeholderText}>Camera View</Text>
+          <Text style={styles.placeholderText}>
+            (Integrate with MediaPipe here)
+          </Text>
+        </View>
+      </View>
+
+      {/* Status and Results */}
+      <View style={styles.resultsContainer}>
+        <View style={styles.statusRow}>
+          <View style={[
+            styles.statusIndicator,
+            { backgroundColor: state.serverConnected ? '#4CAF50' : '#F44336' }
+          ]} />
+          <Text style={styles.statusText}>
+            {state.serverConnected ? 'Server Connected' : 'Server Disconnected'}
+          </Text>
+        </View>
+
+        {state.isLoading && (
+          <ActivityIndicator size="small" color="#2196F3" style={styles.loader} />
+        )}
+
+        <Text style={styles.statusText}>{state.status}</Text>
+
+        {state.prediction && (
+          <View style={styles.predictionContainer}>
+            <Text style={styles.predictionLabel}>Recognized Sign:</Text>
+            <Text style={styles.predictionText}>{state.prediction}</Text>
+            <Text style={styles.confidenceText}>
+              Confidence: {(state.confidence * 100).toFixed(1)}%
+            </Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 };
 
-// Styles unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -239,6 +294,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
 
 export default FSLRecognition;

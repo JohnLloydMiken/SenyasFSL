@@ -38,7 +38,7 @@ class FSLApiService {
   private baseUrl: string;
   private timeout: number;
 
-  constructor(baseUrl: string = 'http://localhost:5000', timeout: number = 10000) {
+ constructor(baseUrl: string = 'http://192.168.0.107:5000', timeout: number = 10000) {
     this.baseUrl = baseUrl;
     this.timeout = timeout;
   }

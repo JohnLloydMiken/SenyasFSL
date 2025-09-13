@@ -1,10 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import SignLanguageScreen from '../components/SignLanguageScreen'
+import FSLRealTimeRecognition from '@/app/components/FSLRealTimeRecognition'
 const Recognizer = () => {
   return (
    
-    <SignLanguageScreen/>
+    <FSLRealTimeRecognition/>
   )
 }
 
