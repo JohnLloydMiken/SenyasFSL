@@ -1,85 +1,66 @@
-import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, Alert } from 'react-native';
-import FSLApiService from './FSLApiService';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import {
+  Camera,
+  Frame,
+  useCameraDevice,
+  useFrameProcessor,
+} from 'react-native-vision-camera';
+import { runOnJS } from 'react-native-reanimated';  // <-- needed to cross into JS
 
-const FSLTest: React.FC = () => {
-  const [result, setResult] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const apiService = new FSLApiService('http://192.168.0.107:5000');
+export default function FSLTest() {
+  const device = useCameraDevice('front');
+  const [handsDetected, setHandsDetected] = useState(false);
 
-  const testConnection = async () => {
-    setIsLoading(true);
+  useEffect(() => {
+    Camera.requestCameraPermission().then(status =>
+      console.log('Camera permission:', status),
+    );
+  }, []);
+
+  const frameProcessor = useFrameProcessor((frame: Frame) => {
+    'worklet';
     try {
-      const health = await apiService.checkHealth();
-      setResult(`Health: ${JSON.stringify(health, null, 2)}`);
+      // ← calls your native plugin
+      const { handsDetected: detected } = detectHands(frame);
+      runOnJS(setHandsDetected)(detected);
     } catch (error) {
-      setResult(`Error: ${error}`);
+      // error will now be a real exception if the native plugin
+      // registration failed—inspect it in Metro’s console
+      runOnJS(console.error)('Frame processor error:', error);
     }
-    setIsLoading(false);
-  };
+  }, []);
 
-  const testPrediction = async () => {
-    setIsLoading(true);
-    try {
-      // Generate random test data (30 frames × 63 landmarks)
-      const testData: number[][] = [];
-      for (let i = 0; i < 30; i++) {
-        const frame: number[] = [];
-        for (let j = 0; j < 63; j++) {
-          frame.push(Math.random());
-        }
-        testData.push(frame);
-      }
-
-      const prediction = await apiService.predictSign(testData);
-      setResult(`Prediction: ${JSON.stringify(prediction, null, 2)}`);
-    } catch (error) {
-      setResult(`Error: ${error}`);
-    }
-    setIsLoading(false);
-  };
+  if (!device) return <Text>Loading camera…</Text>;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>FSL API Test</Text>
-      
-      <Button 
-        title="Test Connection" 
-        onPress={testConnection}
-        disabled={isLoading}
+      <Camera
+        style={StyleSheet.absoluteFill}
+        device={device}
+        isActive
+        frameProcessor={frameProcessor}
+        // You can throttle how many fps you send to the plugin:
+       
       />
-      
-      <Button 
-        title="Test Prediction" 
-        onPress={testPrediction}
-        disabled={isLoading}
-      />
-      
-      <Text style={styles.result}>{result}</Text>
-      
-      {isLoading && <Text>Loading...</Text>}
+      <View style={styles.overlay}>
+        <Text style={styles.text}>
+          Hands detected: {handsDetected ? 'Yes' : 'No'}
+        </Text>
+      </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
+  container: { flex: 1 },
+  overlay: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+    borderRadius: 4,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  result: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    fontSize: 12,
-  },
+  text: { color: 'white', fontSize: 16 },
 });
-
-export default FSLTest;
