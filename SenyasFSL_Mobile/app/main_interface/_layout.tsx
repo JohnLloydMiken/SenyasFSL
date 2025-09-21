@@ -48,9 +48,11 @@ function TabsWithBottomSheet() {
  
   return (
     <>
+    
       <Tabs
         initialRouteName="index"
         screenOptions={{
+          
           headerTitle: '',
           tabBarStyle: isSheetOpen ? { display: 'none' } : {},
           headerLeft: () => <Curency number={100} />,
@@ -75,7 +77,7 @@ function TabsWithBottomSheet() {
         <Tabs.Screen
           name="index"
           options={{
-            
+            lazy: false,
             tabBarIcon: ({ focused }) => <HomeIcon focused={focused} />,
             title: 'Home',
             tabBarLabelStyle:{
@@ -91,7 +93,7 @@ function TabsWithBottomSheet() {
         <Tabs.Screen
           name="treasure"
           options={{
-            
+            lazy: false,
             tabBarIcon: ({ focused }) => <TreasureIcon focused={focused} />,
             title: 'Treasure',
             tabBarLabelStyle:{
@@ -106,7 +108,7 @@ function TabsWithBottomSheet() {
         <Tabs.Screen
           name="dictionary"
           options={{
-           
+            lazy: false,
             tabBarIcon: ({ focused }) => <DictionaryIcon focused={focused} />,
             title: 'Dictionary',
             tabBarLabelStyle:{
@@ -121,7 +123,7 @@ function TabsWithBottomSheet() {
         <Tabs.Screen
           name="profile"
           options={{
-         
+            lazy: false,
             tabBarIcon: ({ focused }) => <ProfileIcon focused={focused} />,
             title: 'Profile',
             tabBarLabelStyle:{

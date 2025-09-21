@@ -6,8 +6,8 @@ module.exports = function (api) {
       "nativewind/babel",
     ],
     plugins: [
-      ['react-native-worklets-core/plugin'], // ← ADD THIS for MediaPipe
-      'react-native-reanimated/plugin',       // Keep this last
+      ['react-native-worklets-core/plugin'], 
+      'react-native-reanimated/plugin',       
     ]
   };
 };
