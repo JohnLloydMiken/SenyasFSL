@@ -1,66 +1,133 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { Platform, StyleSheet, Text, NativeModules, NativeEventEmitter } from 'react-native';
 import {
   Camera,
   Frame,
   useCameraDevice,
-  useFrameProcessor,
+  useCameraPermission,
+  useSkiaFrameProcessor,
+  VisionCameraProxy,
 } from 'react-native-vision-camera';
-import { runOnJS } from 'react-native-reanimated';  // <-- needed to cross into JS
+import { useSharedValue } from 'react-native-worklets-core';
 
-export default function FSLTest() {
+const { HandLandmarks } = NativeModules;
+
+const handLandmarksEmitter = new NativeEventEmitter(HandLandmarks);
+
+// Initialize the frame processor plugin 'handLandmarks'
+const handLandMarkPlugin = VisionCameraProxy.initFrameProcessorPlugin(
+  'handLandmarks',
+  {},
+);
+
+// Create a worklet function 'handLandmarks' that will call the plugin function
+function handLandmarks(frame: Frame) {
+  'worklet';
+  if (handLandMarkPlugin == null) {
+    throw new Error('Failed to load Frame Processor Plugin!');
+  }
+  return handLandMarkPlugin.call(frame);
+}
+
+function HandCameraDemo() {
+  const landmarks = useSharedValue({});
   const device = useCameraDevice('front');
-  const [handsDetected, setHandsDetected] = useState(false);
+  const { hasPermission, requestPermission } = useCameraPermission();
 
   useEffect(() => {
-    Camera.requestCameraPermission().then(status =>
-      console.log('Camera permission:', status),
+    // Set up the event listener to listen for hand landmarks detection results
+    const subscription = handLandmarksEmitter.addListener(
+      'onHandLandmarksDetected',
+      event => {
+        // Update the landmarks shared value to paint them on the screen
+        landmarks.value = event.landmarks;
+
+        /*
+          The event contains values for landmarks and hand.
+          These values are defined in the HandLandmarkerResultProcessor class
+          found in the HandLandmarks.swift file.
+        */
+        console.log("onHandLandmarksDetected: ", event);
+
+        /*
+          This is where you can handle converting the data into commands
+          for further processing.
+        */
+      },
     );
+
+    // Clean up the event listener when the component is unmounted
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
-  const frameProcessor = useFrameProcessor((frame: Frame) => {
+  useEffect(() => {
+    // Request camera permission on component mount
+    requestPermission().catch(error => console.log(error));
+  }, [requestPermission]);
+
+  const frameProcessor = useSkiaFrameProcessor(frame => {
     'worklet';
-    try {
-      // ← calls your native plugin
-      const { handsDetected: detected } = detectHands(frame);
-      runOnJS(setHandsDetected)(detected);
-    } catch (error) {
-      // error will now be a real exception if the native plugin
-      // registration failed—inspect it in Metro’s console
-      runOnJS(console.error)('Frame processor error:', error);
+    frame.render();
+
+    // Process the frame using the 'handLandmarks' function
+    handLandmarks(frame);
+
+    /* 
+      Paint landmarks on the screen.
+      Note: This paints landmarks from the previous frame since
+      frame processing is not synchronous.
+    */
+    if (landmarks.value[0]) {
+      const hand = landmarks.value[0];
+      const frameWidth = frame.width;
+      const frameHeight = frame.height;
+
+      // Draw lines connecting landmarks
+      for (const [from, to] of lines) {
+        frame.drawLine(
+          hand[from].x * Number(frameWidth),
+          hand[from].y * Number(frameHeight),
+          hand[to].x * Number(frameWidth),
+          hand[to].y * Number(frameHeight),
+          linePaint,
+        );
+      }
+
+      // Draw circles on landmarks
+      for (const mark of hand) {
+        frame.drawCircle(
+          mark.x * Number(frameWidth),
+          mark.y * Number(frameHeight),
+          6,
+          paint,
+        );
+      }
     }
   }, []);
 
-  if (!device) return <Text>Loading camera…</Text>;
+  if (!hasPermission) {
+    // Display message if camera permission is not granted
+    return <Text>No permission</Text>;
+  }
+
+  if (device == null) {
+    // Display message if no camera device is available
+    return <Text>No device</Text>;
+  }
+
+  const pixelFormat = Platform.OS === 'ios' ? 'rgb' : 'yuv';
 
   return (
-    <View style={styles.container}>
-      <Camera
-        style={StyleSheet.absoluteFill}
-        device={device}
-        isActive
-        frameProcessor={frameProcessor}
-        // You can throttle how many fps you send to the plugin:
-       
-      />
-      <View style={styles.overlay}>
-        <Text style={styles.text}>
-          Hands detected: {handsDetected ? 'Yes' : 'No'}
-        </Text>
-      </View>
-    </View>
+    <Camera
+      style={StyleSheet.absoluteFill}
+      device={device}
+      isActive={true}
+      frameProcessor={frameProcessor}
+      pixelFormat={pixelFormat}
+    />
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  overlay: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 8,
-    borderRadius: 4,
-  },
-  text: { color: 'white', fontSize: 16 },
-});
+export default HandCameraDemo;
