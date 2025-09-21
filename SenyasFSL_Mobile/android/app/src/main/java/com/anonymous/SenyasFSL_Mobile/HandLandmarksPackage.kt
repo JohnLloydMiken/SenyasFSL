@@ -1,3 +1,5 @@
+// HandLandmarksPackage.kt
+
 package com.anonymous.SenyasFSL_Mobile
 
 import com.facebook.react.ReactPackage

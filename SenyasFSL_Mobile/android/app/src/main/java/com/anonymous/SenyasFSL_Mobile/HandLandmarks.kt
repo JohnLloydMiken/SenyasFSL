@@ -1,5 +1,4 @@
-// HandLandmarks.kt
-
+// HandLandmarks.kt (corrected version)
 package com.anonymous.SenyasFSL_Mobile
 
 import android.content.Context
@@ -17,18 +16,23 @@ import com.google.mediapipe.tasks.core.OutputHandler
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
-import com.mrousavy.camera.frameprocessors.Frame
 
 class HandLandmarks(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
-
-    override fun getName(): String {
-        return "HandLandmarks" // The name used to access the module from JavaScript
+    
+    private lateinit var fslClassifier: FSLClassifier
+    private val landmarkBuffer = LandmarkBuffer(30)
+    
+    override fun getName(): String = "HandLandmarks"
+    
+    init {
+        // Initialize FSL classifier
+        fslClassifier = FSLClassifier(reactContext)
     }
-
+    
     private fun sendEvent(eventName: String, params: WritableMap?) {
         reactApplicationContext
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-                .emit(eventName, params)
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+            .emit(eventName, params)
     }
 
     @ReactMethod
@@ -42,12 +46,14 @@ class HandLandmarks(reactContext: ReactApplicationContext) : ReactContextBaseJav
             return
         }
 
-
-        // Define the result listener
+        // Define the result listener (ONLY ONE - removed the duplicate)
         val resultListener = OutputHandler.ResultListener { result: HandLandmarkerResult, inputImage: MPImage ->
             Log.d("HandLandmarksFrameProcessor", "Detected ${result.landmarks().size} hands")
-
-            // Prepare the data to be sent back to JavaScript
+            
+            // Process for FSL classification first
+            processHandLandmarks(result)
+            
+            // Then prepare the data to be sent back to JavaScript (original functionality)
             val landmarksArray = Arguments.createArray()
 
             for (handLandmarks in result.landmarks()) {
@@ -64,7 +70,6 @@ class HandLandmarks(reactContext: ReactApplicationContext) : ReactContextBaseJav
             }
 
             var handName = ""
-
             for(hand in result.handedness()) {
                 for(handProps in hand){
                     handName = handProps.categoryName()
@@ -106,6 +111,41 @@ class HandLandmarks(reactContext: ReactApplicationContext) : ReactContextBaseJav
             val errorParams = Arguments.createMap()
             errorParams.putString("error", e.message)
             sendEvent("onHandLandmarksError", errorParams)
+        }
+    }
+    
+    private fun processHandLandmarks(result: HandLandmarkerResult) {
+        if (result.landmarks().isEmpty()) return
+        
+        // Get the first hand's landmarks
+        val handLandmarks = result.landmarks()[0]
+        
+        // Convert to flat array (63 features: 21 landmarks × 3 coordinates)
+        val landmarkArray = FloatArray(63)
+        var index = 0
+        for (landmark in handLandmarks) {
+            landmarkArray[index++] = landmark.x()
+            landmarkArray[index++] = landmark.y()
+            landmarkArray[index++] = landmark.z()
+        }
+        
+        // Add to buffer
+        landmarkBuffer.addFrame(landmarkArray)
+        
+        // Classify when buffer is full
+        if (landmarkBuffer.isFull()) {
+            val sequence = landmarkBuffer.getSequence()
+            sequence?.let {
+                val prediction = fslClassifier.classify(it)
+                prediction?.let { sign ->
+                    Log.d("FSL_Recognition", "Detected sign: $sign")
+                    
+                    // Send to React Native
+                    val params = Arguments.createMap()
+                    params.putString("prediction", sign)
+                    sendEvent("onSignLanguageDetected", params)
+                }
+            }
         }
     }
 }

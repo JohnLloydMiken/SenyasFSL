@@ -16,8 +16,5 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts",
-    "firebase-react-native.d.ts",
-    "vision-camera-detectHands.d.ts"
-
   ]
 }

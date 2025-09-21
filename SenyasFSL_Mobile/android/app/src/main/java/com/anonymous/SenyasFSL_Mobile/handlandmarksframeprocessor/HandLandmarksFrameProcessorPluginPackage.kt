@@ -1,3 +1,4 @@
+// HandLandmarksFrameProcessorPluginPackage.kt
 package com.anonymous.SenyasFSL_Mobile.handlandmarksframeprocessor
 
 import com.facebook.react.ReactPackage

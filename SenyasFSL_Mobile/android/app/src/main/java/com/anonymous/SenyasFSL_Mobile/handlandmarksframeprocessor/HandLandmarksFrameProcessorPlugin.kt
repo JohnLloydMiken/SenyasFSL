@@ -1,3 +1,4 @@
+// HandLandmarksFrameProcessorPlugin.kt
 package com.anonymous.SenyasFSL_Mobile.handlandmarksframeprocessor
 
 import com.google.mediapipe.framework.image.BitmapImageBuilder
