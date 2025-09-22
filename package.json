@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@react-native-community/cli": "^20.0.2",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-react-native": "^1.0.0"
   }

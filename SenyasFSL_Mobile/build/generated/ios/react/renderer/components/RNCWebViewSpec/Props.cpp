@@ -91,9 +91,11 @@ RNCWebViewProps::RNCWebViewProps(
     hasOnOpenWindowEvent(convertRawProp(context, rawProps, "hasOnOpenWindowEvent", sourceProps.hasOnOpenWindowEvent, {false})),
     showsHorizontalScrollIndicator(convertRawProp(context, rawProps, "showsHorizontalScrollIndicator", sourceProps.showsHorizontalScrollIndicator, {true})),
     showsVerticalScrollIndicator(convertRawProp(context, rawProps, "showsVerticalScrollIndicator", sourceProps.showsVerticalScrollIndicator, {true})),
+    indicatorStyle(convertRawProp(context, rawProps, "indicatorStyle", sourceProps.indicatorStyle, {RNCWebViewIndicatorStyle::Default})),
     newSource(convertRawProp(context, rawProps, "newSource", sourceProps.newSource, {})),
     userAgent(convertRawProp(context, rawProps, "userAgent", sourceProps.userAgent, {})),
-    injectedJavaScriptObject(convertRawProp(context, rawProps, "injectedJavaScriptObject", sourceProps.injectedJavaScriptObject, {}))
+    injectedJavaScriptObject(convertRawProp(context, rawProps, "injectedJavaScriptObject", sourceProps.injectedJavaScriptObject, {})),
+    paymentRequestEnabled(convertRawProp(context, rawProps, "paymentRequestEnabled", sourceProps.paymentRequestEnabled, {false}))
       {}
 
 } // namespace facebook::react
