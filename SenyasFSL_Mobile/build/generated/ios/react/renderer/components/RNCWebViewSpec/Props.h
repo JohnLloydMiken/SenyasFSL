@@ -242,6 +242,23 @@ static inline std::string toString(const RNCWebViewMediaCapturePermissionGrantTy
     case RNCWebViewMediaCapturePermissionGrantType::GrantIfSameHostElseDeny: return "grantIfSameHostElseDeny";
   }
 }
+enum class RNCWebViewIndicatorStyle { Default, Black, White };
+
+static inline void fromRawValue(const PropsParserContext& context, const RawValue &value, RNCWebViewIndicatorStyle &result) {
+  auto string = (std::string)value;
+  if (string == "default") { result = RNCWebViewIndicatorStyle::Default; return; }
+  if (string == "black") { result = RNCWebViewIndicatorStyle::Black; return; }
+  if (string == "white") { result = RNCWebViewIndicatorStyle::White; return; }
+  abort();
+}
+
+static inline std::string toString(const RNCWebViewIndicatorStyle &value) {
+  switch (value) {
+    case RNCWebViewIndicatorStyle::Default: return "default";
+    case RNCWebViewIndicatorStyle::Black: return "black";
+    case RNCWebViewIndicatorStyle::White: return "white";
+  }
+}
 struct RNCWebViewContentInsetStruct {
   double top{0.0};
   double left{0.0};
@@ -480,9 +497,11 @@ class RNCWebViewProps final : public ViewProps {
   bool hasOnOpenWindowEvent{false};
   bool showsHorizontalScrollIndicator{true};
   bool showsVerticalScrollIndicator{true};
+  RNCWebViewIndicatorStyle indicatorStyle{RNCWebViewIndicatorStyle::Default};
   RNCWebViewNewSourceStruct newSource{};
   std::string userAgent{};
   std::string injectedJavaScriptObject{};
+  bool paymentRequestEnabled{false};
 };
 
 } // namespace facebook::react
