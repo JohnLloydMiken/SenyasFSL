@@ -44,7 +44,7 @@ const SignLanguageRecognition: React.FC = () => {
   const camera = useRef<Camera>(null);
   const { hasPermission, requestPermission } = useCameraPermission();
   const devices = useCameraDevices();
-  const device: CameraDevice | undefined = devices.find(d => d.position === 'front'); // Use front camera for sign language
+  const device: CameraDevice | undefined = devices.find(d => d.position === 'front');
 
   // State management
   const [isActive, setIsActive] = useState<boolean>(true);
@@ -53,10 +53,17 @@ const SignLanguageRecognition: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [framesCollected, setFramesCollected] = useState<number>(0);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
+  const [captureStats, setCaptureStats] = useState({ 
+    lastCaptureTime: 0, 
+    avgCaptureTime: 0,
+    totalCaptures: 0 
+  });
 
-  // Refs for intervals
+  // Refs for intervals and queuing
   const captureInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const isCapturing = useRef<boolean>(false);
+  const frameQueue = useRef<PhotoFile[]>([]);
+  const processingQueue = useRef<boolean>(false);
 
   // Check server health on mount
   useEffect(() => {
@@ -92,48 +99,93 @@ const SignLanguageRecognition: React.FC = () => {
   const startFrameCapture = (): void => {
     if (captureInterval.current) return;
 
-    console.log('Starting frame capture...');
+    console.log('Starting optimized frame capture...');
+    
+    // More aggressive capture rate
     captureInterval.current = setInterval(async () => {
       if (!isCapturing.current && camera.current && isActive) {
-        await captureAndSendFrame();
+        await captureFrame();
       }
-    }, 150); // Capture every 150ms (~6.7 FPS)
+    }, 100); // Faster: every 100ms
+
+    // Start queue processor
+    processFrameQueue();
   };
 
   const stopFrameCapture = (): void => {
     if (captureInterval.current) {
       clearInterval(captureInterval.current);
       captureInterval.current = null;
+      processingQueue.current = false;
+      frameQueue.current = [];
       console.log('Frame capture stopped');
     }
   };
 
-  const captureAndSendFrame = async (): Promise<void> => {
+  const captureFrame = async (): Promise<void> => {
     if (isCapturing.current || !camera.current) return;
     
+    const startTime = Date.now();
     isCapturing.current = true;
-    setIsProcessing(true);
 
     try {
-      // Capture photo
-      const photo: PhotoFile = await camera.current.takePhoto();
+      // Optimized photo settings for speed
+      const photo: PhotoFile = await camera.current.takePhoto({});
 
-      // Send to Flask server
-      await sendFrameToServer(photo);
+      // Add to processing queue instead of immediate upload
+      frameQueue.current.push(photo);
+      
+      // Keep queue size manageable
+      if (frameQueue.current.length > 5) {
+        frameQueue.current.shift(); // Remove oldest frame
+      }
+
+      // Update capture stats
+      const captureTime = Date.now() - startTime;
+      setCaptureStats(prev => ({
+        lastCaptureTime: captureTime,
+        totalCaptures: prev.totalCaptures + 1,
+        avgCaptureTime: (prev.avgCaptureTime * prev.totalCaptures + captureTime) / (prev.totalCaptures + 1)
+      }));
 
     } catch (error) {
       console.error('Frame capture error:', error);
     } finally {
       isCapturing.current = false;
-      setIsProcessing(false);
     }
+  };
+
+  const processFrameQueue = (): void => {
+    if (processingQueue.current) return;
+    
+    processingQueue.current = true;
+    
+    const processNext = async () => {
+      while (processingQueue.current && frameQueue.current.length > 0) {
+        const frame = frameQueue.current.shift();
+        if (frame) {
+          setIsProcessing(true);
+          await sendFrameToServer(frame);
+          setIsProcessing(false);
+          
+          // Small delay to prevent overwhelming the server
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+      }
+      
+      // Continue processing if still active
+      if (processingQueue.current) {
+        setTimeout(processNext, 100);
+      }
+    };
+    
+    processNext();
   };
 
   const sendFrameToServer = async (photo: PhotoFile): Promise<void> => {
     try {
       const formData = new FormData();
       
-      // Create a proper blob-like object for React Native
       const fileData = {
         uri: `file://${photo.path}`,
         type: 'image/jpeg',
@@ -144,8 +196,10 @@ const SignLanguageRecognition: React.FC = () => {
       formData.append('frame', fileData);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // Shorter timeout: 3 seconds
 
+      const startTime = Date.now();
+      
       const response = await fetch(`${SERVER_URL}/predict_frame`, {
         method: 'POST',
         body: formData,
@@ -157,6 +211,9 @@ const SignLanguageRecognition: React.FC = () => {
 
       clearTimeout(timeoutId);
 
+      const networkTime = Date.now() - startTime;
+      console.log(`Network request took: ${networkTime}ms`);
+
       const result: PredictionResponse = await response.json();
 
       if (response.ok) {
@@ -167,26 +224,24 @@ const SignLanguageRecognition: React.FC = () => {
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.error('Request timeout');
+        console.error('Request timeout (3s)');
       } else {
         console.error('Network error:', error);
       }
-      setConnectionStatus('error');
+      // Don't set connection error for individual frame failures
+      // setConnectionStatus('error');
     }
   };
 
   const handlePredictionResponse = (result: PredictionResponse): void => {
     if (result.status === 'collecting' && result.frames_collected !== undefined) {
-      // Still collecting frames
       setFramesCollected(result.frames_collected);
       setPrediction(null);
     } else if (result.predicted_letter) {
-      // Got a prediction
       setPrediction(result.predicted_letter);
       setConfidence(result.confidence || 0);
       setFramesCollected(result.frames_used || 0);
     } else if (result.error === 'No hand detected') {
-      // No hand detected
       setPrediction('No hand detected');
       setConfidence(0);
     }
@@ -241,6 +296,16 @@ const SignLanguageRecognition: React.FC = () => {
           </Text>
         </View>
 
+        {/* Performance Stats */}
+        <View style={styles.statsContainer}>
+          <Text style={styles.statsText}>
+            Capture: {captureStats.lastCaptureTime}ms (avg: {Math.round(captureStats.avgCaptureTime)}ms)
+          </Text>
+          <Text style={styles.statsText}>
+            Queue: {frameQueue.current.length} | Processing: {isProcessing ? 'Yes' : 'No'}
+          </Text>
+        </View>
+
         {/* Frames Collection Status */}
         <View style={styles.framesContainer}>
           <Text style={styles.framesText}>
@@ -253,6 +318,9 @@ const SignLanguageRecognition: React.FC = () => {
               />
             </View>
           )}
+          <Text style={styles.etaText}>
+            ETA: ~{Math.max(0, Math.round((30 - framesCollected) * captureStats.avgCaptureTime / 100) / 10)}s
+          </Text>
         </View>
 
         {/* Prediction Display */}
@@ -269,7 +337,7 @@ const SignLanguageRecognition: React.FC = () => {
           ) : (
             <Text style={styles.instructionText}>
               {framesCollected < 30 
-                ? 'Show your hand and make a sign...' 
+                ? `Collecting frames... (${framesCollected}/30)` 
                 : prediction || 'Make a sign language gesture'}
             </Text>
           )}
@@ -322,6 +390,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  statsContainer: {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+    alignSelf: 'flex-start',
+  },
+  statsText: {
+    color: 'white',
+    fontSize: 12,
+    fontFamily: 'monospace',
+  },
   framesContainer: {
     backgroundColor: 'rgba(0,0,0,0.7)',
     padding: 10,
@@ -345,6 +425,11 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#4CAF50',
     borderRadius: 2,
+  },
+  etaText: {
+    color: '#FFC107',
+    fontSize: 12,
+    marginTop: 5,
   },
   predictionContainer: {
     position: 'absolute',
