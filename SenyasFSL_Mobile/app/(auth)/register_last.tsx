@@ -3,12 +3,12 @@ import React from "react";
 import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 import Last from "@/assets/svgs/FSL_last.svg";
+import { fslIconSize } from "@/utils/sizes";
 export default function register_last() {
-  const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 450 : 600;
+
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col">
-      <Last width={svgSize} height={svgSize} />
+      <Last width={fslIconSize()} height={fslIconSize()} />
       <View className="w-11/12">
         <Text className="text-3xl md:text-4xl font-PoppinsBold text-center mb-2">
           Last step!

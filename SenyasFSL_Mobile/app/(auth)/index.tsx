@@ -1,29 +1,22 @@
 import FSL_start from "@/assets/svgs/FSL_start.svg";
 import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
-import { NativeModules, Platform } from "react-native";
+import { fslIconSize } from "@/utils/sizes";
 import React, { useEffect } from "react";
 import {
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from "react-native";
 import "../../global.css";
 
-
 export default function GetStarted() {
-  const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 400 : 600;
-
-
-
   return (
     <SafeAreaView style={styles.container}>
       <View>
-        <FSL_start width={svgSize} height={svgSize} />
+        <FSL_start width={fslIconSize()} height={fslIconSize()} />
       </View>
 
       <View className="w-11/12">

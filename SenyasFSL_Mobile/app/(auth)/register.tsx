@@ -3,13 +3,12 @@ import { router } from "expo-router";
 import React from "react";
 import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
 import Authbutton from "@/components/authentication/button";
-
+import { fslIconSize } from "@/utils/sizes";
 export default function register() {
-  const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 450 : 600;
+ 
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-16">
-      <FSL_Hi width={svgSize} height={svgSize} />
+      <FSL_Hi width={fslIconSize()} height={fslIconSize()} />
 
       <View className="w-11/12 flex justify-center items-center flex-col md:gap-10">
         <Text className="text-3xl font-PoppinsBold md:text-5xl">

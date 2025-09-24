@@ -9,13 +9,15 @@ import { Level, LevelItemProps } from "./types/interface";
 import Locked from "@/assets/svgs/locked.svg";
 import Unlocked from "@/assets/svgs/Unlock.svg";
 import Boss from "@/assets/svgs/boss.svg";
-
+import UnlockedBoss from '@/assets/svgs/UnlockedBoss.svg'
 
 const LevelItem: React.FC<LevelItemProps> = ({ level, onLevelPress }) => {
   const isEven = level.id % 2 === 0;
 
   const getLevelIcon = (): JSX.Element => {
-    if (level.isBoss) return <Boss />;
+    if (level.isBoss && level.isUnlocked){
+      return <UnlockedBoss/>
+    } else if(level.isBoss) return <Boss/>;
     if (!level.isUnlocked) return <Locked />;
     return <Unlocked />;
   };

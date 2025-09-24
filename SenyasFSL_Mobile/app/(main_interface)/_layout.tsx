@@ -77,16 +77,13 @@ function TabsWithBottomSheet() {
         <Tabs.Screen
           name="index"
           options={{
-            lazy: false,
+            
             tabBarIcon: ({ focused }) => <HomeIcon focused={focused} />,
             title: 'Home',
             tabBarLabelStyle:{
               fontSize: titleSize,
             },
             tabBarLabelPosition: 'below-icon',
-            tabBarIconStyle:{
-              marginTop: 4
-            },
             
           }}
         />
@@ -100,9 +97,6 @@ function TabsWithBottomSheet() {
               fontSize: titleSize,
             },
             tabBarLabelPosition: 'below-icon',
-             tabBarIconStyle:{
-              marginTop: 4
-            },
           }}
         />
         <Tabs.Screen
@@ -115,9 +109,6 @@ function TabsWithBottomSheet() {
               fontSize: titleSize,
             },
             tabBarLabelPosition: 'below-icon',
-             tabBarIconStyle:{
-              marginTop: 4
-            },
           }}
         />
         <Tabs.Screen
@@ -130,9 +121,6 @@ function TabsWithBottomSheet() {
               fontSize: titleSize,
             },
             tabBarLabelPosition: 'below-icon',
-             tabBarIconStyle:{
-              marginTop: 4
-            },
           }}
         />
       </Tabs>
@@ -161,7 +149,8 @@ function TabsWithBottomSheet() {
 
           {sheet === 'editData' && (
             <>
-              <UserInput
+             <View className='flex-1 flex-col justify-center items-center'>
+               <UserInput
                 title="Edit personal data"
                 usernameTitle="Username"
                 userEmailTitle="Email"
@@ -171,6 +160,7 @@ function TabsWithBottomSheet() {
               <View className="w-11/12 absolute bottom-1">
                 <Authbutton content="Save changes" onPress={() => bottomSheetRef.current?.close()} />
               </View>
+             </View>
             </>
           )}
 

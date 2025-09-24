@@ -9,9 +9,9 @@ import React from "react";
 import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
+import { fslIconSize } from "@/utils/sizes";
 export default function welcome() {
-  const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 450 : 500;
+  
   return (
     <View
       className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8"
@@ -25,7 +25,7 @@ export default function welcome() {
           Miks
         </Text>
       </View>
-      <FSL_Hi width={svgSize} height={svgSize} />
+      <FSL_Hi width={fslIconSize()} height={fslIconSize()} />
       <View className="w-10/12 ">
         <Text className="text-center text-lg font-PoppinsRegular md:text-2xl">
           We’re excited to see you join our mission to bridge language barriers
@@ -35,7 +35,7 @@ export default function welcome() {
       <View className="w-11/12 absolute bottom-12">
         <Authbutton
           content="Start Playing"
-          onPress={() => router.replace("../main_interface/")}
+          onPress={() => router.replace("../(main_interface)/")}
         ></Authbutton>
       </View>
     </View>

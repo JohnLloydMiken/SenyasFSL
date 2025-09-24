@@ -13,11 +13,11 @@ import UserInput from "@/components/authentication/userInput";
 import Modal_Terms from "@/components/authentication/Modal_Terms";
 import Modal_Privacy from "@/components/authentication/Modal_Privacy";
 import Informtaion from "@/assets/svgs/information.svg";
+import { IconSize } from "@/utils/sizes";
 export default function sign_up() {
   const [isTermsPressed, setIsTermsPressed] = useState(false);
   const [isPrivacyPressed, setIsPrivacyPressed] = useState(false);
-  const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 25 : 50;
+
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8">
       <UserInput
@@ -29,7 +29,7 @@ export default function sign_up() {
       />
 
       <View className="w-10/12 bg-[#FFEEB9] flex flex-row items-start p-4 rounded-lg gap-4">
-        <Informtaion width={svgSize} height={svgSize} />
+        <Informtaion width={IconSize()} height={IconSize()} />
 
         <View className="flex flex-wrap flex-row items-center gap-x-1 w-10/12">
           <Text className="text-sm md:text-xl">

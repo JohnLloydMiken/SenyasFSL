@@ -1,21 +1,23 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React, { useRef, useMemo, useState } from "react";
+import React, { useRef, useMemo, useState, useEffect } from "react";
 import { Stack, useLocalSearchParams } from "expo-router";
 import Alphabets from "@/components/main_interface/Alphabets";
+import Numbers from "@/components/main_interface/Numbers";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import Categories from "@/json_files/Categories.json";
 import { videoMap } from "@/modules/LevelContentConfig";
 import { useVideoPlayer, VideoView } from "expo-video";
-import Numbers from "@/components/main_interface/Numbers";
+
 const DictionaryContent = () => {
   const { contentId } = useLocalSearchParams();
+
   return (
     <>
       <Stack.Screen
         options={{
-          title: Categories[Number(contentId) - 1].title,
+          title: Categories[Number(contentId) - 1]?.title ?? "Dictionary",
         }}
       />
       <GestureHandlerRootView style={styles.container}>
@@ -29,8 +31,10 @@ export const RenderWords = () => {
   const { contentId } = useLocalSearchParams();
 
   switch (contentId) {
-    case "1": return <FSL_Alphabets />;
-    case "2": return <FSL_Numbers/>
+    case "1":
+      return <FSL_Alphabets />;
+    case "2":
+      return <FSL_Numbers />;
     default:
       return (
         <View style={styles.fallback}>
@@ -60,55 +64,66 @@ const styles = StyleSheet.create({
   },
 });
 
+const useSharedPlayer = () => {
+  // Create a single player instance (no source yet)
+  const player = useVideoPlayer(null, (player) => {
+    player.loop = true;
+    player.muted = true;
+  });
+
+  const setSource = (source: string | null) => {
+    if (source) {
+      player.replace(videoMap[source]); // Fast source swap
+      player.play();
+    }
+  };
+
+  return { player, setSource };
+};
+
 export const FSL_Alphabets = () => {
-    const { contentId } = useLocalSearchParams();
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const [selectedWord, setSelectedWord] = React.useState<string | null>(null);
-  const [selectedFilWord, setSelectedFilWord] = React.useState<string | null>(
-    null
-  );
-  const [selectedVidSource, setSelectedVidSource] = useState("");
-  // Memoize snapPoints (important for performance)
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [selectedFilWord, setSelectedFilWord] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const { player, setSource } = useSharedPlayer();
   const snapPoints = useMemo(() => ["50%"], []);
 
-  const videoSource = videoMap[selectedVidSource];
+  const handleSelect = (letter: string, Filletter: string, letterSource: string) => {
+    setSelectedWord(letter);
+    setSelectedFilWord(Filletter);
+    setLoading(true);
+    setSource(letterSource);
+    bottomSheetRef.current?.expand();
 
-  const player = useVideoPlayer(videoSource, (player) => {
-    player.loop = true;
-    player.muted = true; // Optional: mute the video
-    player.play();
-  });
+    // Give the player a moment to swap
+    setTimeout(() => setLoading(false), 300);
+  };
+
   return (
     <>
-      <Alphabets
-        onPress={(letter, Filletter, letterSource) => {
-          setSelectedWord(letter);
-          setSelectedFilWord(Filletter);
-          setSelectedVidSource(letterSource);
-          bottomSheetRef.current?.expand();
-        }}
-      />
-      <BottomSheet
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        index={-1}
-        enablePanDownToClose
-      >
+      <Alphabets onPress={handleSelect} />
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={-1} enablePanDownToClose>
         <BottomSheetView style={styles.contentContainer}>
           {selectedWord ? (
             <View className="w-full h-full flex-col items-center justify-start">
-              <VideoView
-                style={{
-                  width: 357,
-                  height: 200,
-                  elevation: 5,
-                  backgroundColor: "white",
-                }}
-                player={player}
-                allowsFullscreen={false}
-                allowsPictureInPicture={false}
-                nativeControls={false}
-              />
+              {loading ? (
+                <ActivityIndicator size="large" color="#000" />
+              ) : (
+                <VideoView
+                  style={{
+                    width: 357,
+                    height: 200,
+                    elevation: 5,
+                    backgroundColor: "white",
+                  }}
+                  player={player}
+                  allowsFullscreen={false}
+                  allowsPictureInPicture={false}
+                  nativeControls={false}
+                />
+              )}
               <Text className="font-PoppinsBold text-4xl md:text-5xl mt-10">
                 {selectedWord}
               </Text>
@@ -126,56 +141,45 @@ export const FSL_Alphabets = () => {
 };
 
 export const FSL_Numbers = () => {
-    const { contentId } = useLocalSearchParams();
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const [selectedWord, setSelectedWord] = React.useState<string | null>(null);
-  const [selectedFilWord, setSelectedFilWord] = React.useState<string | null>(
-    null
-  );
-  const [selectedVidSource, setSelectedVidSource] = useState("");
-  // Memoize snapPoints (important for performance)
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+  const [selectedFilWord, setSelectedFilWord] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const { player, setSource } = useSharedPlayer();
   const snapPoints = useMemo(() => ["50%"], []);
 
-  const videoSource = videoMap[selectedVidSource];
+  const handleSelect = (number: string, numberFil: string, numberSource: string) => {
+    setSelectedWord(number);
+    setSelectedFilWord(numberFil);
+    setLoading(true);
+    setSource(numberSource);
+    bottomSheetRef.current?.expand();
+    setTimeout(() => setLoading(false), 300);
+  };
 
-  const player = useVideoPlayer(videoSource, (player) => {
-    player.loop = true;
-    player.muted = true; // Optional: mute the video
-    player.play();
-  });
   return (
     <>
-      <Numbers
-        onPress={(number, numberFil, numberSource) => {
-          setSelectedWord(number);
-          setSelectedFilWord(numberFil);
-          setSelectedVidSource(numberSource);
-          bottomSheetRef.current?.expand();
-        }}
-      />
-      <BottomSheet
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        index={-1}
-        enablePanDownToClose
-      >
+      <Numbers onPress={handleSelect} />
+      <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={-1} enablePanDownToClose>
         <BottomSheetView style={styles.contentContainer}>
           {selectedWord ? (
             <View className="w-full h-full flex-col items-center justify-start">
-              {!videoSource ? (
-                <Text>No Video</Text>
-              ): (
-                <VideoView style={{
-                  width: 357,
-                  height: 200,
-                  elevation: 5,
-                  backgroundColor: "white",
-                }}
-                player={player}
-                allowsFullscreen={false}
-                allowsPictureInPicture={false}
-                nativeControls={false}
-              />
+              {loading ? (
+                <ActivityIndicator size="large" color="#000" />
+              ) : (
+                <VideoView
+                  style={{
+                    width: 357,
+                    height: 200,
+                    elevation: 5,
+                    backgroundColor: "white",
+                  }}
+                  player={player}
+                  allowsFullscreen={false}
+                  allowsPictureInPicture={false}
+                  nativeControls={false}
+                />
               )}
               <Text className="font-PoppinsBold text-4xl md:text-5xl mt-10">
                 {selectedWord}
@@ -185,7 +189,7 @@ export const FSL_Numbers = () => {
               </Text>
             </View>
           ) : (
-            <Text>Select a letter</Text>
+            <Text>Select a number</Text>
           )}
         </BottomSheetView>
       </BottomSheet>

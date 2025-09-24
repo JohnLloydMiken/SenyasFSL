@@ -73,13 +73,13 @@ const BottomView = () => {
                   } } content="Keep Learning"/>
                      <TouchableOpacity
                             onPress={() => {
-                              router.push('/main_interface')
+                              router.push('/(main_interface)')
                               
                             }}
                             className="w-full md:p-6 p-4 bg-[#FAF3E0] rounded-md border-[4px]  border-[#FB990F] "
                           >
                             <Text className="text-2xl md:text-3xl text-center text-[#FB990F] font-PoppinsBold">
-                              I have already an account
+                              Exit Lesson
                             </Text>
                           </TouchableOpacity>
                 </View>

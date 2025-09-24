@@ -2,6 +2,7 @@
   {
     "id": 1,
     "title": "Alphabets",
+    "SvgSource": "Letter",
     "content": {
       "letter": [
         "Letter A",
@@ -98,6 +99,7 @@
   {
     "id": 2,
     "title": "Numbers",
+     "SvgSource": "Numbers",
     "content": {
       "number": [
         "Number 1",
@@ -268,35 +270,43 @@
   },
   {
     "id": 3,
-    "title": "Labels"
+    "title": "Labels",
+     "SvgSource": "Letter"
   },
   {
     "id": 4,
-    "title": "Calendar & Time units"
+    "title": "Calendar & Time units",
+     "SvgSource": "Calendar"
   },
 
   {
     "id": 5,
-    "title": "Family & Colors"
+    "title": "Family & Colors",
+     "SvgSource": "Family"
   },
   {
     "id": 6,
-    "title": "Occupations & Relationships"
+    "title": "Occupations & Relationships",
+     "SvgSource": "Occupation"
   },
   {
     "id": 7,
-    "title": "Food & Places"
+    "title": "Food & Places",
+     "SvgSource": "Food"
   },
   {
     "id": 8,
-    "title": "Vocabulary & Subjects"
+    "title": "Vocabulary & Subjects",
+     "SvgSource": "Vocabulary"
   },
   {
     "id": 9,
-    "title": "Basic Greetings"
+    "title": "Basic Greetings",
+     "SvgSource": "Greetings"
   },
   {
     "id": 10,
-    "title": "Lools & Apperance"
+    "title": "Looks & Apperance",
+     "SvgSource": "Looks"
   }
 ]

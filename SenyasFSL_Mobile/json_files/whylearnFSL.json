@@ -1,27 +1,27 @@
 [
     {
         "reason": "Just for Fun",
-        "image": "Fun.svg"
+        "image": "Fun"
     },
      {
         "reason": "Work or business",
-        "image": "Work.svg"
+        "image": "Work"
     },
      {
         "reason": "Friends",
-        "image": "Friends.svg"
+        "image": "Friends"
     },
      {
         "reason": "Family",
-        "image": "Family.svg"
+        "image": "Family"
     },
      {
         "reason": "Deaf",
-        "image": "deaf.svg"
+        "image": "Deaf"
     },
      {
         "reason": "Other",
-        "image": "Others.svg"
+        "image": "Others"
     }
   
 ]
