@@ -1,12 +1,12 @@
 import { Stack } from "expo-router";
 import GoBackBTN from "@/components/authentication/GoBackBTN";
-import { View, Text, useWindowDimensions } from "react-native";
+import { View, Text } from "react-native";
+import {
+  ProgressbarWidth,
+  ProgressbarHeight,
+  ProgressbarCP,
+} from "@/utils/sizes";
 export default function GetStartedLayout() {
-  const { width } = useWindowDimensions();
-  const progressbarWidth = width < 768 ? 280 : 600;
-  const progressbarHeight = width < 768 ? 20 : 30;
-    const progressbarCp= width < 768 ? 70 : 150;
-
   return (
     <Stack>
       <Stack.Screen
@@ -52,8 +52,8 @@ export default function GetStartedLayout() {
           headerTitle: () => (
             <View
               style={{
-                width: progressbarWidth,
-                height: progressbarHeight,
+                width: ProgressbarWidth(),
+                height: ProgressbarHeight(),
                 backgroundColor: "#FFEEB9",
                 borderRadius: 20,
               }}
@@ -61,8 +61,8 @@ export default function GetStartedLayout() {
             >
               <View
                 style={{
-                  height: progressbarHeight,
-                  width: progressbarCp,
+                  width: ProgressbarWidth(),
+                  height: ProgressbarHeight(),
                   backgroundColor: "#FB990F",
                   borderRadius: 20,
                 }}
@@ -91,8 +91,8 @@ export default function GetStartedLayout() {
           headerTitle: () => (
             <View
               style={{
-                width: progressbarWidth,
-                height: progressbarHeight,
+                width: ProgressbarWidth(),
+                height: ProgressbarHeight(),
                 backgroundColor: "#FFEEB9",
                 borderRadius: 20,
               }}
@@ -100,8 +100,8 @@ export default function GetStartedLayout() {
             >
               <View
                 style={{
-                  height: progressbarHeight,
-                  width: progressbarCp * 2,
+                  height: ProgressbarHeight(),
+                  width: ProgressbarCP() * 2,
                   backgroundColor: "#FB990F",
                   borderRadius: 20,
                 }}
@@ -130,8 +130,8 @@ export default function GetStartedLayout() {
           headerTitle: () => (
             <View
               style={{
-                width: progressbarWidth,
-                height: progressbarHeight,
+                width: ProgressbarWidth(),
+                height: ProgressbarHeight(),
                 backgroundColor: "#FFEEB9",
                 borderRadius: 20,
               }}
@@ -139,8 +139,8 @@ export default function GetStartedLayout() {
             >
               <View
                 style={{
-                  height: progressbarHeight,
-                  width: progressbarCp * 3,
+                  height: ProgressbarHeight(),
+                  width: ProgressbarCP() * 3,
                   backgroundColor: "#FB990F",
                   borderRadius: 20,
                 }}
@@ -169,8 +169,8 @@ export default function GetStartedLayout() {
           headerTitle: () => (
             <View
               style={{
-                width: progressbarWidth,
-                height: progressbarHeight,
+                width: ProgressbarWidth(),
+                height: ProgressbarHeight(),
                 backgroundColor: "#FFEEB9",
                 borderRadius: 20,
               }}
@@ -178,8 +178,8 @@ export default function GetStartedLayout() {
             >
               <View
                 style={{
-                  height: progressbarHeight,
-                  width: progressbarCp * 4,
+                  height: ProgressbarHeight(),
+                  width: ProgressbarCP() * 4,
                   backgroundColor: "#FB990F",
                   borderRadius: 20,
                 }}

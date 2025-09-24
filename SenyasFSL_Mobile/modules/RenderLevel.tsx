@@ -5,10 +5,9 @@ import {
   StyleSheet,
   SectionList,
   ViewStyle,
-  ListRenderItem,
-  SectionListRenderItem,
   TouchableOpacity,
-  useWindowDimensions
+  useWindowDimensions,
+  SectionListRenderItem,
 } from "react-native";
 import { router } from "expo-router";
 import { Level, LevelSection } from "../modules/types/interface";
@@ -20,27 +19,24 @@ import LevelItem from "../modules/LevelItem";
 import BtnUp from "@/assets/svgs/BtnUp.svg";
 import BtnDown from "@/assets/svgs/BtnDown.svg";
 import LevelHeader from "@/components/LevelContent/levelHeader";
-import FSL_Hi from '@/assets/svgs/FSL_hello.svg';
-import LevelSplashScreen from "@/app/LevelSplashScreen";
+import FSL_Hi from "@/assets/svgs/FSL_hello.svg";
 
+const MemoFSLHi = React.memo(FSL_Hi);
+const MemoBtnUp = React.memo(BtnUp);
+const MemoBtnDown = React.memo(BtnDown);
 
 const RenderLevel: React.FC = () => {
-  const [levels, setLevels] = useState<Level[]>(generateLevelData(50));
+  const userProgress = 5;
+
+  const [levels] = useState<Level[]>(() => generateLevelData(50, userProgress));
+
   const [currentSection, setCurrentSection] = useState(0);
-    const {width} =useWindowDimensions()
-    const FSLHiSize = width < 768 ? 160 : 300;
-    const BtnSize = width < 768 ? 40 : 80;
-  const [currentView, setCurrentView] = useState('loading')
-    const handleSplashComplete = () => {
-    setCurrentView('levelContent');
-  };
-  const handleScrollDown = () =>{
-    setCurrentSection( (prev) =>  Math.min(sectionsData.length - 1, prev + 1))
-  }
-  const handleScrollUp = () =>{
-     setCurrentSection( (prev) =>  Math.max(0, prev - 1))
-  }
-  // Group levels into sections of 5
+  const { width } = useWindowDimensions();
+
+  const FSLHiSize = width < 768 ? 160 : 300;
+  const BtnSize = width < 768 ? 40 : 80;
+
+  // ✅ Sections
   const sectionsData = useMemo(() => {
     return levels.reduce((sections: LevelSection[], level: Level) => {
       const sectionIndex = Math.floor((level.id - 1) / LEVELS_PER_SECTION);
@@ -57,56 +53,85 @@ const RenderLevel: React.FC = () => {
     }, []);
   }, [levels]);
 
-  const handleLevelPress = useCallback((level: Level): void => {
-    console.log("Level pressed:", level.id);
-    
-    router.push(`/LevelSplashScreen?nextRoute=level&levelId=${level.id}`);
- 
-    
+  // ✅ Only show current section
+  const displayedSection = useMemo(
+    () => [sectionsData[currentSection]],
+    [sectionsData, currentSection]
+  );
+
+  // ✅ Handlers
+  const handleScrollDown = useCallback(() => {
+    setCurrentSection((prev) => Math.min(sectionsData.length - 1, prev + 1));
+  }, [sectionsData.length]);
+
+  const handleScrollUp = useCallback(() => {
+    setCurrentSection((prev) => Math.max(0, prev - 1));
   }, []);
 
-  const renderLevelItem: SectionListRenderItem<Level, LevelSection> = ({
-    item,
-    index,
-  }) => (
-    <LevelItem level={item} index={index} onLevelPress={handleLevelPress} />
+  const handleLevelPress = useCallback((level: Level): void => {
+    if (level.isUnlocked) {
+      console.log("Level pressed:", level.id);
+      router.push(`/LevelSplashScreen?nextRoute=level&levelId=${level.id}`);
+    }
+  }, []);
+
+  // ✅ Renderers
+  const renderLevelItem: SectionListRenderItem<Level, LevelSection> =
+    useCallback(
+      ({ item, index }) => (
+        <LevelItem level={item} index={index} onLevelPress={handleLevelPress} />
+      ),
+      [handleLevelPress]
+    );
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: LevelSection }) => (
+      <LevelHeader
+        title={section.title}
+        section={section.index}
+        level={section.currentLevel}
+      />
+    ),
+    []
   );
 
-  const renderSectionHeader = ({ section }: { section: LevelSection }) => (
-    <LevelHeader
-      title={section.title}
-      section={section.index}
-      level={section.currentLevel}
-    />
+  const keyExtractor = useCallback(
+    (item: Level): string => item.id.toString(),
+    []
   );
-
-  const keyExtractor = (item: Level): string => item.id.toString();
 
   return (
     <View style={styles.container}>
       <SectionList
-        sections={[sectionsData[currentSection]]}
+        sections={displayedSection}
         renderItem={renderLevelItem}
         renderSectionHeader={renderSectionHeader}
         keyExtractor={keyExtractor}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
+        removeClippedSubviews
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
       />
 
+      {/* Scroll buttons */}
       <View className="flex-col justify-center items-center gap-6 absolute right-4 bottom-4">
-        {currentSection === 0 ? null : (
-          <TouchableOpacity onPress={() => handleScrollUp()}>
-            <BtnUp width={BtnSize} height={BtnSize} />
+        {currentSection > 0 && (
+          <TouchableOpacity onPress={handleScrollUp}>
+            <MemoBtnUp width={BtnSize} height={BtnSize} />
           </TouchableOpacity>
         )}
-        {currentSection === 9 ? null : (
-          <TouchableOpacity onPress={() =>handleScrollDown()}>
-            <BtnDown width={BtnSize} height={BtnSize} />
+        {currentSection < sectionsData.length - 1 && (
+          <TouchableOpacity onPress={handleScrollDown}>
+            <MemoBtnDown width={BtnSize} height={BtnSize} />
           </TouchableOpacity>
         )}
       </View>
-      <View className="absolute right-0 top-1/2  ">
-        <FSL_Hi width={FSLHiSize} height={FSLHiSize}/>
+
+      {/* Static SVG */}
+      <View className="absolute right-0 top-1/2">
+        <MemoFSLHi width={FSLHiSize} height={FSLHiSize} />
       </View>
     </View>
   );
@@ -115,17 +140,15 @@ const RenderLevel: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: '100%',
+    width: "100%",
     zIndex: 30,
-    position: 'relative',
- 
-  
+    position: "relative",
   } as ViewStyle,
   contentContainer: {
     paddingVertical: 20,
-    
   } as ViewStyle,
 });
+
 const titles = [
   "Learn the Alphabets",
   "Learn the Numbers",
@@ -138,4 +161,5 @@ const titles = [
   "Learn the Socializing",
   "Learn the Days",
 ];
-export default RenderLevel;
+
+export default React.memo(RenderLevel);

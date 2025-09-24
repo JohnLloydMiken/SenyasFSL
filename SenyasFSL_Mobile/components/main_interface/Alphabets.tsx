@@ -1,6 +1,7 @@
 import { View, Text , TouchableOpacity, ScrollView} from 'react-native'
 import React from 'react'
 import Categories from '@/json_files/Categories.json'
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Props {
   onPress: (letter: string, letterFil: string, letterSource: string) => void;
@@ -11,7 +12,8 @@ const Alphabets: React.FC<Props> = ({ onPress }) => {
   const dataFil = Categories[0].content?.letterFil;
   const dataSource = Categories[0].content?.letterVidSource
   return (
-    <ScrollView style={{ flex: 1, padding: 8 }}>
+    <SafeAreaView style={{ flex: 1}}>
+      <ScrollView style={{ flex: 1 }}>
       {data?.map((item, index) => (
         <TouchableOpacity
           key={index}
@@ -27,6 +29,7 @@ const Alphabets: React.FC<Props> = ({ onPress }) => {
         </TouchableOpacity>
       ))}
     </ScrollView>
+    </SafeAreaView>
   );
 };
 

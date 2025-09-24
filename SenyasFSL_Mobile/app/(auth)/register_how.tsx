@@ -5,10 +5,9 @@ import { router } from "expo-router";
 import Bride from "@/assets/svgs/bridge.svg";
 import Dumbell from "@/assets/svgs/dumbell.svg";
 import Mountain from "@/assets/svgs/mountain.svg";
+import { IconSize } from "@/utils/sizes";
 export default function register_how() {
-  const { width } = useWindowDimensions();
 
-  const svgSize = width < 768 ? 50 : 80;
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8">
       <Text className="text-2xl font-PoppinsBold md:text-3xl">
@@ -16,7 +15,7 @@ export default function register_how() {
       </Text>
       <View className="w-11/12 bg-white rounded-lg md:rounded-2xl p-4 gap-8 overflow-hidden">
         <View className="flex justify-between items-center flex-row w-full ">
-          <Bride width={svgSize} height={svgSize} />
+          <Bride width={IconSize()} height={IconSize()} />
           <View className="md:w-10/12 ">
             <Text className="font-PoppinsBold text-xl md:text-2xl">
               Build bridges
@@ -28,7 +27,7 @@ export default function register_how() {
           </View>
         </View>
         <View className="flex justify-between items-center flex-row w-full ">
-          <Dumbell width={svgSize} height={svgSize} />
+          <Dumbell width={IconSize()} height={IconSize()} />
           <View className="md:w-10/12 ">
             <Text className="font-PoppinsBold text-xl md:text-2xl">
               Excellent brain exercise
@@ -40,7 +39,7 @@ export default function register_how() {
           </View>
         </View>
         <View className="flex justify-between items-center flex-row w-full ">
-          <Mountain width={svgSize} height={svgSize} />
+          <Mountain width={IconSize()} height={IconSize()} />
           <View className="md:w-10/12 ">
             <Text className="font-PoppinsBold text-xl md:text-2xl">
               Challenge yourself
