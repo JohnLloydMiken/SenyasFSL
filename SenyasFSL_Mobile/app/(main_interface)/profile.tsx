@@ -192,29 +192,4 @@ const styles = StyleSheet.create({
   },
 });
 
-/**
-{editUserData && (
-        <BottomSheet
-          ref={bottomSheetRef}
-          onChange={handleSheetChanges}
-          snapPoints={['60%']}
-          detached
-          enablePanDownToClose
- 
-        >
-          <BottomSheetView style={styles.contentContainer}>
-              <UserInput  
-                title='Edit personal data'
-                usernameTitle='Username'
-                userEmailTitle='Email'
-                userPasswordTitle='Current password'
-                passwordTitleDescription='Type in your password to update your email'
-              />
-              <View className='w-11/12  absolute bottom-1'>
-              <Authbutton content='Save changes' onPress={()=>    bottomSheetRef.current?.close()}></Authbutton>
-               </View>
-          </BottomSheetView>
-        </BottomSheet>
-      )} 
 
- */
