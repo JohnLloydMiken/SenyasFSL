@@ -1,32 +1,41 @@
 import { View, Text } from "react-native";
 import React, { useState } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
-import LevelContentBtn from "./GameBtns/LevelContentBtn";
-import MCBTN from "./GameBtns/MCBTN";
+import LevelContentBtn from "../GameBtns/LevelContentBtn";
+import MCBTN from "../GameBtns/MCBTN";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import MCContent from "@/json_files/MutlipleChoiceContent.json";
-import Inventory from "../main_interface/Inventory";
+import Inventory from "@/components/main_interface/Inventory";
 import { fslLetterMap } from "@/utils/assetsMap";
-interface MultipleChoiceProps {
+interface BossMultipleChoiceProps {
   title: string;
-  videoUrl: string
-  choices: ReadonlyArray<readonly [string, string]>
-  correctAnswer: string
-  onPress: () => void
-
+  videoUrl: string;
+  choices: ReadonlyArray<readonly [string, string]>;
+  correctAnswer: string;
+  onPress: () => void;
+  onAnswer: (isCorrect: boolean) => void;
+  hearts: number;
 }
 
-const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choices, onPress , correctAnswer }) => {
+const BossMultipleChoiceProps: React.FC<BossMultipleChoiceProps> = ({
+  title,
+  videoUrl,
+  choices,
+  onPress,
+  correctAnswer,
+  onAnswer,
+  hearts,
+}) => {
   const [isClicked, setIsClicked] = useState(false);
   const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false); // New state to track if "Check" was pressed
   const [opacity, setOpacity] = useState(100);
- const videoSource = fslLetterMap[videoUrl]
+  const videoSource = fslLetterMap[videoUrl];
 
   const player = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
@@ -36,19 +45,29 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choice
 
   const handleBG = () => {
     if (choice) {
+      const result = choice === correctAnswer;
       setIsCorrect(choice === correctAnswer);
       setHasChecked(true); // Mark that check button was pressed
       setOpacity(0);
+      onAnswer(result);
     }
   };
 
   return (
-    <View className="flex-1 relative bg-white">
+    <View className="flex-1 relative bg-white items-center justify-start">
+      <View className=" flex-row ">
+        {Array.from({ length: hearts }).map((_, idx) => (
+          <Text key={idx} style={{ fontSize: 24, color: "red" }}>
+            ❤️
+          </Text>
+        ))}
+      </View>
+
       <Text className="text-center text-2xl md:text-3xl font-PoppinsBold my-2">
         {title}
       </Text>
 
-      <View className="w-full h-[30%] relative -top-1">
+      <View className="w-11/12 h-[25%] relative -top-1">
         <VideoView
           style={{ width: "100%", height: "100%" }}
           player={player}
@@ -122,12 +141,7 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choice
         {choice && !hasChecked ? (
           <LevelContentBtn text="Check" onPress={handleBG} />
         ) : (
-          hasChecked && (
-            <LevelContentBtn
-              text="Next"
-              onPress={onPress}
-            />
-          )
+          hasChecked && <LevelContentBtn text="Next" onPress={onPress} />
         )}
       </View>
 
@@ -144,6 +158,4 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choice
   );
 };
 
-
-
-export default MultipleChoice;
+export default BossMultipleChoiceProps;

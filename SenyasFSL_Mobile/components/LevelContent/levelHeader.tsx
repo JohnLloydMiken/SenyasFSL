@@ -52,13 +52,3 @@ const styles = StyleSheet.create({
 
 export default  levelHeader
 
-/*
- <View className='p-4'>
-                     <Text className='text-white text-sm font-PoppinsRegular'>Section {section}, Level {level}</Text>
-                   <Text className='text-white text-lg font-PoppinsBold'>{title}</Text>
-                  </View>
-                  <View className='p-4'>
-                    <Image source={require('../assets/images/book.png')}/>
-                  </View>
-
-*/

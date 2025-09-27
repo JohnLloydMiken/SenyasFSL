@@ -1,14 +1,15 @@
 import { View, Text } from "react-native";
 import React, { useState } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
-import LevelContentBtn, { MCBTN } from "../LevelContent/LevelContentBtn";
+import LevelContentBtn from "./GameBtns/LevelContentBtn";
+import MCBTN from "./GameBtns/MCBTN";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import Inventory from "../main_interface/Inventory";
-import { videoMap } from "@/modules/LevelContentConfig";
+import { fslLetterMap } from "@/utils/assetsMap";
 
 interface TrueOrFalseProps {
   title: readonly string[];
@@ -33,7 +34,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(1); // use number between 0–1 for style
 
-  const player = useVideoPlayer(videoMap[videoSource], (p) => {
+  const player = useVideoPlayer(fslLetterMap[videoSource], (p) => {
     p.loop = true;
     p.muted = true;
     p.play();
@@ -61,8 +62,8 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
 
       {/* Video Section */}
       <View className="w-full h-56 flex-row items-center justify-around">
-        {[0, 1].map((i) => (
-          <View key={i} className="w-48 h-36">
+       
+          <View  className="w-48 h-36">
             <VideoView
               style={{ width: "100%", height: "100%" }}
               player={player}
@@ -71,7 +72,18 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
               nativeControls={false}
             />
           </View>
-        ))}
+
+          <View  className="w-48 h-36">
+            <VideoView
+              style={{ width: "100%", height: "100%" }}
+              player={player}
+              allowsFullscreen={false}
+              allowsPictureInPicture={false}
+              nativeControls={false}
+              
+            />
+          </View>
+      
       </View>
 
       {/* Choices */}

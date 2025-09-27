@@ -2,7 +2,7 @@ import { View, Text, useWindowDimensions } from 'react-native'
 import React from 'react'
 import FSL_Like from '@/assets/svgs/FSL_Like.svg'
 import LevelBg from "@/assets/svgs/LevelBG.svg";
-import LevelContentBtn from "../../LevelContent/LevelContentBtn";
+import LevelContentBtn from '../GameBtns/LevelContentBtn';
 
 interface ConsecutiveProps{
     correctAnswer: number;
