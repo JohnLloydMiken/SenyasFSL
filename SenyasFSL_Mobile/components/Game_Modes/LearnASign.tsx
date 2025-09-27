@@ -1,9 +1,10 @@
 import { View, Text } from "react-native";
 import React, { useState } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
-import LevelContentBtn, { LearnAsignBTN } from "../LevelContent/LevelContentBtn";
+import LevelContentBtn from "./GameBtns/LevelContentBtn";
+import LearnAsignBTN from "./GameBtns/LearnAsignBTN";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
-import { videoMap } from "@/modules/LevelContentConfig";
+import { fslLetterMap } from "@/utils/assetsMap";
 interface LearnASignProps {
   videoUrl: any;
   title: string;
@@ -14,7 +15,7 @@ interface LearnASignProps {
 
 const LearnASign: React.FC<LearnASignProps> = ({videoUrl, title, EnglishText, FilipinoText, onPress}) => {
   const [isClicked, setIsClicked] = useState(false);
-  const videoSource = videoMap[videoUrl];
+  const videoSource = fslLetterMap[videoUrl];
   if (!videoSource) {
     console.error(`Video not found for URL: ${videoUrl}`);
   }

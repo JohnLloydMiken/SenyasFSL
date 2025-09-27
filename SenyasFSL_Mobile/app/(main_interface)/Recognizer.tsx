@@ -1,10 +1,10 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import FSLTest from '../components/FSLTest'
+import GestureRecorder from '../components/HRW'
 const Recognizer = () => {
   return (
    
-    <FSLTest/>
+    <GestureRecorder/>
   )
 }
 

@@ -1,7 +1,8 @@
 import { View, Text } from "react-native";
 import React, { useState } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
-import LevelContentBtn, { MCBTN } from "../LevelContent/LevelContentBtn";
+import LevelContentBtn from "./GameBtns/LevelContentBtn";
+import MCBTN from "./GameBtns/MCBTN";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
@@ -11,7 +12,7 @@ import MCContent from "@/json_files/MutlipleChoiceContent.json";
 import Inventory from "../main_interface/Inventory";
 import FTG_data from "@/json_files/FillTheGap.json";
 import { LinearGradient } from "expo-linear-gradient";
-import { videoMap } from "@/modules/LevelContentConfig";
+import { fslLetterMap } from "@/utils/assetsMap";
 
 interface FillTheGapProps{
   title: string;
@@ -38,7 +39,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({title, videoSource, question, ch
       setOpacity(0);
     }
   };
-  const video = videoMap[videoSource];
+  const video = fslLetterMap[videoSource];
   const player = useVideoPlayer(video, (player) => {
     player.loop = true;
     player.muted = true;

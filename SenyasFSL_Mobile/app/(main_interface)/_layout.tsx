@@ -42,10 +42,6 @@ function TabsWithBottomSheet() {
       return ["1"]; // closed by default
   }
 }, [sheet]);
-
-
-
- 
   return (
     <>
     

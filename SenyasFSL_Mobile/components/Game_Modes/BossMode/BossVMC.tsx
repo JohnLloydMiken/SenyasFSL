@@ -6,21 +6,29 @@ import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
-import LevelContentBtn from "./GameBtns/LevelContentBtn";
-import VideoMCBTN from "./GameBtns/VideoMCBTN";
-import Inventory from "../main_interface/Inventory";
+import LevelContentBtn from "../GameBtns/LevelContentBtn";
+import VideoMCBTN from "../GameBtns/VideoMCBTN";
+import Inventory from "../../main_interface/Inventory";
 
-interface ViewMCProps {
+interface BossViewMCProps {
   title: string;
   choices: ReadonlyArray<readonly [string, string]>;
   videoSources: readonly string[];
   correctAnswer: string;
-  onPress: () => void
-  
+  onPress: () => void;
+  onAnswer: (isCorrect: boolean) => void;
+  hearts: number;
 }
 
-const ViewMC: React.FC <ViewMCProps> = ({title, choices, videoSources, correctAnswer , onPress}) => {
-
+const BossViewMCProps: React.FC<BossViewMCProps> = ({
+  title,
+  choices,
+  videoSources,
+  correctAnswer,
+  onPress,
+  onAnswer,
+  hearts,
+}) => {
   const [isClicked, setIsClicked] = useState(false);
   const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -29,13 +37,23 @@ const ViewMC: React.FC <ViewMCProps> = ({title, choices, videoSources, correctAn
 
   const handleBG = () => {
     if (choice) {
+      const result = choice === correctAnswer;
       setIsCorrect(choice === correctAnswer);
       setHasChecked(true); // Mark that check button was pressed
       setOpacity(0);
+      onAnswer(result);
     }
   };
   return (
-    <View className="flex-1 relative items-center bg-white">
+    <View className="flex-1 relative items-center bg-white justify-start">
+      <View className=" flex-row">
+        {Array.from({ length: hearts }).map((_, idx) => (
+          <Text key={idx} style={{ fontSize: 24, color: "red" }}>
+            ❤️
+          </Text>
+        ))}
+      </View>
+
       <Text className="text-center font-PoppinsBold my-2 text-2xl md:text-3xl">
         {title}
       </Text>
@@ -98,12 +116,7 @@ const ViewMC: React.FC <ViewMCProps> = ({title, choices, videoSources, correctAn
         {choice && !hasChecked ? (
           <LevelContentBtn text="Check" onPress={handleBG} />
         ) : (
-          hasChecked && (
-            <LevelContentBtn
-              text="Next"
-              onPress={onPress}
-            />
-          )
+          hasChecked && <LevelContentBtn text="Next" onPress={onPress} />
         )}
       </View>
 
@@ -120,4 +133,4 @@ const ViewMC: React.FC <ViewMCProps> = ({title, choices, videoSources, correctAn
   );
 };
 
-export default ViewMC;
+export default BossViewMCProps;
