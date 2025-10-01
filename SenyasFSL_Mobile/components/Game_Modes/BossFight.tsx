@@ -6,6 +6,9 @@ import Instruction from "./BossMode";
 import BossMultipleChoiceProps from "./BossMode/BossMC";
 import Evaluation from "./Eval/Evaluation";
 import OutOfHearts from "./Eval/OutOfHearts";
+import { router } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
+import { navigate } from "expo-router/build/global-state/routing";
 interface BossFightProp {
   level: string | string[];
 }
@@ -16,16 +19,24 @@ const BossFight: React.FC<BossFightProp> = ({ level }) => {
   const [hearts, setHearts] = useState(3); // ❤️ start with 3 hearts
   const step = steps[currentStep];
 
- const handleAnswer = (isCorrect: boolean) => {
-  if (!isCorrect) {
-    setHearts((prev) => Math.max(prev - 1, 0)); // never below 0
-  }
-};
+  const handleAnswer = (isCorrect: boolean) => {
+    if (!isCorrect) {
+      setHearts((prev) => Math.max(prev - 1, 0)); // never below 0
+    }
+  };
 
   const renderStep = () => {
     // ✅ check hearts first
     if (hearts === 0) {
-      return <OutOfHearts />;
+      return (
+        <OutOfHearts
+          onContinue={() => navigate("/(main_interface)")}
+          onRetake={() => {
+            setHearts(3);
+            setCurrentStep(0);
+          }}
+        />
+      );
     }
 
     // ✅ if user reached the end, show Evaluation
@@ -41,42 +52,35 @@ const BossFight: React.FC<BossFightProp> = ({ level }) => {
         />
       );
     }
-  switch (step.type) {
-    case "Instruction":
-      return (
-        <Instruction onPress={() => setCurrentStep((prev) => prev + 1)} />
-      );
+    switch (step.type) {
+      case "Instruction":
+        return (
+          <Instruction onPress={() => setCurrentStep((prev) => prev + 1)} />
+        );
 
-    case "MultipleChoice":
-      return (
-        <BossMultipleChoiceProps
-          {...step.data}
-          hearts={hearts} // ✅ pass hearts
-          onAnswer={handleAnswer} // ✅ pass callback
-          onPress={() => setCurrentStep((prev) => prev + 1)}
-        />
-      );
+      case "MultipleChoice":
+        return (
+          <BossMultipleChoiceProps
+            {...step.data}
+            hearts={hearts} // ✅ pass hearts
+            onAnswer={handleAnswer} // ✅ pass callback
+            onPress={() => setCurrentStep((prev) => prev + 1)}
+          />
+        );
 
-    case "VideoMultipleChoice":
-      return (
-        <BossViewMCProps
-          {...step.data}
-          hearts={hearts} // ✅ pass hearts
-          onAnswer={handleAnswer} // ✅ pass callback
-          onPress={() => setCurrentStep((prev) => prev + 1)}
-        />
-      );
-  
-  }
-};
+      case "VideoMultipleChoice":
+        return (
+          <BossViewMCProps
+            {...step.data}
+            hearts={hearts} // ✅ pass hearts
+            onAnswer={handleAnswer} // ✅ pass callback
+            onPress={() => setCurrentStep((prev) => prev + 1)}
+          />
+        );
+    }
+  };
 
-
-  return (
-   
-
-      renderStep()
-   
-  );
+  return renderStep();
 };
 
 export default BossFight;
