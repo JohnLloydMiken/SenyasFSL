@@ -1,11 +1,11 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import GestureRecorder from '../components/HRW'
+import HRW from '../components/HRW'
 const Recognizer = () => {
   return (
    
-    <GestureRecorder/>
+    <HRW/>
   )
 }
 
-export default Recognizer
+export default Recognizer;
