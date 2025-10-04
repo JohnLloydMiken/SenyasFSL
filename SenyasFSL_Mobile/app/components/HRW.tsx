@@ -1,98 +1,120 @@
-import React, { useRef, useState } from "react";
-import { View, Button, Alert, StyleSheet } from "react-native";
-import { Camera, useCameraDevices, CameraDevice } from "react-native-vision-camera";
+import React, { useState, useEffect } from "react";
+import { View, Text, PermissionsAndroid } from "react-native";
+import { WebView } from "react-native-webview";
 
-export default function GestureRecorder() {
-  const camera = useRef<Camera>(null);
-   const devices = useCameraDevices();
-   const device: CameraDevice | undefined = devices.find(d => d.position === 'front');
-  const [isRecording, setIsRecording] = useState(false);
+const RecognizerScreen = () => {
+  const [prediction, setPrediction] = useState("Detecting...");
 
-  const startRecording = async () => {
-    if (!camera.current || !device) return;
+  useEffect(() => {
+    requestCameraPermission();
+  }, []);
 
-    setIsRecording(true);
-
-    await camera.current.startRecording({
-      flash: "off",
-      onRecordingFinished: async (video) => {
-  setIsRecording(false);
-  console.log("Video file:", video.path);
-
-  const formData = new FormData();
-  formData.append("video", {
-    // Ensure file:// prefix
-    uri: video.path.startsWith("file://") ? video.path : `file://${video.path}`,
-    type: "video/mp4",
-    name: "gesture.mp4",
-  } as any);
-
-  try {
-    const res = await fetch("http://192.168.0.106:5000/predict_video", {
-      method: "POST",
-      body: formData,
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    const json = await res.json();
-    console.log("Server response:", json);
-
-    if (json.error) {
-      Alert.alert("Error", json.error);
-    } else {
-      Alert.alert(
-        "Prediction",
-        `${json.predicted_letter} (confidence: ${json.confidence.toFixed(2)})`
+  async function requestCameraPermission() {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        {
+          title: "Camera Permission",
+          message: "App needs access to your camera",
+          buttonNeutral: "Ask Me Later",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK",
+        }
       );
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        console.log("Camera permission denied");
+      }
+    } catch (err) {
+      console.warn(err);
     }
-  } catch (err) {
-    console.error("Upload error:", err);
-    Alert.alert("Error", "Failed to upload video");
   }
-}
-,
-      onRecordingError: (err) => {
-        console.error("Recording error:", err);
-        setIsRecording(false);
-      },
-    });
 
-    // Auto stop after 2 seconds
-    setTimeout(() => {
-      camera.current?.stopRecording();
-    }, 2000);
-  };
+  const mediapipeHTML = `
+    <!DOCTYPE html>
+    <html>
+    <body style="margin:0; overflow:hidden;">
+      <video id="video" autoplay playsinline style="width:100%; height:100%; object-fit:cover; background:black;"></video>
+      <canvas id="output" style="position:absolute; top:0; left:0; width:100%; height:100%;"></canvas>
 
-  if (!device) {
-    return <View style={styles.container} />;
-  }
+      <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+      <script>
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('output');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        const hands = new Hands({locateFile: (file) => {
+          return 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/' + file;
+        }});
+        hands.setOptions({
+          maxNumHands: 1,
+          minDetectionConfidence: 0.7,
+          minTrackingConfidence: 0.7
+        });
+
+        hands.onResults(results => {
+          canvasCtx.save();
+          canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+          canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+          if (results.multiHandLandmarks) {
+            for (const landmarks of results.multiHandLandmarks) {
+              drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
+                             {color: '#00FF00', lineWidth: 2});
+              drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1});
+            }
+          }
+          canvasCtx.restore();
+        });
+
+        const camera = new Camera(videoElement, {
+          onFrame: async () => { await hands.send({image: videoElement}); },
+          width: 640,
+          height: 480
+        });
+        camera.start();
+      </script>
+    </body>
+    </html>
+  `;
 
   return (
-    <View style={styles.container}>
-      <Camera
-        ref={camera}
-        style={styles.camera}
-        device={device}
-        isActive={true}
-        video={true}
+    <View style={{ flex: 1 }}>
+      <WebView
+        originWhitelist={["*"]}
+        source={{ html: mediapipeHTML }}
+        javaScriptEnabled={true}
+        mediaPlaybackRequiresUserAction={false}
+        allowsInlineMediaPlayback={true}
+        onMessage={(event) => {
+          try {
+            const data = JSON.parse(event.nativeEvent.data);
+            if (data.prediction) {
+              setPrediction(data.prediction);
+            } else {
+              setPrediction(JSON.stringify(data));
+            }
+          } catch (e) {
+            console.log("Message parse error:", e);
+          }
+        }}
       />
-      <Button
-        title={isRecording ? "Recording..." : "Record Gesture"}
-        onPress={startRecording}
-        disabled={isRecording}
-      />
+
+      <Text
+        style={{
+          position: "absolute",
+          bottom: 40,
+          alignSelf: "center",
+          backgroundColor: "#444",
+          color: "white",
+          padding: 8,
+          borderRadius: 8,
+        }}
+      >
+        {prediction}
+      </Text>
     </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-  },
-  camera: {
-    flex: 1,
-  },
-});
+export default RecognizerScreen;
