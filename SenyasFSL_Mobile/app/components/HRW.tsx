@@ -1,120 +1,107 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, PermissionsAndroid } from "react-native";
-import { WebView } from "react-native-webview";
+import React, { JSX, useState } from 'react';
+import { View, Text, SafeAreaView, StyleSheet } from 'react-native';
+import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
-const RecognizerScreen = () => {
-  const [prediction, setPrediction] = useState("Detecting...");
+interface PredictionResponse {
+  prediction: string;
+  confidence: number;
+}
 
-  useEffect(() => {
-    requestCameraPermission();
-  }, []);
+export default function MediapipeWebView(): JSX.Element {
+  const [prediction, setPrediction] = useState<string | null>(null);
 
-  async function requestCameraPermission() {
+  const handleMessage = (event: WebViewMessageEvent) => {
+    const message = event.nativeEvent.data;
+
     try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        {
-          title: "Camera Permission",
-          message: "App needs access to your camera",
-          buttonNeutral: "Ask Me Later",
-          buttonNegative: "Cancel",
-          buttonPositive: "OK",
-        }
-      );
-      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-        console.log("Camera permission denied");
+      const data: PredictionResponse = JSON.parse(message);
+
+      if (data && typeof data.prediction === 'string') {
+        const confidenceText = (data.confidence * 100).toFixed(1);
+        setPrediction(`${data.prediction} (${confidenceText}%)`);
+      } else {
+        setPrediction(message);
       }
-    } catch (err) {
-      console.warn(err);
+    } catch {
+      // if message is not JSON (just text), display raw message
+      setPrediction(message);
     }
-  }
-
-  const mediapipeHTML = `
-    <!DOCTYPE html>
-    <html>
-    <body style="margin:0; overflow:hidden;">
-      <video id="video" autoplay playsinline style="width:100%; height:100%; object-fit:cover; background:black;"></video>
-      <canvas id="output" style="position:absolute; top:0; left:0; width:100%; height:100%;"></canvas>
-
-      <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-      <script>
-        const videoElement = document.getElementById('video');
-        const canvasElement = document.getElementById('output');
-        const canvasCtx = canvasElement.getContext('2d');
-
-        const hands = new Hands({locateFile: (file) => {
-          return 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/' + file;
-        }});
-        hands.setOptions({
-          maxNumHands: 1,
-          minDetectionConfidence: 0.7,
-          minTrackingConfidence: 0.7
-        });
-
-        hands.onResults(results => {
-          canvasCtx.save();
-          canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-          canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-          if (results.multiHandLandmarks) {
-            for (const landmarks of results.multiHandLandmarks) {
-              drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
-                             {color: '#00FF00', lineWidth: 2});
-              drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1});
-            }
-          }
-          canvasCtx.restore();
-        });
-
-        const camera = new Camera(videoElement, {
-          onFrame: async () => { await hands.send({image: videoElement}); },
-          width: 640,
-          height: 480
-        });
-        camera.start();
-      </script>
-    </body>
-    </html>
-  `;
+  };
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container}>
       <WebView
-        originWhitelist={["*"]}
-        source={{ html: mediapipeHTML }}
+        source={{ uri: 'https://johnlloydmiken.github.io/SenyasFSL_Webview/' }} // 👈 replace with your actual URL
+        onMessage={handleMessage}
         javaScriptEnabled={true}
         mediaPlaybackRequiresUserAction={false}
         allowsInlineMediaPlayback={true}
-        onMessage={(event) => {
-          try {
-            const data = JSON.parse(event.nativeEvent.data);
-            if (data.prediction) {
-              setPrediction(data.prediction);
-            } else {
-              setPrediction(JSON.stringify(data));
-            }
-          } catch (e) {
-            console.log("Message parse error:", e);
-          }
-        }}
+        mixedContentMode="always"
       />
 
-      <Text
-        style={{
-          position: "absolute",
-          bottom: 40,
-          alignSelf: "center",
-          backgroundColor: "#444",
-          color: "white",
-          padding: 8,
-          borderRadius: 8,
-        }}
-      >
-        {prediction}
-      </Text>
-    </View>
+      <View style={styles.overlay}>
+        <Text style={styles.text}>
+          {prediction ? `🧠 ${prediction}` : 'Detecting hands...'}
+        </Text>
+      </View>
+    </SafeAreaView>
   );
-};
+}
 
-export default RecognizerScreen;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  overlay: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: '#000a',
+    padding: 10,
+    borderRadius: 10,
+  },
+  text: {
+    color: 'white',
+    fontSize: 18,
+  },
+});
+
+
+
+
+/*
+
+ const [hasPermission, setHasPermission] = useState(false);
+
+  useEffect(() => {
+    async function requestCameraPermission() {
+      if (Platform.OS === 'android') {
+        try {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.CAMERA,
+            {
+              title: 'Camera Permission',
+              message: 'App needs access to the camera to display it in WebView',
+              buttonPositive: 'OK',
+            },
+          );
+          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+            setHasPermission(true);
+          } else {
+            Alert.alert('Camera permission denied');
+          }
+        } catch (err) {
+          console.warn(err);
+        }
+      } else {
+        setHasPermission(true);
+      }
+    }
+    requestCameraPermission();
+  }, []);
+
+  if (!hasPermission) {
+    return <View />; // or a loading placeholder
+  }
+*/ 

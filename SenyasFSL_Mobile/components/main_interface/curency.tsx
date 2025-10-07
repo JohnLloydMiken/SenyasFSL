@@ -3,6 +3,7 @@ import { useState } from "react";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import Money from "@/assets/svgs/Currency.svg";
+
 type CurrencyProps = {
   number: number;
 };
