@@ -6,8 +6,7 @@ import Instruction from "./BossMode";
 import BossMultipleChoiceProps from "./BossMode/BossMC";
 import Evaluation from "./Eval/Evaluation";
 import OutOfHearts from "./Eval/OutOfHearts";
-import { router } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
+
 import { navigate } from "expo-router/build/global-state/routing";
 interface BossFightProp {
   level: string | string[];
