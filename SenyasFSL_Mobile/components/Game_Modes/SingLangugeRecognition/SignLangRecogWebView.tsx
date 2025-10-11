@@ -8,8 +8,8 @@ interface PredictionResponse {
 }
 
 export default function SignLangRecogWebView(): JSX.Element {
-const prediction = usePredictionStore((state) => state.prediction);
-const setPrediction = usePredictionStore((state) => state.setPrediction)
+const prediction = usePredictionStore((state: { prediction: any; }) => state.prediction);
+const setPrediction = usePredictionStore((state: { setPrediction: any; }) => state.setPrediction)
   const handleMessage = (event: WebViewMessageEvent) => {
     const message = event.nativeEvent.data;
 
