@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import DictionaryCategories from '@/app/components/DictionaryCategories'
+import DictionaryCategories from '@/components/main_interface/DictionaryCategories'
 import { router } from 'expo-router'
 const dictionary = () => {
   return (
