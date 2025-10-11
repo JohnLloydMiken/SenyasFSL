@@ -23,7 +23,7 @@ const LearnASign: React.FC<LearnASignProps> = ({videoUrl, title, EnglishText, Fi
   const player = useVideoPlayer(videoSource, (player) => {
     player.loop = true;
     player.muted = true; // Optional: mute the video
-    player.pause();
+    player.play();
   });
   return (
     <View className="flex-1 relative bg-white">
