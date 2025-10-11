@@ -23,7 +23,7 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
   onPress,
 }) => {
   const [count, setCount] = useState(0);
-  const prediction = usePredictionStore((state) => state.prediction);
+  const prediction = usePredictionStore((state: { prediction: any; }) => state.prediction);
   const videoSource = fslLetterMap[videoUrl[count]];
 
   const player = useVideoPlayer(videoSource, (player) => {
