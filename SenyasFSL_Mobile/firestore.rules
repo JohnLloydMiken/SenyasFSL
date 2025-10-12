@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Game content collections (read-only for users)
+    match /sections/{sectionId} { allow read: if request.auth != null; allow write: if false; }
+    match /levels/{levelId} { allow read: if request.auth != null; allow write: if false; }
+    match /lessons/{lessonId} { allow read: if request.auth != null; allow write: if false; }
+    match /questions/{questionId} { allow read: if request.auth != null; allow write: if false; }
+    match /dictionaryCategories/{categoryId} { allow read: if request.auth != null; allow write: if false; }
+
+    // 👇 THIS IS THE NEW RULE YOU NEED TO ADD 👇
+    // It allows any logged-in user to READ the master list of achievements.
+    match /achievements/{achievementId} {
+      allow read: if request.auth != null;
+      allow write: if false; // For security, users cannot change achievements from the app
+    }
+
+    // Public collection for checking username availability
+    match /usernames/{name} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // User-specific data
+    match /users/{uid}/{document=**} { // Added {document=**} to cover sub-collections
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

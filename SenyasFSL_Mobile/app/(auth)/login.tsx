@@ -3,7 +3,7 @@ import { useState } from "react";
 import "@/global.css";
 import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
-import { login, resetPassword } from "@/services/AuthService"; // ✅ we'll add resetPassword
+import { loginUser } from "@/services/AuthService"; // ✅ we'll add resetPassword
 import React from "react";
 
 export default function Login() {
@@ -21,7 +21,7 @@ export default function Login() {
     }
 
     try {
-      await login(email, password);
+      await loginUser(email, password);
       router.push("/(auth)/welcome");
     } catch (err: any) {
       setIsError(true);
@@ -30,20 +30,7 @@ export default function Login() {
     }
   };
 
-  const handleSendResetEmail = async () => {
-    if (!resetEmail) {
-      Alert.alert("Missing Info", "Please enter your email address.");
-      return;
-    }
-
-    try {
-      await resetPassword(resetEmail);
-      setSendEmail(true);
-    } catch (error: any) {
-      console.error(error);
-      setSendEmail(false);
-    }
-  };
+ 
 
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-80">
@@ -149,7 +136,7 @@ export default function Login() {
 
             <TouchableOpacity
               className="w-full bg-[#FB990F] rounded-2xl mt-2 p-4"
-              onPress={handleSendResetEmail}
+        
             >
               <Text className="font-PoppinsBold text-center text-xl md:text-2xl text-white">
                 Send Email

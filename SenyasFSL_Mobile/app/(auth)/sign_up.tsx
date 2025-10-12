@@ -7,7 +7,7 @@ import Modal_Terms from "@/components/authentication/Modal_Terms";
 import Modal_Privacy from "@/components/authentication/Modal_Privacy";
 import Informtaion from "@/assets/svgs/information.svg";
 import { IconSize } from "@/utils/sizes";
-import { register } from "@/services/AuthService";
+import { registerUser } from "@/services/AuthService";
 
 export default function SignUp() {
   const [isTermsPressed, setIsTermsPressed] = useState(false);
@@ -22,25 +22,7 @@ export default function SignUp() {
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleRegister = async () => {
-    if (!email || !password) {
-      Alert.alert("Missing info", "Please enter both email and password.");
-      return;
-    }
-
-    try {
-      await register(email, password);
-      router.push("/(auth)/congrast");
-    } catch (err: any) {
-      setIsError(true);
-      setErrorMessage(err.message);
-
-      // ✅ Clear fields visually
-      setUsername("");
-      setEmail("");
-      setPassword("");
-    }
-  };
+ 
 
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8">
@@ -79,7 +61,7 @@ export default function SignUp() {
       </View>
 
       <View className="w-11/12 absolute bottom-12">
-        <Authbutton content="Commit to my goal" onPress={handleRegister} />
+        <Authbutton content="Commit to my goal"  />
       </View>
 
       {/* Modals */}
