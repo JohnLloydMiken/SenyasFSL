@@ -6,7 +6,18 @@ import {
   ProgressbarHeight,
   ProgressbarCP,
 } from "@/utils/sizes";
-export default function GetStartedLayout() {
+import { useAuth ,AuthProvider } from "@/services/auth/AuthProvider";
+export default function GetStarted(){
+ return(
+   <AuthProvider>
+    <GetStartedLayout>
+    </GetStartedLayout>
+  </AuthProvider>
+ )
+}
+
+
+ const GetStartedLayout = () =>{
   return (
     <Stack>
       <Stack.Screen

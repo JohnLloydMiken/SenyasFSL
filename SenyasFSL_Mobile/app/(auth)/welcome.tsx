@@ -10,8 +10,27 @@ import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
 import { fslIconSize } from "@/utils/sizes";
+import { useAuth } from "@/services/auth/AuthProvider";
+import { useUserData } from "@/hooks/useUserData";
 export default function welcome() {
-  
+  const { user: authUser } = useAuth();
+  const { userData, loading: userDataLoading } = useUserData();
+
+  if (userDataLoading) {
+    return (
+      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if(!userData){
+    return (
+      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
+        <Text>Could not load user profile. Please try again later.</Text>
+      </View>
+    );
+  }
   return (
     <View
       className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8"
@@ -22,7 +41,7 @@ export default function welcome() {
           Welcome!
         </Text>
         <Text className="text-2xl md:text-3xl font-PoppinsBold text-[#FB990F] text-center">
-          Miks
+          {userData?.username}
         </Text>
       </View>
       <FSL_Hi width={fslIconSize()} height={fslIconSize()} />

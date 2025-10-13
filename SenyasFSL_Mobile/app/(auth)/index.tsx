@@ -15,19 +15,7 @@ import {
 import "../../global.css";
 
 export default function GetStarted() {
-    useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const testRef = doc(db, "_connection_test", "ping");
-        await getDoc(testRef);
-        console.log("✅ Firebase connection successful!");
-      } catch (error) {
-        console.error("❌ Firebase connection failed:", error);
-      }
-    };
-
-    checkConnection();
-  }, []);
+  
   return (
     <SafeAreaView style={styles.container}>
       <View>
