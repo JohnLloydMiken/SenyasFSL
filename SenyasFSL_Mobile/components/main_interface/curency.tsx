@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Money from "@/assets/svgs/Currency.svg";
 
 type CurrencyProps = {
-  number: number;
+  number: number ;
 };
 
 const Currency: React.FC<CurrencyProps> = ({ number }) => {

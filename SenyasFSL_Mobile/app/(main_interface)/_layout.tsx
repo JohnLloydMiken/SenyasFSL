@@ -13,10 +13,14 @@ import TreasureIcon from '@/components/main_interface/treasureIcon';
 import UserStreak from '@/components/main_interface/userStreak';
 import UserInput from '@/components/authentication/userInput';
 import Authbutton from '@/components/authentication/button';
-
+import { useAuthStore } from "@/utils/store/useAuthStore";
+import { useUserStore } from "@/utils/store/useUserStore";
 import { BottomSheetProvider, useBottomSheet } from '@/modules/contextProvider';
+  
 
 export default function RootLayout() {
+  
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetProvider>
@@ -27,6 +31,8 @@ export default function RootLayout() {
 }
 
 function TabsWithBottomSheet() {
+  const { user, loading: authLoading } = useAuthStore();
+  const { userData, loading: userLoading } = useUserStore();
   const { bottomSheetRef, handleSheetChanges, isSheetOpen, sheet } = useBottomSheet();
   const router = useRouter();
   const {width} = useWindowDimensions()
@@ -42,6 +48,22 @@ function TabsWithBottomSheet() {
       return ["1"]; // closed by default
   }
 }, [sheet]);
+
+  if (userLoading) {
+      return (
+        <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
+          <Text>Loading...</Text>
+        </View>
+      );
+    }
+  
+    if (!userData) {
+      return (
+        <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
+          <Text>Could not load user profile. Please try again later.</Text>
+        </View>
+      );
+    }
   return (
     <>
     
@@ -51,11 +73,11 @@ function TabsWithBottomSheet() {
           
           headerTitle: '',
           tabBarStyle: isSheetOpen ? { display: 'none' } : {},
-          headerLeft: () => <Curency number={100} />,
+          headerLeft: () => <Curency number={userData?.senyasCoins} />,
           headerRight: () => (
             <HeaderRightBtn
               achievementCount={0}
-              streakCount={0}
+              streakCount={userData.currentStreak}
               onPressAchievement={() => router.push('./headeroptions/')}
               onPressLeaderboards={() => router.push('../headeroptions/leaderboards')}
             />

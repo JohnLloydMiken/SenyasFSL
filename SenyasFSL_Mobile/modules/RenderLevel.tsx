@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   SectionListRenderItem,
+  Text,
 } from "react-native";
 import { router } from "expo-router";
 import { Level, LevelSection } from "../modules/types/interface";
@@ -20,12 +21,31 @@ import BtnUp from "@/assets/svgs/BtnUp.svg";
 import BtnDown from "@/assets/svgs/BtnDown.svg";
 import LevelHeader from "@/components/LevelContent/levelHeader";
 import FSL_Hi from "@/assets/svgs/FSL_hello.svg";
-
+import { useAuthStore } from "@/utils/store/useAuthStore";
+import { useUserStore } from "@/utils/store/useUserStore";
 const MemoFSLHi = React.memo(FSL_Hi);
 const MemoBtnUp = React.memo(BtnUp);
 const MemoBtnDown = React.memo(BtnDown);
 
 const RenderLevel: React.FC = () => {
+  const { user, loading: authLoading } = useAuthStore();
+  const { userData, loading: userLoading } = useUserStore();
+  if (userLoading) {
+    return (
+      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
+        <Text>Could not load user profile. Please try again later.</Text>
+      </View>
+    );
+  }
+
   const userProgress = 5;
 
   const [levels] = useState<Level[]>(() => generateLevelData(50, userProgress));

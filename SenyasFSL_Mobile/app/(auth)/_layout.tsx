@@ -9,10 +9,10 @@ import {
 import { useAuth ,AuthProvider } from "@/services/auth/AuthProvider";
 export default function GetStarted(){
  return(
-   <AuthProvider>
+
     <GetStartedLayout>
     </GetStartedLayout>
-  </AuthProvider>
+
  )
 }
 

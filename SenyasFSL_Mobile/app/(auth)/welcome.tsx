@@ -10,13 +10,13 @@ import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
 import { fslIconSize } from "@/utils/sizes";
-import { useAuth } from "@/services/auth/AuthProvider";
-import { useUserData } from "@/hooks/useUserData";
+import { useAuthStore } from "@/utils/store/useAuthStore";
+import { useUserStore } from "@/utils/store/useUserStore";
 export default function welcome() {
-  const { user: authUser } = useAuth();
-  const { userData, loading: userDataLoading } = useUserData();
+  const { user, loading: authLoading } = useAuthStore();
+  const { userData, loading: userLoading } = useUserStore();
 
-  if (userDataLoading) {
+  if (userLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
         <Text>Loading...</Text>
@@ -24,7 +24,7 @@ export default function welcome() {
     );
   }
 
-  if(!userData){
+  if (!userData) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
         <Text>Could not load user profile. Please try again later.</Text>

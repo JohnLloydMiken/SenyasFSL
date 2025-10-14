@@ -1,7 +1,7 @@
 import React, { JSX, useState } from 'react';
 import { View, Text, SafeAreaView, StyleSheet } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
-import { usePredictionStore } from "@/utils/store";
+import { usePredictionStore } from "@/utils/store/store";
 interface PredictionResponse {
   prediction: string;
   confidence: number;

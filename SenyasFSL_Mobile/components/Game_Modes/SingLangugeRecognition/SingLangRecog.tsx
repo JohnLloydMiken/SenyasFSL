@@ -4,7 +4,7 @@ import SignLangRecogWebView from "./SignLangRecogWebView";
 import { useState } from "react";
 import LevelContentBtn from "../GameBtns/LevelContentBtn";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
-import { usePredictionStore } from "@/utils/store";
+import { usePredictionStore } from "@/utils/store/store";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { fslLetterMap } from "@/utils/assetsMap";
 interface SingLangRecogProps {
