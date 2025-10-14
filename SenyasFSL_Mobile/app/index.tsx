@@ -4,6 +4,7 @@ import Splash1 from "../components/authentication/splash1";
 import Splash2 from "../components/authentication/splashScreen";
 import GetStarted from "@/app/(auth)/index";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 export default function Splash() {
   const [screen, setScreen] = useState<"splash1" | "splash2" | "main">("splash1");
 

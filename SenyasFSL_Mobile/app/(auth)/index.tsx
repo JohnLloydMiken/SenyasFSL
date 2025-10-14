@@ -3,8 +3,7 @@ import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 import { fslIconSize } from "@/utils/sizes";
 import React, { useEffect } from "react";
-import { db } from "@/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+
 import {
   SafeAreaView,
   StyleSheet,
@@ -14,20 +13,9 @@ import {
 } from "react-native";
 import "../../global.css";
 
-export default function GetStarted() {
-    useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const testRef = doc(db, "_connection_test", "ping");
-        await getDoc(testRef);
-        console.log("✅ Firebase connection successful!");
-      } catch (error) {
-        console.error("❌ Firebase connection failed:", error);
-      }
-    };
 
-    checkConnection();
-  }, []);
+export default function GetStarted() {
+ 
   return (
     <SafeAreaView style={styles.container}>
       <View>

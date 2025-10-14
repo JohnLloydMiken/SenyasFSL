@@ -1,19 +1,25 @@
 import { Text, View, TextInput, TouchableOpacity, Alert } from "react-native";
-import { useState } from "react";
+import React, { useState } from "react";
 import "@/global.css";
 import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
-import { loginUser } from "@/services/AuthService"; // ✅ we'll add resetPassword
-import React from "react";
+import { loginUser } from "@/services/AuthService";
+import { useAuthStore } from "@/utils/store/useAuthStore";
 
 export default function Login() {
+  // Local UI state
   const [changePassword, setChangePassword] = useState(false);
   const [sendEmail, setSendEmail] = useState<boolean | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [resetEmail, setResetEmail] = useState("");
-
   const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Zustand store
+  const { user, loading: authLoading } = useAuthStore();
+
+  // ✅ Handle login
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Missing Info", "Please enter both email and password.");
@@ -21,16 +27,41 @@ export default function Login() {
     }
 
     try {
+      setIsLoading(true);
       await loginUser(email, password);
+
+      // ✅ Auth listener in Zustand will update `user` automatically
       router.push("/(auth)/welcome");
     } catch (err: any) {
+      console.error("Login failed:", err);
       setIsError(true);
       setEmail("");
       setPassword("");
+    } finally {
+      setIsLoading(false);
     }
   };
 
- 
+  // ✅ Handle forgot password
+  const handleSendResetEmail = async () => {
+    if (!resetEmail) {
+      Alert.alert("Missing Info", "Please enter your email.");
+      return;
+    }
+
+    try {
+      // await resetPassword(resetEmail); // implement in AuthService if needed
+      setSendEmail(true);
+      setTimeout(() => {
+        setChangePassword(false);
+        setSendEmail(null);
+        setResetEmail("");
+      }, 2000);
+    } catch (err) {
+      console.error("Reset email failed:", err);
+      setSendEmail(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-80">
@@ -53,7 +84,7 @@ export default function Login() {
           <TextInput
             placeholder="Email"
             value={email}
-            onChangeText={setEmail} // ✅ fixed
+            onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
             className="border-[1px] border-gray-400 rounded-md bg-white p-4 md:text-xl"
@@ -64,7 +95,7 @@ export default function Login() {
           </Text>
           <TextInput
             value={password}
-            onChangeText={setPassword} // ✅ fixed
+            onChangeText={setPassword}
             placeholder="Password"
             secureTextEntry
             className="border-[1px] border-gray-400 rounded-md bg-white p-4 md:text-xl"
@@ -74,13 +105,16 @@ export default function Login() {
 
       {/* Buttons */}
       <View className="w-11/12 absolute bottom-16">
-        <TouchableOpacity className="flex-1" disabled={isError}>
-          <Authbutton content="Log In" onPress={handleLogin} />
+        <TouchableOpacity disabled={isError || isLoading || authLoading}>
+          <Authbutton
+            content={isLoading || authLoading ? "Logging in..." : "Log In"}
+            onPress={handleLogin}
+          />
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => setChangePassword(!changePassword)}
-          disabled={isError}
+          disabled={isError || isLoading || authLoading}
         >
           <Text className="text-center font-PoppinsBold md:text-2xl text-[#626262]">
             Forgot Password?
@@ -91,7 +125,7 @@ export default function Login() {
       {/* Forgot Password Modal */}
       {changePassword && (
         <>
-          <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/60 z-40" />
+          <View className="absolute inset-0 bg-black/60 z-40" />
           <View className="absolute w-11/12 top-1/2 -translate-y-1/2 z-50 rounded-3xl bg-[#FAF3E0] p-4">
             <TouchableOpacity onPress={() => setChangePassword(false)}>
               <Text className="font-PoppinsBold text-xl md:text-2xl text-[#FB990F]">
@@ -135,8 +169,8 @@ export default function Login() {
             )}
 
             <TouchableOpacity
+              onPress={handleSendResetEmail}
               className="w-full bg-[#FB990F] rounded-2xl mt-2 p-4"
-        
             >
               <Text className="font-PoppinsBold text-center text-xl md:text-2xl text-white">
                 Send Email
@@ -146,6 +180,7 @@ export default function Login() {
         </>
       )}
 
+      {/* Error Popup */}
       {isError && (
         <View className="absolute w-96 h-60 top-1/2 -translate-y-1/2 bg-white border border-[#FB990F] rounded-xl p-4 flex flex-col items-center justify-center gap-3">
           <Text className="text-red-500 text-center font-PoppinsBold text-4xl md:text-3xl">
