@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import "@/global.css";
 import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
-import { loginUser } from "@/services/AuthService";
+import { loginUser } from "@/services/authService";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 
 export default function Login() {

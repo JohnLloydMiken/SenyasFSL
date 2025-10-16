@@ -8,7 +8,7 @@ import {
   Image,
   ImageSourcePropType,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Leaderboards from "@/json_files/leaderboards.json";
 
 // Type for one leaderboard entry
@@ -17,11 +17,17 @@ interface LeaderboardItem {
   name: string;
   score: number;
 }
+type LeaderboardData = {
+  daily?: any[];
+  weekly?: any[];
+  monthly?: any[];
+};
 
 export default function AchievementComponent() {
   const [selected, setSelected] = useState<"daily" | "weekly" | "monthly">(
     "daily"
   );
+const [leaderboard, setLeaderboard] = useState<LeaderboardData | null>(null);
 
   // Type-cast the imported JSON
   const leaderboardData = Leaderboards as LeaderboardItem[];
@@ -30,6 +36,11 @@ export default function AchievementComponent() {
   const rest = leaderboardData.slice(3);
   const { width } = useWindowDimensions();
   const svgSize = width < 768 ? 20 : 30;
+
+
+
+
+  if (!leaderboard) return <Text>Loading...</Text>;
 
   return (
     <ScrollView contentContainerStyle={{ alignItems: "center", paddingBottom: 20, backgroundColor: '#FAF3E0' }}>

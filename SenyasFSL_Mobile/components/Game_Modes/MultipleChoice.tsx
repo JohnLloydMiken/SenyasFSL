@@ -93,10 +93,6 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choice
       >
         <Inventory
           onPress={() => setIsClicked(!isClicked)}
-          XpPotion={1}
-          Bomb={0}
-          Retry={2}
-          Skip={1}
           isPressed={isClicked}
           onClose={() => setIsClicked(false)}
         />

@@ -67,10 +67,6 @@ const ViewMC: React.FC <ViewMCProps> = ({title, choices, videoSources, correctAn
       >
         <Inventory
           onPress={() => setIsClicked(!isClicked)}
-          XpPotion={1}
-          Bomb={0}
-          Retry={2}
-          Skip={1}
           isPressed={isClicked}
           onClose={() => setIsClicked(false)}
         />
