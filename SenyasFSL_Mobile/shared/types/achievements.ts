@@ -1,26 +1,57 @@
-// 1. First, define the shape of the unlock condition object
+// packages/shared/src/types/achievements.ts
+
+// The shape of the unlock condition object
 export interface AchievementUnlockCondition {
-  type: "streak" | "progressCount"; // Can be expanded with more types later
+  type: "streak" | "progressCount";
   value: number;
 }
 
-// 2. Then, update the main AchievementData interface
-export interface AchievementData {
-  id: string;
+// Renamed from AchievementData for consistency
+export interface ContentAchievement {
+  id: string; // Document ID
   title: string;
   description: string;
   type: "award" | "other";
   category: string;
-  image: string;
-  detailImage: string;
+  image: string; // gs:// URL
+  detailImage: string; // gs:// URL
   rewardCoins: number;
-  unlockCondition: AchievementUnlockCondition; // 👈 Use the new, specific type
+  unlockCondition: AchievementUnlockCondition;
 }
 
-// The payload for our function (remains empty)
+// --- USER-FACING TYPES (Existing) ---
 export interface CheckAchievementsData {}
-
-// The result our function will send back (remains the same)
 export interface CheckAchievementsResult {
-  newlyUnlocked: AchievementData[];
+  newlyUnlocked: ContentAchievement[];
 }
+
+// --- ADMIN CRUD API TYPES (New) ---
+
+// GET
+export type GetAchievementsResult = {
+  achievements: ContentAchievement[];
+};
+
+// CREATE
+export type CreateAchievementData = ContentAchievement;
+export type CreateAchievementResult = {
+  status: "success";
+  id: string;
+};
+
+// UPDATE
+export type UpdateAchievementData = {
+  id: string;
+  data: Partial<Omit<ContentAchievement, "id">>;
+};
+export type UpdateAchievementResult = {
+  status: "success";
+};
+
+// DELETE
+export type DeleteAchievementData = {
+  id: string;
+};
+export type DeleteAchievementResult = {
+  status: "success";
+};

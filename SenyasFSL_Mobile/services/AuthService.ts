@@ -1,5 +1,5 @@
 import { httpsCallable, HttpsCallableResult } from "firebase/functions";
-import { functions, auth } from "../firebaseConfig";
+import { functions, auth } from "@/firebaseConfig";
 import {
   CheckUsernameData,
   CheckUsernameResult,
@@ -9,7 +9,7 @@ import {
   UpdateUserProfileResult,
   DeleteUserAccountData,
   DeleteUserAccountResult,
-} from "@/shared/types/auth";
+} from "../shared/types/auth";
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
@@ -58,7 +58,7 @@ export async function checkUsername(
 ): Promise<CheckUsernameResult> {
   try {
     // Construct the URL to your public HTTP function
-    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const projectId = process.env.EXPO_PUBLIC_FIREBASE_APP_ID;
     const url = `https://us-central1-${projectId}.cloudfunctions.net/checkUsernameAvailability?username=${encodeURIComponent(
       username
     )}`;

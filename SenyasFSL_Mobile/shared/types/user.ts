@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 // 1. Defines the shape of the user's inventory
 export interface Inventory {
   xpMultiply: number;
@@ -14,9 +12,11 @@ export type ItemId = keyof Inventory;
 
 // 3. This is the main, single source of truth for the user's profile data
 export interface UserProfileData {
+  id: string;
   uid: string;
   username: string;
   email: string;
+  reason?: string; // Optional reason field (e.g. "work", "deaf", etc.)
   currentStreak: number;
   streakFreezes: number;
   xp: number;
@@ -26,7 +26,9 @@ export interface UserProfileData {
   inventory: Inventory;
   chestCount: number;
   achievements: string[];
-  lastUpdated: Timestamp;
+  createdAt: number | null; // converted from Firestore Timestamp -> milliseconds
+  lastActivityDate: number | null; // converted from Firestore Timestamp -> milliseconds
+  lastUpdated: number | null; // converted from Firestore Timestamp -> milliseconds
 }
 
 // --- Existing Interfaces ---

@@ -107,10 +107,6 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
       <View style={{ opacity }} className="w-full p-4 mx-auto absolute bottom-28 z-50">
         <Inventory
           onPress={() => setIsClicked((prev) => !prev)}
-          XpPotion={1}
-          Bomb={0}
-          Retry={2}
-          Skip={1}
           isPressed={isClicked}
           onClose={() => setIsClicked(false)}
         />

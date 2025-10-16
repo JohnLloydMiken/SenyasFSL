@@ -129,10 +129,6 @@ const FillTheGap: React.FC<FillTheGapProps> = ({title, videoSource, question, ch
       >
         <Inventory
           onPress={() => setIsClicked(!isClicked)}
-          XpPotion={1}
-          Bomb={0}
-          Retry={2}
-          Skip={1}
           isPressed={isClicked}
           onClose={() => setIsClicked(false)}
         />

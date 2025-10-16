@@ -1,5 +1,4 @@
-// screens/LevelsScreen.tsx
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -23,13 +22,20 @@ import LevelHeader from "@/components/LevelContent/levelHeader";
 import FSL_Hi from "@/assets/svgs/FSL_hello.svg";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
+
 const MemoFSLHi = React.memo(FSL_Hi);
 const MemoBtnUp = React.memo(BtnUp);
 const MemoBtnDown = React.memo(BtnDown);
 
 const RenderLevel: React.FC = () => {
-  const { user, loading: authLoading } = useAuthStore();
+  const { user } = useAuthStore();
   const { userData, loading: userLoading } = useUserStore();
+
+  const { width } = useWindowDimensions();
+  const FSLHiSize = width < 768 ? 160 : 300;
+  const BtnSize = width < 768 ? 40 : 80;
+
+  // ✅ Loading state
   if (userLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
@@ -46,15 +52,38 @@ const RenderLevel: React.FC = () => {
     );
   }
 
-  const userProgress = 5;
+  // ✅ Determine highest unlocked level from user progress
+  const userProgress = useMemo(() => {
+    if (typeof userData.progress === "number") {
+      return userData.progress; // e.g., if backend directly gives a number
+    } else if (Array.isArray(userData.progress)) {
+      // e.g., [2, 5, 10]
+      return Math.max(...userData.progress);
+    } else if (typeof userData.progress === "object") {
+      // e.g., { section1: 5, section2: 2 }
+      return Math.max(...Object.values(userData.progress));
+    }
+    return 1; // default fallback
+  }, [userData.progress]);
 
-  const [levels] = useState<Level[]>(() => generateLevelData(50, userProgress));
+  // ✅ Generate level data based on user's progress
+  const [levels, setLevels] = useState<Level[]>(() =>
+    generateLevelData(50, userProgress)
+  );
 
-  const [currentSection, setCurrentSection] = useState(0);
-  const { width } = useWindowDimensions();
+  // ✅ Compute initial section based on progress
+  const initialSection = useMemo(
+    () => Math.floor((userProgress - 1) / LEVELS_PER_SECTION),
+    [userProgress]
+  );
 
-  const FSLHiSize = width < 768 ? 160 : 300;
-  const BtnSize = width < 768 ? 40 : 80;
+  const [currentSection, setCurrentSection] = useState(initialSection);
+
+  // ✅ Recompute levels when user progress updates
+  useEffect(() => {
+    setLevels(generateLevelData(50, userProgress));
+    setCurrentSection(initialSection);
+  }, [userProgress, initialSection]);
 
   // ✅ Sections
   const sectionsData = useMemo(() => {
@@ -90,7 +119,6 @@ const RenderLevel: React.FC = () => {
 
   const handleLevelPress = useCallback((level: Level): void => {
     if (level.isUnlocked) {
-      console.log("Level pressed:", level.id);
       router.push(`/LevelSplashScreen?nextRoute=level&levelId=${level.id}`);
     }
   }, []);
@@ -120,6 +148,7 @@ const RenderLevel: React.FC = () => {
     []
   );
 
+  // ✅ Render
   return (
     <View style={styles.container}>
       <SectionList
@@ -175,7 +204,7 @@ const titles = [
   "Learn the Labels",
   "Learn the Calendar and Time Units",
   "Learn the Family and Colors",
-  "Learn the occupations and relationships",
+  "Learn the Occupations and Relationships",
   "Learn the Food",
   "Learn the Home Vocabulary",
   "Learn the Socializing",
