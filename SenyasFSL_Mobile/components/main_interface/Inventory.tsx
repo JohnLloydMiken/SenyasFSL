@@ -114,7 +114,7 @@ const Inventory: React.FC<InventoryProps> = React.memo(
     }
 
     return (
-      <View className="w-11/12 relative mx-auto">
+      <View className="w-full relative ">
         {/* 🔹 Animated Inventory Panel */}
         <Animated.View
           style={{

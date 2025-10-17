@@ -7,6 +7,8 @@ interface Count {
   number?: number;
 }
 const InventoryCount: React.FC<Count> = ({ number }) => {
+
+  
   return (
     <LinearGradient
       colors={["#FB990F", "#EA0505"]}
