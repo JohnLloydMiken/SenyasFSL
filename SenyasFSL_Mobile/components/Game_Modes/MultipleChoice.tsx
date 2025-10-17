@@ -8,36 +8,46 @@ import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
-import MCContent from "@/json_files/MutlipleChoiceContent.json";
 import Inventory from "../main_interface/Inventory";
-import { fslLetterMap } from "@/utils/assetsMap";
-interface MultipleChoiceProps {
-  title: string;
-  videoUrl: string
-  choices: ReadonlyArray<readonly [string, string]>
-  correctAnswer: string
-  onPress: () => void
 
+interface Option {
+  id: string;
+  labelEn: string;
+  labelFil: string;
+  isCorrect: boolean;
 }
 
-const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choices, onPress , correctAnswer }) => {
-  const [isClicked, setIsClicked] = useState(false);
-  const [choice, setChoice] = useState<string | null>(null);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [hasChecked, setHasChecked] = useState(false); // New state to track if "Check" was pressed
-  const [opacity, setOpacity] = useState(100);
- const videoSource = fslLetterMap[videoUrl]
+interface MultipleChoiceProps {
+  enPrompt: string;
+  filPrompt: string;
+  videoUrl: string;
+  options: Option[];
+  onPress: () => void;
+}
 
-  const player = useVideoPlayer(videoSource, (player) => {
+const MultipleChoice: React.FC<MultipleChoiceProps> = ({
+  enPrompt,
+  filPrompt,
+  videoUrl,
+  options,
+  onPress,
+}) => {
+  const [isClicked, setIsClicked] = useState(false);
+  const [choice, setChoice] = useState<Option | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [hasChecked, setHasChecked] = useState(false);
+  const [opacity, setOpacity] = useState(100);
+
+  const player = useVideoPlayer(videoUrl, (player) => {
     player.loop = true;
     player.muted = true;
     player.play();
   });
 
-  const handleBG = () => {
+  const handleCheck = () => {
     if (choice) {
-      setIsCorrect(choice === correctAnswer);
-      setHasChecked(true); // Mark that check button was pressed
+      setIsCorrect(choice.isCorrect);
+      setHasChecked(true);
       setOpacity(0);
     }
   };
@@ -45,7 +55,10 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choice
   return (
     <View className="flex-1 relative bg-white">
       <Text className="text-center text-2xl md:text-3xl font-PoppinsBold my-2">
-        {title}
+        {enPrompt}
+      </Text>
+      <Text className="text-center text-xl md:text-2xl font-PoppinsLightItalic my-2">
+        {filPrompt}
       </Text>
 
       <View className="w-full h-[30%] relative -top-1">
@@ -56,41 +69,27 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choice
           allowsPictureInPicture={false}
           nativeControls={false}
         />
-        <View
-          className={`bg-white/60 w-full p-4 absolute bottom-0 ${hasChecked && "opacity-100"} opacity-0`}
-        >
-          <Text className="text-sm text-center font-PoppinsRegular">
-            {correctAnswer}
-          </Text>
-        </View>
       </View>
 
-      <View className="w-11/12 mx-auto ">
-        {choices.map((item, index) => {
-          return (
-            <MCBTN
-              key={index}
-              EnglishText={choices[index][0]}
-              FilipinoText={`"${choices[index][1]}"`}
-              onPress={() => {
-                if (!hasChecked) {
-                  // Only allow selection if not checked yet
-                  setChoice(choices[index][0]);
-                }
-              }}
-              clicked={hasChecked} // Keep for backward compatibility
-              isCorrect={choices[index][0] === correctAnswer} // Each button knows if it's the correct answer
-              isSelected={choice === choices[index][0]} // New prop: is this button selected
-              hasChecked={hasChecked} // New prop: has check button been pressed
-              rounded={50}
-            />
-          );
-        })}
+      <View className="w-11/12 mx-auto mt-4">
+        {options.map((item, index) => (
+          <MCBTN
+            key={index}
+            EnglishText={item.labelEn}
+            FilipinoText={item.labelFil}
+            onPress={() => {
+              if (!hasChecked) setChoice(item);
+            }}
+            clicked={hasChecked}
+            isCorrect={item.isCorrect}
+            isSelected={choice?.id === item.id}
+            hasChecked={hasChecked}
+            rounded={50}
+          />
+        ))}
       </View>
 
-      <View
-        className={`w-full p-4 mx-auto absolute bottom-20 z-50 opacity-${opacity}`}
-      >
+      <View className={`w-full p-4 mx-auto absolute bottom-20 z-50 opacity-${opacity}`}>
         <Inventory
           onPress={() => setIsClicked(!isClicked)}
           isPressed={isClicked}
@@ -100,14 +99,14 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choice
 
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
         {isCorrect === true ? (
-          <View className=" flex-row mx-auto justify-center items-center gap-2">
+          <View className="flex-row mx-auto justify-center items-center gap-2">
             <CorrectIcon />
             <Text className="font-PoppinsBold text-lg md:text-xl text-white">
               Correct!
             </Text>
           </View>
         ) : isCorrect === false ? (
-          <View className=" flex-row mx-auto justify-center items-center gap-2">
+          <View className="flex-row mx-auto justify-center items-center gap-2">
             <Incorrect />
             <Text className="font-PoppinsBold text-lg md:text-xl text-white">
               Incorrect!
@@ -116,14 +115,9 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choice
         ) : null}
 
         {choice && !hasChecked ? (
-          <LevelContentBtn text="Check" onPress={handleBG} />
+          <LevelContentBtn text="Check" onPress={handleCheck} />
         ) : (
-          hasChecked && (
-            <LevelContentBtn
-              text="Next"
-              onPress={onPress}
-            />
-          )
+          hasChecked && <LevelContentBtn text="Next" onPress={onPress} />
         )}
       </View>
 
@@ -139,7 +133,5 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ title, videoUrl, choice
     </View>
   );
 };
-
-
 
 export default MultipleChoice;
