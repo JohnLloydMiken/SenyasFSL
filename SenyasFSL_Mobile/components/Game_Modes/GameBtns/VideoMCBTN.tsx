@@ -1,10 +1,11 @@
-import React, { JSX } from "react";
+import React, { JSX, useEffect, useState } from "react";
 import {
   Text,
   View,
   TouchableOpacity,
   useWindowDimensions,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useVideoPlayer, VideoView } from "expo-video";
@@ -12,11 +13,11 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import ViDSelected from "@/assets/svgs/VidSelected.svg";
 import ViDCorrect from "@/assets/svgs/VidCorrect.svg";
 import VidWrong from "@/assets/svgs/VidWrong.svg";
-import { fslLetterMap } from "@/utils/assetsMap";
 
 interface VideoMCBTNProps {
-  answer: readonly [string, string];
-  videoSource: string;
+  labeFil:string,
+  labelEn: string;
+  videoSource: string; // must be a remote HTTPS URL
   hasChecked: boolean;
   isCorrect: boolean;
   clicked: boolean;
@@ -32,7 +33,8 @@ const gradients = {
 };
 
 const VideoMCBTN: React.FC<VideoMCBTNProps> = ({
-  answer,
+  labeFil,
+  labelEn,
   isCorrect,
   hasChecked,
   onPress,
@@ -41,16 +43,33 @@ const VideoMCBTN: React.FC<VideoMCBTNProps> = ({
 }) => {
   const { width } = useWindowDimensions();
   const svgSize = width < 768 ? 34 : 50;
-  const vidSource = fslLetterMap[videoSource];
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
 
-  const player = useVideoPlayer(vidSource, (p) => {
+  // ✅ Init remote video
+  const player = useVideoPlayer({ uri: videoSource }, (p) => {
     p.loop = true;
     p.muted = true;
-    p.play();
+    p.play()
   });
 
+  useEffect(() => {
+    const loadVideo = async () => {
+      try {
+        setIsLoading(true);
+        await player.play();
+        setIsLoading(false);
+      } catch (error) {
+        setIsError(true);
+        setIsLoading(false);
+        console.error("🎥 Video failed to load:", error);
+      }
+    };
+    loadVideo();
+  }, [videoSource]);
+
   // 🎨 Pick gradient
-   let gradientColors: readonly [string, string] = gradients.default;
+  let gradientColors: readonly [string, string] = gradients.default;
   if (hasChecked) {
     gradientColors = isCorrect ? gradients.correct : gradients.incorrect;
   } else if (isSelected) {
@@ -81,27 +100,37 @@ const VideoMCBTN: React.FC<VideoMCBTNProps> = ({
         activeOpacity={0.9}
         onPress={onPress}
       >
-        {/* Video */}
-        <VideoView
-          style={styles.video}
-          player={player}
-          allowsFullscreen={false}
-          allowsPictureInPicture={false}
-          nativeControls={false}
-        />
+        {/* 🎥 Remote video */}
+        {isError ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>Video not available</Text>
+          </View>
+        ) : isLoading ? (
+          <View style={styles.loaderBox}>
+            <ActivityIndicator size="large" color="#EA0505" />
+          </View>
+        ) : (
+          <VideoView
+            style={styles.video}
+            player={player}
+            allowsFullscreen={false}
+            allowsPictureInPicture={false}
+            nativeControls={false}
+          />
+        )}
 
-        {/* Answer text (revealed after checking) */}
+        {/* 📝 Answer text (revealed after checking) */}
         <View
           style={[
             styles.answerBox,
             { opacity: hasChecked ? 1 : 0 },
           ]}
         >
-          <Text style={styles.answerText}>{answer[0]}</Text>
-          <Text style={styles.answerText}>{`"${answer[1]}"`}</Text>
+          <Text style={styles.answerText}>{labelEn}</Text>
+          <Text style={styles.answerText}>{`"${labeFil}"`}</Text>
         </View>
 
-        {/* Status Icon */}
+        {/* 🧩 Status Icon */}
         <LinearGradient
           colors={gradientColors}
           start={{ x: 0, y: 0 }}
@@ -138,6 +167,27 @@ const styles = StyleSheet.create({
     width: "98%",
     height: "100%",
     borderRadius: 16,
+  },
+  loaderBox: {
+    width: "98%",
+    height: "100%",
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorBox: {
+    width: "98%",
+    height: "100%",
+    borderRadius: 16,
+    backgroundColor: "rgba(255,0,0,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#A20000",
+    fontFamily: "Poppins-Bold",
+    fontSize: 16,
   },
   answerBox: {
     backgroundColor: "rgba(255,255,255,0.6)",

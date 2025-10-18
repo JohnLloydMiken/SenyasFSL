@@ -1,5 +1,5 @@
-import { View, Text } from "react-native";
-import React, { useState, useMemo } from "react";
+import { View, Text, ActivityIndicator } from "react-native";
+import React, { useState, useMemo, useEffect } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
 import LevelContentBtn from "./GameBtns/LevelContentBtn";
 import MCBTN from "./GameBtns/MCBTN";
@@ -9,24 +9,21 @@ import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import Inventory from "../main_interface/Inventory";
-// import { fslLetterMap } from "@/utils/assetsMap"; // No longer needed
+import { getVideoUrl } from "@/services/gameService";
 
-// 1. Define and export the Option type
 export interface TrueFalseOption {
   id: string;
-  incorrect: boolean;
+  isCorrect: boolean;
   labelEn: string;
   labelFil: string;
 }
 
-// 2. Update the props interface
 interface TrueOrFalseProps {
-  enQuestion: string;   // Was 'title' and 'question' arrays
-  filQuestion: string;  // Was 'title' and 'question' arrays
-  videoURL: string;     // Was 'videoSource', this must be an https:// URL
-  options: readonly TrueFalseOption[]; // Was 'choices' array of tuples
+  enQuestion: string;
+  filQuestion: string;
+  videoURL: string;
+  options: readonly TrueFalseOption[];
   onPress: () => void;
-  // 'correctAnswer' prop removed, will be derived from options
 }
 
 const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
@@ -37,47 +34,72 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
   onPress,
 }) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [selectedChoice, setSelectedChoice] = useState<string | null>(null); // Will store "True" or "False"
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null); // stores option id
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(1);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 3. Derive the correct answer from the options prop
   const correctAnswer = useMemo(() => {
-    const correctOpt = options.find(opt => opt.incorrect === false);
-    return correctOpt ? correctOpt.labelEn : ""; // This will be "True"
+    const correctOpt = options.find((opt) => !opt.isCorrect);
+    return correctOpt ? correctOpt.labelEn : "";
   }, [options]);
 
-  // 4. Use the videoURL prop directly
-  const player = useVideoPlayer(videoURL, (p) => {
+  // Create video player without source initially
+  const player = useVideoPlayer(null, (p) => {
     p.loop = true;
     p.muted = true;
-    p.play();
   });
+
+  // Fetch and resolve video URL then update player
+  useEffect(() => {
+    const loadVideo = async () => {
+      try {
+        let finalUrl = videoURL;
+        if (videoURL.startsWith("gs://")) {
+          finalUrl = await getVideoUrl(videoURL);
+        }
+        setResolvedUrl(finalUrl);
+        player.replace(finalUrl);
+        player.play();
+      } catch (error) {
+        console.error("Error loading video URL:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadVideo();
+  }, [videoURL]);
 
   const handleCheck = () => {
     if (selectedChoice) {
-      setIsCorrect(selectedChoice === correctAnswer);
+      const selectedOption = options.find((opt) => opt.id === selectedChoice);
+      const correct = selectedOption ? !selectedOption.isCorrect : false;
+      setIsCorrect(correct);
       setHasChecked(true);
       setOpacity(0);
     }
   };
 
+  if (loading || !resolvedUrl) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" />
+        <Text className="mt-2 text-lg">Loading video...</Text>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 relative items-center bg-white">
-      {/* 5. Update Question section */}
       <View className="w-10/12">
-        <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">
-          {filQuestion}
-        </Text>
-        <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">
-          {enQuestion}
-        </Text>
+        <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">{filQuestion}</Text>
+        <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">{enQuestion}</Text>
       </View>
 
-      {/* 6. Update Video Section - now shows one centered video */}
       <View className="w-full h-56 flex-row items-center justify-center">
-        <View className="w-48 h-36">
+        <View className="w-full h-full">
           <VideoView
             style={{ width: "100%", height: "100%" }}
             player={player}
@@ -86,31 +108,25 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
             nativeControls={false}
           />
         </View>
-        {/* Removed the second video player */}
       </View>
 
-      {/* 7. Update Choices section to map 'options' */}
       <View className="w-11/12 mx-auto">
         {options.map((option) => (
           <MCBTN
             key={option.id}
             EnglishText={option.labelEn}
             FilipinoText={`"${option.labelFil}"`}
-            onPress={() => !hasChecked && setSelectedChoice(option.labelEn)}
+            onPress={() => !hasChecked && setSelectedChoice(option.id)}
             clicked={hasChecked}
-            isCorrect={option.labelEn === correctAnswer}
-            isSelected={selectedChoice === option.labelEn}
+            isCorrect={!option.isCorrect}
+            isSelected={selectedChoice === option.id}
             hasChecked={hasChecked}
             rounded={50}
           />
         ))}
       </View>
 
-      {/* Inventory */}
-      <View
-        style={{ opacity }}
-        className="w-full p-4 mx-auto absolute bottom-28 z-50"
-      >
+      <View style={{ opacity }} className="w-full p-4 mx-auto absolute bottom-28 z-50">
         <Inventory
           onPress={() => setIsClicked((prev) => !prev)}
           isPressed={isClicked}
@@ -118,7 +134,6 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
         />
       </View>
 
-      {/* Feedback & Actions (This section is fine, no changes needed) */}
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
         {isCorrect !== null && (
           <View className="flex-row mx-auto justify-center items-center gap-2">
@@ -136,15 +151,8 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
         ) : null}
       </View>
 
-      {/* Backgrounds (This section is fine, no changes needed) */}
       <View className="absolute w-full bottom-0 z-10">
-        {isCorrect === true ? (
-          <CorrectBG />
-        ) : isCorrect === false ? (
-          <WrongBG />
-        ) : (
-          <LevelBg />
-        )}
+        {isCorrect === true ? <CorrectBG /> : isCorrect === false ? <WrongBG /> : <LevelBg />}
       </View>
     </View>
   );
