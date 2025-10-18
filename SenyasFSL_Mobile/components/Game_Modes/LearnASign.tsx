@@ -34,27 +34,17 @@ const LearnASign: React.FC<LearnASignProps> = ({
   // ✅ Fetch video URL
   useEffect(() => {
     const loadVideo = async () => {
-      console.log("🎬 LearnASign mounted!");
-      console.log("📦 Received videoURL prop:", videoURL);
-
       try {
         let finalUrl = videoURL;
-
         if (videoURL.startsWith("gs://")) {
-          console.log("🔄 Fetching download URL from Firebase Storage...");
           finalUrl = await getVideoUrl(videoURL);
-          console.log("✅ Fetched download URL:", finalUrl);
         } else {
-          console.log("✅ Using direct https URL:", finalUrl);
         }
-
         setResolvedUrl(finalUrl);
         player.replace(finalUrl); // ✅ Correct way to update video source
-        player.play();
+        player.pause();
       } catch (error) {
-        console.error("❌ Error loading video:", error);
       } finally {
-        console.log("🟣 Finished loading video");
         setLoading(false);
       }
     };

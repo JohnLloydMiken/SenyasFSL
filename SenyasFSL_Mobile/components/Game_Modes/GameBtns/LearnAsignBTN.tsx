@@ -1,13 +1,18 @@
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, Text, View, TouchableOpacity, useWindowDimensions } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  useWindowDimensions,
+} from "react-native";
 interface LearnAsignBTNProps {
   EnglishText: string;
   FilipinoText: string;
   clicked: boolean;
   onPress: () => void;
 }
-
 
 const LearnAsignBTN: React.FC<LearnAsignBTNProps> = ({
   EnglishText,
@@ -25,7 +30,7 @@ const LearnAsignBTN: React.FC<LearnAsignBTNProps> = ({
           style={{
             width: "100%",
             borderRadius: 50,
-            backgroundColor: "trasnparent",
+            backgroundColor: "transparent",
             elevation: 5,
             padding: 1,
             marginTop: 10,
@@ -94,4 +99,4 @@ const LearnAsignBTN: React.FC<LearnAsignBTNProps> = ({
     </>
   );
 };
-export default LearnAsignBTN
+export default LearnAsignBTN;

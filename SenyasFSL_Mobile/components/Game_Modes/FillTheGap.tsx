@@ -1,21 +1,23 @@
-import { View, Text } from "react-native";
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { View, Text, ActivityIndicator } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
+import { LinearGradient } from "expo-linear-gradient";
+
 import LevelContentBtn from "./GameBtns/LevelContentBtn";
 import MCBTN from "./GameBtns/MCBTN";
+import Inventory from "../main_interface/Inventory";
+
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 
-import Inventory from "../main_interface/Inventory";
-
-import { LinearGradient } from "expo-linear-gradient";
+import { getVideoUrl } from "@/services/gameService";
 
 export interface QuestionOption {
   id: string;
-  incorrect: boolean;
+  isCorrect: boolean;
   labelEn: string;
   labelFil: string;
 }
@@ -23,8 +25,8 @@ export interface QuestionOption {
 interface FillTheGapProps {
   enPrompt: string;
   filPrompt: string;
-  videoURL: string; // Changed from videoSource
-  options: readonly QuestionOption[]; // Changed from choices
+  videoURL: string;
+  options: readonly QuestionOption[];
   message: string;
   onPress: () => void;
 }
@@ -38,40 +40,75 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
   onPress,
 }) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [choice, setChoice] = useState<string | null>(null); // Will store the selected labelEn
+  const [choice, setChoice] = useState<string | null>(null); // store selected option id
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(100);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 1. Derive the correct answer from the options prop
-  const correctAnswer = useMemo(() => {
-    const correctOption = options.find((opt) => opt.incorrect === false);
-    return correctOption ? correctOption.labelEn : ""; // Assuming we check against the English label
-  }, [options]);
+  // ✅ Find the correct option
+const correctOption = useMemo(
+  () => options.find((opt) => opt.isCorrect) || null,
+  [options]
+);
 
-  const handleBG = () => {
-    if (choice) {
-      setIsCorrect(choice === correctAnswer);
-      setHasChecked(true);
-      setOpacity(0);
-    }
-  };
+// ✅ Check answer correctly
+const handleCheck = () => {
+  if (choice) {
+    const selectedOption = options.find((opt) => opt.id === choice);
+    const correct = selectedOption ? selectedOption.isCorrect : false;
+    setIsCorrect(correct);
+    setHasChecked(true);
+    setOpacity(0);
+  }
+};
 
-  // 2. Use the videoURL prop directly
-  // IMPORTANT: See note below about gs:// vs https:// URLs
-  const player = useVideoPlayer(videoURL, (player) => {
-    player.loop = true;
-    player.muted = true;
-    player.pause();
+
+  // Initialize video player
+  const player = useVideoPlayer(null, (p) => {
+    p.loop = true;
+    p.muted = true;
   });
 
+  // Fetch video URL from Firebase if gs://
+  useEffect(() => {
+    const loadVideo = async () => {
+      try {
+        let finalUrl = videoURL;
+        if (videoURL.startsWith("gs://")) {
+          finalUrl = await getVideoUrl(videoURL);
+        }
+        setResolvedUrl(finalUrl);
+        player.replace(finalUrl);
+        player.play();
+      } catch (error) {
+        console.error("Error loading video:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadVideo();
+  }, [videoURL]);
+
+  if (loading || !resolvedUrl) {
+    return (
+      <View className="flex-1 justify-center items-center bg-white">
+        <ActivityIndicator size="large" />
+        <Text className="mt-2 text-lg">Loading video...</Text>
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 relataive items-center bg-white">
+    <View className="flex-1 relative items-center bg-white">
+      {/* Prompts */}
       <Text className="font-PoppinsBold text-2xl md:text-3xl">{enPrompt}</Text>
       <Text className="font-PoppinsLightItallic text-xl md:text-3xl">
         {filPrompt}
       </Text>
 
+      {/* Video */}
       <View className="w-full h-[30%] relative -top-1">
         <VideoView
           style={{ width: "100%", height: "100%" }}
@@ -80,24 +117,22 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
           allowsPictureInPicture={false}
           nativeControls={false}
         />
-        <View className={`bg-white/60 w-full p-4 absolute bottom-0 opacity-0`}>
+        <View className="bg-white/60 w-full p-4 absolute bottom-0 opacity-0">
           <Text className="text-sm text-center font-PoppinsRegular">
-            {correctAnswer}
+            {isCorrect}
           </Text>
         </View>
       </View>
 
-      <View className="w-11/12 rounded-md border border-[#F7D674] p-4 flex-col justify-center items-center">
+      {/* Question */}
+      <View className="w-11/12 rounded-md border border-[#F7D674] p-4 items-center">
         <Text className="text-center font-PoppinsSemiBold text-lg md:text-xl">
           {enPrompt}
         </Text>
-        {hasChecked === true ? (
+
+        {hasChecked ? (
           <LinearGradient
-            colors={
-              hasChecked === true && isCorrect === true
-                ? ["#31F705", "#007D00"]
-                : ["#FF6A6C", "#A20000"]
-            }
+            colors={isCorrect ? ["#31F705", "#007D00"] : ["#FF6A6C", "#A20000"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 0.8 }}
             style={{
@@ -111,55 +146,45 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
               zIndex: 50,
             }}
           >
-            <View className=" rounded-full w-full p-2">
+            <View className="rounded-full w-full p-2">
               <Text className="text-sm md:text-lg font-PoppinsBold text-white text-center">
-                {choice}
+                {options.find((opt) => opt.id === choice)?.labelEn || ""}
               </Text>
             </View>
           </LinearGradient>
         ) : (
-          <View className="w-16 h-10 bg-gray-400"></View>
+          <View className="w-16 h-10 bg-gray-400" />
         )}
       </View>
 
+      {/* Options */}
       <View className="w-11/12 flex-row flex-wrap justify-between mt-4">
-        {options.map((option) => {
-          const choiceLabel = option.labelEn;
-
-          return (
+        {options.map((option) => (
+          <View key={option.id} className="w-[48%] mb-5 relative items-center">
             <View
-              key={option.id}
-              className="w-[48%] mb-5 relative items-center"
+              className={`${
+                hasChecked && choice === option.id ? "opacity-0" : "opacity-100"
+              } w-full`}
             >
-              {/* The button itself */}
-              <View
-                className={`${
-                  hasChecked && choice === choiceLabel
-                    ? "opacity-0"
-                    : "opacity-100"
-                } w-full`}
-              >
-                <MCBTN
-                  EnglishText={choiceLabel}
-                  FilipinoText={option.labelFil}
-                  rounded={6}
-                  hasChecked={hasChecked}
-                  isCorrect={choiceLabel === correctAnswer}
-                  isSelected={choice === choiceLabel}
-                  onPress={() => {
-                    if (!hasChecked) setChoice(choiceLabel);
-                  }}
-                  clicked={hasChecked}
-                />
-              </View>
-
-              {/* Background gray overlay */}
-              <View className="absolute w-24 h-8 bg-[#E6E6E6] rounded-md top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0" />
+              <MCBTN
+                EnglishText={option.labelEn}
+                FilipinoText={option.labelFil}
+                rounded={6}
+                hasChecked={hasChecked}
+                isCorrect={option.id === correctOption?.id}
+                isSelected={choice === option.id}
+                onPress={() => {
+                  if (!hasChecked) setChoice(option.id);
+                }}
+                clicked={hasChecked}
+              />
             </View>
-          );
-        })}
+            <View className="absolute w-24 h-8 bg-[#E6E6E6] rounded-md top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0" />
+          </View>
+        ))}
       </View>
 
+      {/* Inventory Button */}
       <View
         className={`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}
       >
@@ -170,36 +195,25 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
         />
       </View>
 
-      <View className="absolute bottom-6 w-96 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2 ">
-        <View
-          className={`flex-row mx-auto justify-center items-center gap-2 ${
-            isCorrect == null
-              ? "hidden"
-              : isCorrect === true
-                ? "flex"
-                : "hidden"
-          }`}
-        >
-          <CorrectIcon />
-          <Text className="font-PoppinsBold text-lg md:text-xl text-white">
-            Correct!
-          </Text>
-        </View>
+      {/* Feedback Section */}
+      <View className="absolute bottom-6 w-96 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
+        {isCorrect === true && (
+          <View className="flex-row mx-auto justify-center items-center gap-2">
+            <CorrectIcon />
+            <Text className="font-PoppinsBold text-lg md:text-xl text-white">
+              Correct!
+            </Text>
+          </View>
+        )}
 
-        <View
-          className={`flex-row mx-auto justify-center items-center gap-2 ${
-            isCorrect == null
-              ? "hidden"
-              : isCorrect === false
-                ? "flex"
-                : "hidden"
-          }`}
-        >
-          <Incorrect />
-          <Text className="font-PoppinsBold text-lg md:text-xl text-white">
-            Incorrect!
-          </Text>
-        </View>
+        {isCorrect === false && (
+          <View className="flex-row mx-auto justify-center items-center gap-2">
+            <Incorrect />
+            <Text className="font-PoppinsBold text-lg md:text-xl text-white">
+              Incorrect!
+            </Text>
+          </View>
+        )}
 
         {hasChecked && (
           <Text className="text-center text-white font-NunitoBold text-sm">
@@ -209,7 +223,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
 
         {choice && !hasChecked ? (
           <View className="w-2/3 mx-auto">
-            <LevelContentBtn text="Check" onPress={handleBG} />
+            <LevelContentBtn text="Check" onPress={handleCheck} />
           </View>
         ) : (
           hasChecked && (
@@ -220,6 +234,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
         )}
       </View>
 
+      {/* Backgrounds */}
       <View className="absolute w-full bottom-0 z-10">
         {isCorrect === true ? (
           <CorrectBG />

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, ActivityIndicator } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { getLevelData, getFlowContent } from "@/services/gameService";
 import FillTheGap from "@/components/Game_Modes/FillTheGap";
@@ -10,21 +10,22 @@ import VideoMC from "@/components/Game_Modes/VideoMC";
 
 export default function LevelContent() {
   const { levelId } = useLocalSearchParams();
+  const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [levelData, setLevelData] = useState<any>(null);
   const [flowContent, setFlowContent] = useState<Map<string, any> | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
 
+  // ⏬ Fetch Level Data and Flow
   useEffect(() => {
     const fetchLevelAndFlow = async () => {
       setLoading(true);
       try {
-        // 1️⃣ Fetch level data (like title, flow, intro, etc.)
         const level = await getLevelData(`s1_lvl_${levelId}` as string);
         setLevelData(level);
 
-        // 2️⃣ Fetch lesson & question content referenced in flow
-        if (level && level.flow) {
+        if (level?.flow) {
           const contentMap = await getFlowContent(level.flow);
           setFlowContent(contentMap);
         }
@@ -38,14 +39,42 @@ export default function LevelContent() {
     fetchLevelAndFlow();
   }, [levelId]);
 
-  // 3️⃣ Get the current step data
+  // ⏩ Move to next step or evaluation
+  const handleNextStep = () => {
+    if (levelData && currentStep + 1 < levelData.flow.length) {
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      // 🏁 When last step is done → Go to Evaluation screen
+      router.push({
+        pathname: "./Eval_phase",
+        params: {
+          levelId,
+          lessons: JSON.stringify(
+            // 👈 send lessons to recap
+            levelData.flow
+              .filter((f: any) => f.type === "lesson")
+              .map((f: any) => {
+                const c = flowContent?.get(f.ref);
+                return {
+                  id: c?.id,
+                  enTitle: c?.enTitle,
+                  filTitle: c?.filTitle,
+                  videoUrl: c?.videoUrl,
+                };
+              })
+          ),
+        },
+      });
+    }
+  };
+
+  // 🧩 Get current step data
   const flowStep =
     levelData?.flow && flowContent ? levelData.flow[currentStep] : null;
-
   const content =
     flowStep && flowContent ? flowContent.get(flowStep.ref) : null;
 
-  // 4️⃣ Decide which component to show
+  // 🧠 Render Component based on type
   const renderStep = () => {
     if (loading) {
       return (
@@ -64,7 +93,7 @@ export default function LevelContent() {
       );
     }
 
-    // LESSON TYPE
+    // 🧠 LESSON TYPE
     if (flowStep.type === "lesson") {
       return (
         <LearnASign
@@ -73,18 +102,14 @@ export default function LevelContent() {
           videoURL={content.videoUrl}
           EnglishText={content.enTitle}
           FilipinoText={content.filTitle}
-          onPress={() =>
-            setCurrentStep((prev) =>
-              prev + 1 < levelData.flow.length ? prev + 1 : prev
-            )
-          }
+          onPress={handleNextStep}
         />
       );
     }
 
-    // QUESTION TYPE
+    // 🧩 QUESTION TYPE
     if (flowStep.type === "question") {
-      const qType = content.type; // e.g. "multiple_choice", "true_false", etc.
+      const qType = content.type?.toLowerCase();
 
       switch (qType) {
         case "multiple_choice":
@@ -95,13 +120,8 @@ export default function LevelContent() {
               filPrompt={content.filPrompt}
               videoUrl={content.videoUrl}
               options={content.options}
-              onPress={() =>
-                setCurrentStep((prev) =>
-                  prev + 1 < levelData.flow.length ? prev + 1 : prev
-                )
-              }
+              onPress={handleNextStep}
             />
-            
           );
         case "fill_in_the_gap":
           return (
@@ -112,11 +132,7 @@ export default function LevelContent() {
               message="Alright!"
               videoURL={content.videoUrl}
               options={content.options}
-              onPress={() =>
-                setCurrentStep((prev) =>
-                  prev + 1 < levelData.flow.length ? prev + 1 : prev
-                )
-              }
+              onPress={handleNextStep}
             />
           );
         case "true_or_false":
@@ -127,11 +143,7 @@ export default function LevelContent() {
               filQuestion={content.filPrompt}
               options={content.options}
               videoURL={content.videoUrl}
-              onPress={() =>
-                setCurrentStep((prev) =>
-                  prev + 1 < levelData.flow.length ? prev + 1 : prev
-                )
-              }
+              onPress={handleNextStep}
             />
           );
         case "multiple_choice_video":
@@ -141,11 +153,7 @@ export default function LevelContent() {
               enPrompt={content.enPrompt}
               filPrompt={content.filPrompt}
               options={content.options}
-              onPress={() =>
-                setCurrentStep((prev) =>
-                  prev + 1 < levelData.flow.length ? prev + 1 : prev
-                )
-              }
+              onPress={handleNextStep}
             />
           );
         default:
