@@ -10,6 +10,7 @@ import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import Inventory from "../main_interface/Inventory";
 import { getVideoUrl } from "@/services/gameService";
+import { useUserPoints } from "@/utils/store/userGameEval";
 
 export interface TrueFalseOption {
   id: string;
@@ -40,7 +41,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
   const [opacity, setOpacity] = useState(1);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+ const incrementScore = useUserPoints((state) => state.incrementScore);
   const correctAnswer = useMemo(() => {
     const correctOpt = options.find((opt) => !opt.isCorrect);
     return correctOpt ? correctOpt.labelEn : "";
@@ -79,14 +80,19 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
       setIsCorrect(correct);
       setHasChecked(true);
       setOpacity(0);
+      if(correct){
+        incrementScore();
+      }
     }
+    
   };
 
-  if (loading || !resolvedUrl) {
+  if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" />
-        <Text className="mt-2 text-lg">Loading video...</Text>
+      <View className="flex-1 bg-white justify-center items-center">
+        <Text className="text-center text-gray-400 mt-8">
+          Loading videos...
+        </Text>
       </View>
     );
   }
@@ -94,8 +100,12 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
   return (
     <View className="flex-1 relative items-center bg-white">
       <View className="w-10/12">
-        <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">{filQuestion}</Text>
-        <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">{enQuestion}</Text>
+        <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">
+          {filQuestion}
+        </Text>
+        <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">
+          {enQuestion}
+        </Text>
       </View>
 
       <View className="w-full h-56 flex-row items-center justify-center">
@@ -126,7 +136,10 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
         ))}
       </View>
 
-      <View style={{ opacity }} className="w-full p-4 mx-auto absolute bottom-28 z-50">
+      <View
+        style={{ opacity }}
+        className="w-full p-4 mx-auto absolute bottom-28 z-50"
+      >
         <Inventory
           onPress={() => setIsClicked((prev) => !prev)}
           isPressed={isClicked}
@@ -152,7 +165,13 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
       </View>
 
       <View className="absolute w-full bottom-0 z-10">
-        {isCorrect === true ? <CorrectBG /> : isCorrect === false ? <WrongBG /> : <LevelBg />}
+        {isCorrect === true ? (
+          <CorrectBG />
+        ) : isCorrect === false ? (
+          <WrongBG />
+        ) : (
+          <LevelBg />
+        )}
       </View>
     </View>
   );

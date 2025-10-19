@@ -8,21 +8,26 @@ import ReminderNotif from "@/components/Game_Modes/Eval/ReminderNotif";
 import LearningRecap from "@/components/Game_Modes/Eval/LearningRecap";
 
 const Eval_phase = () => {
-  const { levelId, lessons } = useLocalSearchParams();
+  const { levelId, lessons, questions } = useLocalSearchParams();
   const parsedLessons = lessons ? JSON.parse(lessons as string) : [];
   const router = useRouter();
   const point = useUserPoints((state) => state.score ?? 0);
-
+  
   const [step, setStep] = useState<
     "evaluation" | "streak" | "reminder" | "recap"
   >("evaluation");
 
+  const calcEvalpoint =()=>{
+    return (Number(questions)/point)*100
+  }
+
   const renderContent = () => {
     switch (step) {
       case "evaluation":
+        console.log(questions)
         return (
           <Evaluation
-            percent={point}
+            percent={calcEvalpoint()}
             onRetake={() =>
               router.replace({
                 pathname: "./[levelId]",

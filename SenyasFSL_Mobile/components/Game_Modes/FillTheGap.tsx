@@ -14,6 +14,7 @@ import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 
 import { getVideoUrl } from "@/services/gameService";
+import { useUserPoints } from "@/utils/store/userGameEval";
 
 export interface QuestionOption {
   id: string;
@@ -46,24 +47,26 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
   const [opacity, setOpacity] = useState(100);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+ const incrementScore = useUserPoints((state) => state.incrementScore);
   // ✅ Find the correct option
-const correctOption = useMemo(
-  () => options.find((opt) => opt.isCorrect) || null,
-  [options]
-);
+  const correctOption = useMemo(
+    () => options.find((opt) => opt.isCorrect) || null,
+    [options]
+  );
 
-// ✅ Check answer correctly
-const handleCheck = () => {
-  if (choice) {
-    const selectedOption = options.find((opt) => opt.id === choice);
-    const correct = selectedOption ? selectedOption.isCorrect : false;
-    setIsCorrect(correct);
-    setHasChecked(true);
-    setOpacity(0);
-  }
-};
-
+  // ✅ Check answer correctly
+  const handleCheck = () => {
+    if (choice) {
+      const selectedOption = options.find((opt) => opt.id === choice);
+      const correct = selectedOption ? selectedOption.isCorrect : false;
+      setIsCorrect(correct);
+      setHasChecked(true);
+      setOpacity(0);
+        if(correct){
+        incrementScore();
+      }
+    }
+  };
 
   // Initialize video player
   const player = useVideoPlayer(null, (p) => {
@@ -90,12 +93,12 @@ const handleCheck = () => {
     };
     loadVideo();
   }, [videoURL]);
-
-  if (loading || !resolvedUrl) {
+  if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <ActivityIndicator size="large" />
-        <Text className="mt-2 text-lg">Loading video...</Text>
+      <View className="flex-1 bg-white justify-center items-center">
+        <Text className="text-center text-gray-400 mt-8">
+          Loading videos...
+        </Text>
       </View>
     );
   }
