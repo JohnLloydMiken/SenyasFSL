@@ -1,9 +1,14 @@
-// types/Level.ts
+// types/interface.tsx
+
 export interface Level {
   id: number;
   section: number;
   isBoss: boolean;
   isUnlocked: boolean;
+  position: { // ✅ Add this position property
+    top: string;
+    left: string;
+  };
 }
 
 export interface LevelSection {

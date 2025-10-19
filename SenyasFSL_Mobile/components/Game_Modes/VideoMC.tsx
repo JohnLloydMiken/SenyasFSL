@@ -9,11 +9,12 @@ import LevelContentBtn from "./GameBtns/LevelContentBtn";
 import VideoMCBTN from "./GameBtns/VideoMCBTN";
 import Inventory from "@/components/main_interface/Inventory";
 import { getVideoUrl } from "@/services/gameService";
+import { useUserPoints } from "@/utils/store/userGameEval";
 
 // --- Interfaces ---
 export interface VideoQuestionOption {
   id: string;
-  incorrect: boolean;
+  isCorrect: boolean;
   labelEn: string;
   labelFil: string;
   videoSrc: string; // Can be "gs://" or full HTTPS URL
@@ -26,18 +27,27 @@ interface ViewMCProps {
   onPress: () => void;
 }
 
-const ViewMC: React.FC<ViewMCProps> = ({ enPrompt, filPrompt, options, onPress }) => {
+const ViewMC: React.FC<ViewMCProps> = ({
+  enPrompt,
+  filPrompt,
+  options,
+  onPress,
+}) => {
   const [isClicked, setIsClicked] = useState(false);
   const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(100);
-  const [resolvedVideos, setResolvedVideos] = useState<Record<string, string>>({}); // Stores resolved video URLs
+  const incrementScore = useUserPoints((state) => state.incrementScore);
+  const [resolvedVideos, setResolvedVideos] = useState<Record<string, string>>(
+    {}
+  ); // Stores resolved video URLs
   const [loading, setLoading] = useState(true);
 
   // ✅ Determine the correct answer from options
   const correctAnswer = useMemo(() => {
-    const correctOption = options.find((opt) => opt.incorrect === false);
+    // ✅ This now correctly looks for the option where `isCorrect` is true
+    const correctOption = options.find((opt) => opt.isCorrect);
     return correctOption ? correctOption.labelEn : "";
   }, [options]);
 
@@ -56,7 +66,10 @@ const ViewMC: React.FC<ViewMCProps> = ({ enPrompt, filPrompt, options, onPress }
             try {
               finalUrl = await getVideoUrl(option.videoSrc);
             } catch (err) {
-              console.error(`❌ Failed to fetch URL for ${option.labelEn}:`, err);
+              console.error(
+                `❌ Failed to fetch URL for ${option.labelEn}:`,
+                err
+              );
             }
           }
 
@@ -80,18 +93,13 @@ const ViewMC: React.FC<ViewMCProps> = ({ enPrompt, filPrompt, options, onPress }
       setHasChecked(true);
       setOpacity(0);
     }
+    if (choice === correctAnswer) {
+      incrementScore();
+    }
   };
 
   // ✅ Render options once all video URLs are loaded
   const renderOptions = useMemo(() => {
-    if (loading) {
-      return (
-        <Text className="text-center text-gray-400 mt-8">
-          Loading videos...
-        </Text>
-      );
-    }
-
     return options.map((option) => (
       <VideoMCBTN
         key={option.id}
@@ -108,6 +116,16 @@ const ViewMC: React.FC<ViewMCProps> = ({ enPrompt, filPrompt, options, onPress }
       />
     ));
   }, [options, choice, hasChecked, loading, resolvedVideos]);
+
+  if (loading) {
+    return (
+      <View className="flex-1 bg-white justify-center items-center">
+        <Text className="text-center text-gray-400 mt-8">
+          Loading videos...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 relative items-center bg-white">

@@ -12,8 +12,10 @@ import Item from "@/components/main_interface/items";
 import Item_function from "@/json_files/item_function.json";
 import Tutorial from "@/assets/svgs/Tutorial.svg";
 import BGComponent from "@/assets/svgs/bg 1.svg";
+import { useAuthStore } from "@/utils/store/useAuthStore";
+import { useUserStore } from "@/utils/store/useUserStore";
 
-// ✅ Memoize heavy stuff once
+// ✅ Memoized components are good
 const BG = React.memo(BGComponent);
 
 const TreasureVideo = React.memo(({ source }: { source: any }) => {
@@ -49,8 +51,6 @@ const TutorialModal = React.memo(({ onClose }: { onClose: () => void }) => (
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* ✅ Use ScrollView instead of FlatList */}
       <ScrollView>
         {Item_function.map((item, index) => (
           <Text key={index} className="text-justify my-2">
@@ -65,7 +65,6 @@ const TutorialModal = React.memo(({ onClose }: { onClose: () => void }) => (
           </Text>
         ))}
       </ScrollView>
-
       <TouchableOpacity
         className="w-1/3 md:w-1/2 p-3 border border-black mx-auto mt-2 rounded-lg"
         onPress={onClose}
@@ -80,8 +79,21 @@ const TutorialModal = React.memo(({ onClose }: { onClose: () => void }) => (
 
 export default function Treasure() {
   const videoSource = require("@/assets/videos/Treasure.mp4");
-  const [haveChest, setHaveChest] = useState(true);
   const [isShown, setIsShown] = useState(false);
+  const { user, loading: authLoading } = useAuthStore();
+  const { userData, loading: userLoading } = useUserStore();
+
+  // ✅ 1. Handle loading state at the very top
+  if (authLoading || userLoading) {
+    return (
+      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  // ✅ 2. Derive the value directly from your store data instead of using state.
+  const hasChest = (userData?.chestCount ?? 0) > 0;
 
   return (
     <View className="bg-white flex-1 items-center relative">
@@ -92,24 +104,32 @@ export default function Treasure() {
 
       {/* Chest + Button */}
       <View className="w-11/12 flex justify-center items-center flex-col mb-4">
-        <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
-          You have no chests right now, get 7 questions right in a row to open 1!
-        </Text>
-
-        {haveChest ? (
+        {hasChest ? (
+         <>
+          <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
+              You have {userData?.chestCount}. Open it to receive random item
+            </Text>
           <View className="w-full h-36 md:h-72">
             <TreasureVideo source={videoSource} />
           </View>
+         </>
         ) : (
-          <Image
-            source={require("../../assets/images/Treasure_Locked.png")}
-            className="w-44 h-36 mr-3"
-          />
+          <>
+            <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
+              You have no chests right now, get 7 questions right in a row to
+              open 1!
+            </Text>
+            <Image
+              source={require("../../assets/images/Treasure_Locked.png")}
+              className="w-44 h-36 mr-3"
+            />
+          </>
         )}
 
         <TouchableOpacity className="w-2/3 p-4 bg-[#27D700] rounded-xl mt-4">
           <Text className="font-PoppinsBold text-white text-xl md:text-2xl text-center">
-            {haveChest ? "Claim Chest" : "Start a lesson"}
+            {/* ✅ 5. Use `hasChest` for button text */}
+            {hasChest ? "Claim Chest" : "Start a lesson"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -125,7 +145,11 @@ export default function Treasure() {
           <Item itemName="2x Try" itemCost={25} itemIcon="Retry" />
         </View>
         <View className="flex-row justify-center gap-4 mb-4">
-          <Item itemName="Streak Protection" itemCost={500} itemIcon="Protection" />
+          <Item
+            itemName="Streak Protection"
+            itemCost={500}
+            itemIcon="Protection"
+          />
         </View>
       </View>
 

@@ -1,4 +1,6 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+// RenderLevel.tsx
+
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -11,104 +13,104 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Level, LevelSection } from "../modules/types/interface";
-import {
-  generateLevelData,
-  LEVELS_PER_SECTION,
-} from "../modules/levelsmetadata";
 import LevelItem from "../modules/LevelItem";
 import BtnUp from "@/assets/svgs/BtnUp.svg";
 import BtnDown from "@/assets/svgs/BtnDown.svg";
 import LevelHeader from "@/components/LevelContent/levelHeader";
 import FSL_Hi from "@/assets/svgs/FSL_hello.svg";
-import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
+import { Section } from "@/shared/types"; // Import the Section type from your shared types
 
 const MemoFSLHi = React.memo(FSL_Hi);
 const MemoBtnUp = React.memo(BtnUp);
 const MemoBtnDown = React.memo(BtnDown);
 
-const RenderLevel: React.FC = () => {
-  const { user } = useAuthStore();
-  const { userData, loading: userLoading } = useUserStore();
+// ✅ Accept sections as a prop
+interface RenderLevelProps {
+  sections: Section[];
+}
 
+const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
+  const { userData, loading: userLoading } = useUserStore();
   const { width } = useWindowDimensions();
   const FSLHiSize = width < 768 ? 160 : 300;
   const BtnSize = width < 768 ? 40 : 80;
 
-  // ✅ Loading state
-  if (userLoading) {
-    return (
-      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
-  if (!userData) {
-    return (
-      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Could not load user profile. Please try again later.</Text>
-      </View>
-    );
-  }
-
-  // ✅ Determine highest unlocked level from user progress
+  // ✅ Determine highest unlocked level from user progress (this logic is still needed)
   const userProgress = useMemo(() => {
+    if (!userData?.progress) return 1; // Default to 1 if no progress
     if (typeof userData.progress === "number") {
-      return userData.progress; // e.g., if backend directly gives a number
-    } else if (Array.isArray(userData.progress)) {
-      // e.g., [2, 5, 10]
+      return userData.progress;
+    }
+    if (Array.isArray(userData.progress) && userData.progress.length > 0) {
       return Math.max(...userData.progress);
-    } else if (typeof userData.progress === "object") {
-      // e.g., { section1: 5, section2: 2 }
+    }
+    if (typeof userData.progress === "object" && Object.keys(userData.progress).length > 0) {
       return Math.max(...Object.values(userData.progress));
     }
-    return 1; // default fallback
-  }, [userData.progress]);
+    return 1; // Fallback
+  }, [userData?.progress]);
 
-  // ✅ Generate level data based on user's progress
-  const [levels, setLevels] = useState<Level[]>(() =>
-    generateLevelData(50, userProgress)
-  );
-
-  // ✅ Compute initial section based on progress
-  const initialSection = useMemo(
-    () => Math.floor((userProgress - 1) / LEVELS_PER_SECTION),
-    [userProgress]
-  );
-
-  const [currentSection, setCurrentSection] = useState(initialSection);
-
-  // ✅ Recompute levels when user progress updates
-  useEffect(() => {
-    setLevels(generateLevelData(50, userProgress));
-    setCurrentSection(initialSection);
-  }, [userProgress, initialSection]);
-
-  // ✅ Sections
+  // ✅ Transform the sections prop from Firestore into the format SectionList needs
   const sectionsData = useMemo(() => {
-    return levels.reduce((sections: LevelSection[], level: Level) => {
-      const sectionIndex = Math.floor((level.id - 1) / LEVELS_PER_SECTION);
-      if (!sections[sectionIndex]) {
-        sections[sectionIndex] = {
-          title: titles[sectionIndex],
-          index: sectionIndex + 1,
-          currentLevel: level.id,
-          data: [],
-        };
-      }
-      sections[sectionIndex].data.push(level);
-      return sections;
-    }, []);
-  }, [levels]);
+    if (!sections) return [];
 
-  // ✅ Only show current section
+    return sections.map((section, sectionIndex) => {
+      // Map over the level IDs and positions in the section document
+      const levelData: Level[] = section.levels.map((levelId, levelIndex) => {
+        const isLastLevelInSection = levelIndex === section.levels.length - 1;
+        return {
+          id: levelId,
+          section: section.order, // Use the order field for the section number
+          isBoss: isLastLevelInSection,
+          isUnlocked: levelId <= userProgress , // Unlock current level and the next one
+          position: section.positions[levelIndex], // Use position data from Firestore
+        };
+      });
+
+      return {
+        title: section.name, // Use the name from Firestore
+        index: section.order,
+        currentLevel: levelData[0]?.id || 1, // For display in header
+        data: levelData,
+      };
+    });
+  }, [sections, userProgress]);
+
+  // ✅ Compute initial section to display based on user progress
+  const initialSectionIndex = useMemo(() => {
+    const sectionIdx = sectionsData.findIndex(sec => 
+      sec.data.some(level => level.id === userProgress)
+    );
+    return sectionIdx > -1 ? sectionIdx : 0; // Default to the first section
+  }, [sectionsData, userProgress]);
+  
+  const [currentSection, setCurrentSection] = useState(initialSectionIndex);
+
+  // Loading and error states
+  if (userLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>Loading User Data...</Text>
+      </View>
+    );
+  }
+
+  if (!sectionsData || sectionsData.length === 0) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>Loading Map...</Text>
+      </View>
+    );
+  }
+
+  // ✅ Only show the current section based on state
   const displayedSection = useMemo(
     () => [sectionsData[currentSection]],
     [sectionsData, currentSection]
   );
 
-  // ✅ Handlers
+  // Handlers
   const handleScrollDown = useCallback(() => {
     setCurrentSection((prev) => Math.min(sectionsData.length - 1, prev + 1));
   }, [sectionsData.length]);
@@ -123,14 +125,13 @@ const RenderLevel: React.FC = () => {
     }
   }, []);
 
-  // ✅ Renderers
-  const renderLevelItem: SectionListRenderItem<Level, LevelSection> =
-    useCallback(
-      ({ item, index }) => (
-        <LevelItem level={item} index={index} onLevelPress={handleLevelPress} />
-      ),
-      [handleLevelPress]
-    );
+  // Renderers
+  const renderLevelItem: SectionListRenderItem<Level, LevelSection> = useCallback(
+    ({ item, index }) => (
+      <LevelItem level={item} index={index} onLevelPress={handleLevelPress} />
+    ),
+    [handleLevelPress]
+  );
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: LevelSection }) => (
@@ -143,12 +144,8 @@ const RenderLevel: React.FC = () => {
     []
   );
 
-  const keyExtractor = useCallback(
-    (item: Level): string => item.id.toString(),
-    []
-  );
+  const keyExtractor = useCallback((item: Level) => item.id.toString(), []);
 
-  // ✅ Render
   return (
     <View style={styles.container}>
       <SectionList
@@ -197,18 +194,5 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   } as ViewStyle,
 });
-
-const titles = [
-  "Learn the Alphabets",
-  "Learn the Numbers",
-  "Learn the Labels",
-  "Learn the Calendar and Time Units",
-  "Learn the Family and Colors",
-  "Learn the Occupations and Relationships",
-  "Learn the Food",
-  "Learn the Home Vocabulary",
-  "Learn the Socializing",
-  "Learn the Days",
-];
 
 export default React.memo(RenderLevel);

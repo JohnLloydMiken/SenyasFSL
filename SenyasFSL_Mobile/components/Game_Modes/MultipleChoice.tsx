@@ -10,7 +10,7 @@ import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import Inventory from "../main_interface/Inventory";
 import { getVideoUrl } from "@/services/gameService";
-
+import { useUserPoints } from "@/utils/store/userGameEval";
 interface Option {
   id: string;
   labelEn: string;
@@ -39,7 +39,7 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
   const [isClicked, setIsClicked] = useState(false);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const incrementScore = useUserPoints((state) => state.incrementScore);
   // Initialize player (empty source first)
   const player = useVideoPlayer("", (player) => {
     player.loop = true;
@@ -72,6 +72,9 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
   // ✅ Handle check button
   const handleCheck = useCallback(() => {
     if (!choice) return;
+    if (choice.isCorrect) {
+      incrementScore(); // Add a point only if correct
+    }
     setIsCorrect(choice.isCorrect);
     setHasChecked(true);
   }, [choice]);
@@ -97,6 +100,16 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
     [options, choice, hasChecked]
   );
 
+  if(loading){
+    return(
+      <View className="flex-1 bg-white justify-center items-center">
+        <Text className="text-center mt-8 text-gray-400">
+            Loading video...
+          </Text>
+      </View>
+    )
+  }
+
   return (
     <View className="flex-1 relative bg-white">
       {/* PROMPTS */}
@@ -109,19 +122,13 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
 
       {/* VIDEO */}
       <View className="w-full h-[30%] relative -top-1">
-        {loading ? (
-          <Text className="text-center mt-8 text-gray-400">
-            Loading video...
-          </Text>
-        ) : (
-          <VideoView
-            style={{ width: "100%", height: "100%" }}
-            player={player}
-            allowsFullscreen={false}
-            allowsPictureInPicture={false}
-            nativeControls={false}
-          />
-        )}
+        <VideoView
+          style={{ width: "100%", height: "100%" }}
+          player={player}
+          allowsFullscreen={false}
+          allowsPictureInPicture={false}
+          nativeControls={false}
+        />
       </View>
 
       {/* MULTIPLE CHOICE OPTIONS */}

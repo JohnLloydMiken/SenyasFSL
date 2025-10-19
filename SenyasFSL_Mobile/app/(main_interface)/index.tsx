@@ -1,19 +1,50 @@
-import React, { useState } from "react";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { StyleSheet, View, TouchableOpacity , Text} from "react-native";
 import BGComponent from "@/assets/svgs/bg 1.svg";
 import TutorialSVG from "@/assets/svgs/Tutorial.svg";
 import Settings from "@/components/main_interface/Settings";
 import SoundSettings from "@/components/main_interface/SoundSettings";
 import Tutorial from "@/components/main_interface/Tutorial";
 import RenderLevelBase from "@/modules/RenderLevel";
+import { getSectionsData } from "@/services/gameService";
+import { Section } from "@/shared/types";
+import { useAuthStore } from "@/utils/store/useAuthStore";
+import { useUserStore } from "@/utils/store/useUserStore";
 
 // ✅ Memoize heavy components ONCE
 const BG = React.memo(BGComponent);
 const RenderLevel = React.memo(RenderLevelBase);
 
 export default function Index() {
+  const sectionRefs = useRef<React.RefObject<HTMLElement | null>[]>([]);
   const [isPressed, setIsPressed] = useState(false);
   const [tutorialPressed, setTutorialPressed] = useState(false);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [isMapLoading, setIsMapLoading] = useState(true);
+  const { user, loading: authLoading } = useAuthStore();
+  const { userData, loading: userLoading } = useUserStore();
+  useEffect(() => {
+    const fetchMapData = async () => {
+      try {
+        const data = await getSectionsData();
+        sectionRefs.current = data.map(() => React.createRef());
+        setSections(data);
+      } catch (error) {
+        console.error("Failed to fetch map sections:", error);
+      } finally {
+        setIsMapLoading(false);
+      }
+    };
+    fetchMapData();
+  }, []);
+
+  if (isMapLoading || userLoading) {
+    return (
+      <View className="flex-1 bg-white">
+          <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="bg-white flex-1 items-center">
@@ -23,7 +54,7 @@ export default function Index() {
       </View>
 
       {/* ✅ Heavy component is now memoized */}
-      <RenderLevel />
+      <RenderLevel  sections={sections}/>
 
       {/* Floating Buttons */}
       <View className="flex-col justify-center items-center absolute bottom-2 left-2 gap-2 z-50">
@@ -40,7 +71,9 @@ export default function Index() {
 
       {/* Modals */}
       {isPressed && <SoundSettings onPress={() => setIsPressed(false)} />}
-      {tutorialPressed && <Tutorial onPress={() => setTutorialPressed(false)} />}
+      {tutorialPressed && (
+        <Tutorial onPress={() => setTutorialPressed(false)} />
+      )}
     </View>
   );
 }

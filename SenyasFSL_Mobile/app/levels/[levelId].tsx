@@ -49,6 +49,8 @@ export default function LevelContent() {
         pathname: "./Eval_phase",
         params: {
           levelId,
+          questions: levelData.flow.filter((f: any)=> f.type === "question").length
+          ,
           lessons: JSON.stringify(
             // 👈 send lessons to recap
             levelData.flow
