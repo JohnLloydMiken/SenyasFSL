@@ -17,9 +17,13 @@ const Eval_phase = () => {
     "evaluation" | "streak" | "reminder" | "recap"
   >("evaluation");
 
-  const calcEvalpoint =()=>{
-    return (Number(questions)/point)*100
+  const calcEvalpoint = () => {
+  // Prevent division by zero if there are no questions
+  if (!questions || Number(questions) === 0) {
+    return 0;
   }
+  return (point / Number(questions)) * 100;
+};
 
   const renderContent = () => {
     switch (step) {

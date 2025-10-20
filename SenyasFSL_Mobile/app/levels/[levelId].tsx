@@ -1,36 +1,58 @@
+// [levelId].tsx
+
 import { StyleSheet, Text, View, ActivityIndicator } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { getLevelData, getFlowContent } from "@/services/gameService";
-import FillTheGap from "@/components/Game_Modes/FillTheGap";
-import LearnASign from "@/components/Game_Modes/LearnASign";
-import MultipleChoice from "@/components/Game_Modes/MultipleChoice";
-import TrueOrFalse from "@/components/Game_Modes/TrueOrFalse";
-import VideoMC from "@/components/Game_Modes/VideoMC";
+import {
+  getLevelData,
+  getFlowContent,
+  getQuestionsFromPool, // Make sure this is imported
+} from "@/services/gameService";
+import Sign_Prcatice from "@/components/Game_Modes/SignLangRecog";
+import FlowRenderer from "@/components/Game_Modes/FlowRenderer";
+import BossFight from "@/components/Game_Modes/BossFight";
 
 export default function LevelContent() {
   const { levelId } = useLocalSearchParams();
-  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [levelData, setLevelData] = useState<any>(null);
-  const [flowContent, setFlowContent] = useState<Map<string, any> | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [flowContent, setFlowContent] = useState<Map<string, any> | null>(
+    null
+  );
 
-  // ⏬ Fetch Level Data and Flow
   useEffect(() => {
     const fetchLevelAndFlow = async () => {
       setLoading(true);
       try {
-        const level = await getLevelData(`s1_lvl_${levelId}` as string);
+        if (!levelId || typeof levelId !== "string") return;
+
+        const level = await getLevelData(`s1_lvl_${levelId}`);
         setLevelData(level);
 
-        if (level?.flow) {
-          const contentMap = await getFlowContent(level.flow);
-          setFlowContent(contentMap);
+        if (!level) return;
+
+        let contentMap: Map<string, any> | null = null;
+
+        // ✅ FIX: Check that the array property exists AND is not empty.
+        // This satisfies TypeScript by confirming the value is not undefined.
+        if (
+          level.type === "quiz_survival" &&
+          level.questionPool && // 👈 Check for existence first
+          level.questionPool.length > 0
+        ) {
+          contentMap = await getQuestionsFromPool(level.questionPool);
+        } else if (
+          level.type === "lesson_and_minigame" &&
+          level.flow && // 👈 Check for existence first
+          level.flow.length > 0
+        ) {
+          contentMap = await getFlowContent(level.flow);
         }
+
+        setFlowContent(contentMap);
       } catch (error) {
-        console.error("Error loading level:", error);
+        console.error("Error loading level content:", error);
       } finally {
         setLoading(false);
       }
@@ -39,142 +61,60 @@ export default function LevelContent() {
     fetchLevelAndFlow();
   }, [levelId]);
 
-  // ⏩ Move to next step or evaluation
-  const handleNextStep = () => {
-    if (levelData && currentStep + 1 < levelData.flow.length) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      // 🏁 When last step is done → Go to Evaluation screen
-      router.push({
-        pathname: "./Eval_phase",
-        params: {
-          levelId,
-          questions: levelData.flow.filter((f: any)=> f.type === "question").length
-          ,
-          lessons: JSON.stringify(
-            // 👈 send lessons to recap
-            levelData.flow
-              .filter((f: any) => f.type === "lesson")
-              .map((f: any) => {
-                const c = flowContent?.get(f.ref);
-                return {
-                  id: c?.id,
-                  enTitle: c?.enTitle,
-                  filTitle: c?.filTitle,
-                  videoUrl: c?.videoUrl,
-                };
-              })
-          ),
-        },
-      });
-    }
-  };
-
-  // 🧩 Get current step data
-  const flowStep =
-    levelData?.flow && flowContent ? levelData.flow[currentStep] : null;
-  const content =
-    flowStep && flowContent ? flowContent.get(flowStep.ref) : null;
-
-  // 🧠 Render Component based on type
-  const renderStep = () => {
+  // ... The rest of your component remains the same
+  
+  const renderLevel = () => {
     if (loading) {
       return (
         <View style={styles.center}>
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="large" color="#0000ff" />
           <Text>Loading Level...</Text>
         </View>
       );
     }
 
-    if (!flowStep || !content) {
+    if (!levelData) {
       return (
         <View style={styles.center}>
-          <Text>No content found for this step.</Text>
+          <Text>Could not load level data.</Text>
         </View>
       );
     }
 
-    // 🧠 LESSON TYPE
-    if (flowStep.type === "lesson") {
-      return (
-        <LearnASign
-          key={content.id}
-          title={content.enTitle}
-          videoURL={content.videoUrl}
-          EnglishText={content.enTitle}
-          FilipinoText={content.filTitle}
-          onPress={handleNextStep}
-        />
-      );
-    }
-
-    // 🧩 QUESTION TYPE
-    if (flowStep.type === "question") {
-      const qType = content.type?.toLowerCase();
-
-      switch (qType) {
-        case "multiple_choice":
-          return (
-            <MultipleChoice
-              key={content.id}
-              enPrompt={content.enPrompt}
-              filPrompt={content.filPrompt}
-              videoUrl={content.videoUrl}
-              options={content.options}
-              onPress={handleNextStep}
-            />
-          );
-        case "fill_in_the_gap":
-          return (
-            <FillTheGap
-              key={content.id}
-              enPrompt={content.enPrompt}
-              filPrompt={content.filPrompt}
-              message="Alright!"
-              videoURL={content.videoUrl}
-              options={content.options}
-              onPress={handleNextStep}
-            />
-          );
-        case "true_or_false":
-          return (
-            <TrueOrFalse
-              key={content.id}
-              enQuestion={content.enPrompt}
-              filQuestion={content.filPrompt}
-              options={content.options}
-              videoURL={content.videoUrl}
-              onPress={handleNextStep}
-            />
-          );
-        case "multiple_choice_video":
-          return (
-            <VideoMC
-              key={content.id}
-              enPrompt={content.enPrompt}
-              filPrompt={content.filPrompt}
-              options={content.options}
-              onPress={handleNextStep}
-            />
-          );
-        default:
+    switch (levelData.type) {
+      case "lesson_and_minigame":
+        if (!flowContent) {
           return (
             <View style={styles.center}>
-              <Text>Unknown question type: {qType}</Text>
+              <Text>Could not load content for this level.</Text>
             </View>
           );
-      }
-    }
+        }
+        return <FlowRenderer levelData={levelData} flowContent={flowContent} />;
 
-    return (
-      <View style={styles.center}>
-        <Text>Unknown step type: {flowStep.type}</Text>
-      </View>
-    );
+      case "sign_practice":
+        return <Sign_Prcatice level={levelId} />;
+
+      case "quiz_survival":
+        if (!flowContent) {
+          return (
+            <View style={styles.center}>
+              <Text>Could not load quiz questions.</Text>
+            </View>
+          );
+        }
+        return <BossFight levelData={levelData} flowContent={flowContent} />;
+
+      default:
+        return (
+          <View style={styles.center}>
+            <Text>Unknown level type: {levelData.type}</Text>
+          </View>
+        );
+    }
   };
 
-  return <View style={styles.container}>{renderStep()}</View>;
+  return <View style={styles.container}>{renderLevel()}</View>;
 }
 
 const styles = StyleSheet.create({
