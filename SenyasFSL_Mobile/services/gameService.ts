@@ -80,6 +80,35 @@ export const getFlowContent = async (
   }
 };
 
+
+export const getQuestionsFromPool = async (
+  questionIds: string[]
+): Promise<Map<string, Question>> => {
+  const contentMap = new Map<string, Question>();
+  if (!questionIds || questionIds.length === 0) {
+    return contentMap;
+  }
+
+  try {
+    // Firestore 'in' queries are limited to 30 items.
+    // If you expect more, you'll need to batch the requests.
+    // This implementation assumes fewer than 30 questions per level.
+    const questionsQuery = query(
+      collection(db as Firestore, "questions"),
+      where(documentId(), "in", questionIds)
+    );
+    const questionSnapshots = await getDocs(questionsQuery);
+    questionSnapshots.forEach((doc) => {
+      contentMap.set(doc.id, { id: doc.id, ...doc.data() } as Question);
+    });
+
+    return contentMap;
+  } catch (error) {
+    console.error("Error fetching questions from pool:", error);
+    throw new Error("Failed to fetch questions for the level.");
+  }
+};
+
 /**
  * Converts a Firebase Storage gs:// path to a public, downloadable HTTPS URL.
  */
@@ -176,3 +205,4 @@ export const useItem = async (itemId: string): Promise<{ status: string }> => {
     throw error;
   }
 };
+
