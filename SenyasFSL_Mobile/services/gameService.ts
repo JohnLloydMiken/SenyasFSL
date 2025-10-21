@@ -15,7 +15,7 @@ import { db, storage, functions } from "@/firebaseConfig";
 import { Level, LevelFlowStep, Section } from "shared/types/game";
 import { Lesson, Question } from "shared/types/content";
 import { CompleteLevelData, CompleteLevelResult } from "shared/types/user";
-
+import Toast from "react-native-toast-message";
 /**
  * Fetches a single level's complete data structure from Firestore.
  */
@@ -79,7 +79,6 @@ export const getFlowContent = async (
     throw new Error("Failed to fetch content for the level.");
   }
 };
-
 
 export const getQuestionsFromPool = async (
   questionIds: string[]
@@ -153,24 +152,44 @@ export const getSectionsData = async (): Promise<Section[]> => {
  * Buys an item: calls the secure backend function to deduct coins and increment inventory.
  */
 export const buyItem = async (
-  uid: string,
   itemId: string,
   price: number
-): Promise<void> => {
+): Promise<boolean> => {
   const fn = httpsCallable(functions, "buyItem");
-  await fn({ itemId, price });
+
+  // ✅ 2. Show a loading toast and wait for the promise
+  Toast.show({
+    type: "info", // You can customize this
+    text1: "Purchasing item...",
+    visibilityTime: 2000,
+  });
+
+  try {
+    await fn({ itemId, price });
+
+    // ✅ 3. Show success toast (the component will show its own)
+    // We just return true here, the component will handle the success message.
+    return true;
+  } catch (error: any) {
+    // ✅ 4. Show a specific error toast from the backend
+    console.error("Error buying item:", error);
+    Toast.show({
+      type: "error",
+      text1: "Purchase Failed",
+      text2: error.message || "An unknown error occurred.",
+    });
+    return false;
+  }
 };
 
 /**
  * Opens a chest: calls the secure backend function to decrement chestCount and increment prize item.
  */
-export const openChest = async (
-  uid: string,
-  prizeId: string
-): Promise<void> => {
+export const openChest = async (prizeId: string): Promise<void> => {
   const fn = httpsCallable(functions, "openChest");
   await fn({ prizeId });
 };
+
 export const saveLevelProgress = async (
   data: CompleteLevelData
 ): Promise<CompleteLevelResult> => {
@@ -205,4 +224,3 @@ export const useItem = async (itemId: string): Promise<{ status: string }> => {
     throw error;
   }
 };
-
