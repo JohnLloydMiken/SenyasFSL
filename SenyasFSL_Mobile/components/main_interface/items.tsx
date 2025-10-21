@@ -1,3 +1,4 @@
+// src/components/main_interface/items.tsx (or wherever this file is)
 import React, { memo } from "react";
 import {
   TouchableOpacity,
@@ -19,7 +20,10 @@ interface itemCardProps {
   itemName: string;
   itemCost: number;
   itemIcon: string;
-  inGame?: boolean; // optional flag for the smaller version
+  inGame?: boolean;
+  itemId: string; // ✅ Add a unique ID for the item
+  onPress: (itemId: string, itemCost: number) => void; // ✅ Add a press handler
+  disabled?: boolean; // ✅ Add a disabled state for loading
 }
 
 const svgMap: { [key: string]: any } = {
@@ -35,9 +39,19 @@ const borderGradient = ["#FB990F", "#EA0505"] as const;
 const textGradient = ["#2DE2E2", "#0922A0"] as const;
 const costGradient = ["#FB990F", "#EA0505"] as const;
 
-const Item: React.FC<itemCardProps> = ({ itemName, itemCost, itemIcon }) => {
+const Item: React.FC<itemCardProps> = ({
+  itemName,
+  itemCost,
+  itemIcon,
+  itemId, // ✅ Get new prop
+  onPress, // ✅ Get new prop
+  disabled = false, // ✅ Get new prop
+}) => {
   const SvgIcon = svgMap[itemIcon];
   const { width } = useWindowDimensions();
+  
+  
+
   const svgSize = width < 768 ? 30 : 50;
   const svgStar = width < 768 ? 24 : 30;
   const containerWidth = width < 768 ? 120 : 150;
@@ -57,7 +71,13 @@ const Item: React.FC<itemCardProps> = ({ itemName, itemCost, itemIcon }) => {
         elevation: 5,
       }}
     >
-      <TouchableOpacity className="w-[101%] h-[98%] bg-[#FAF3E0] rounded-2xl p-4 flex justify-center items-center flex-col mx-auto my-0 gap-1">
+      <TouchableOpacity
+        // ✅ Wire up the press handler and disabled state
+        onPress={() => onPress(itemId, itemCost)}
+        disabled={disabled}
+        className="w-[101%] h-[98%] bg-[#FAF3E0] rounded-2xl p-4 flex justify-center items-center flex-col mx-auto my-0 gap-1"
+      >
+        {/* ... (rest of the component's internals: SvgIcon, MaskedView, etc.) ... */}
         {SvgIcon && <SvgIcon width={svgSize} height={svgSize} />}
         <MaskedView
           maskElement={
@@ -113,8 +133,12 @@ export const ItemInGame: React.FC<itemCardProps> = ({
   itemName,
   itemCost,
   itemIcon,
+  itemId, // ✅ Add prop
+  onPress, // ✅ Add prop
+  disabled = false, // ✅ Add prop
 }) => {
   const SvgIcon = svgMap[itemIcon];
+  // ... (sizing logic remains the same) ...
   const { width } = useWindowDimensions();
   const svgSize = width < 768 ? 20 : 50;
   const svgStar = width < 768 ? 15 : 30;
@@ -124,8 +148,7 @@ export const ItemInGame: React.FC<itemCardProps> = ({
   return (
     <LinearGradient
       colors={borderGradient}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+      // ... (styles)
       style={{
         borderRadius: 16,
         padding: 2,
@@ -133,7 +156,13 @@ export const ItemInGame: React.FC<itemCardProps> = ({
         height: containerHeight,
       }}
     >
-      <TouchableOpacity className="w-full h-full bg-[#FAF3E0] rounded-2xl p-4 flex justify-center items-center flex-col mx-auto my-0 gap-1">
+      <TouchableOpacity
+        // ✅ Wire up the press handler and disabled state
+        onPress={() => onPress(itemId, itemCost)}
+        disabled={disabled}
+        className="w-full h-full bg-[#FAF3E0] rounded-2xl p-4 flex justify-center items-center flex-col mx-auto my-0 gap-1"
+      >
+        {/* ... (rest of the component's internals) ... */}
         {SvgIcon && <SvgIcon width={svgSize} height={svgSize} />}
         <MaskedView
           maskElement={
@@ -186,3 +215,4 @@ export const ItemInGame: React.FC<itemCardProps> = ({
 
 // ✅ memoize for perf
 export default memo(Item);
+

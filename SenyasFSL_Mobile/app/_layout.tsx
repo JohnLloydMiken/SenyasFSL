@@ -4,6 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
+import Toast from 'react-native-toast-message';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -41,5 +42,10 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
-  return <Slot />;
+  return (
+  <>
+  <Slot />
+  <Toast/>
+  </>
+  );
 }
