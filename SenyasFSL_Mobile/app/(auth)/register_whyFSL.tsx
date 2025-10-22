@@ -12,11 +12,12 @@ import { useState } from "react";
 import { router } from "expo-router";
 import { IconSize } from "@/utils/sizes";
 import { WhyFSLMap } from "@/utils/assetsMap";
+import { userReason } from "@/utils/store/useUserStore";
 export default function register_whyFSL() {
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(
     null
   );
-
+  const reason = userReason((state: {setReason: any}) => state.setReason)
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-4">
       <Text className="text-2xl md:text-3xl font-PoppinsBold mt-4">
@@ -32,9 +33,12 @@ export default function register_whyFSL() {
               <TouchableOpacity
                 className={`w-full flex justify-start items-center gap-4 border-[1px] border-[#F7D674] ${selectedItemIndex === index ? "bg-[#FFEEB9]" : "bg-white"} flex-row rounded-3xl px-4 py-2 my-4`}
                 onPress={() =>
-                  setSelectedItemIndex(
+                 {
+                   setSelectedItemIndex(
                     selectedItemIndex === index ? null : index
                   )
+                  reason(item.reason)
+                 }
                 }
               >
                 {SvgIcon && <SvgIcon width={IconSize()} height={IconSize()} />}
