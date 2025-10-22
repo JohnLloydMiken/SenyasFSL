@@ -14,6 +14,17 @@ interface UserStoreState {
   clearUserData: () => void;
 }
 
+interface UserReason{
+  reason: string;
+  setReason: (value: string)=>void;
+
+}
+
+export const userReason = create<UserReason>((set)=>({
+    reason: "",
+  setReason: (value: string) => set({ reason: value }),
+}))
+
 const parseUserData = (data: any, authUser: AuthUser): UserProfileData => {
   const defaults = {
     username: "New User",

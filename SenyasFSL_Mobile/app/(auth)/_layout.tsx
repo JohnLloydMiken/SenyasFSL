@@ -72,7 +72,7 @@ export default function GetStarted(){
             >
               <View
                 style={{
-                  width: ProgressbarWidth(),
+                  width: ProgressbarCP(),
                   height: ProgressbarHeight(),
                   backgroundColor: "#FB990F",
                   borderRadius: 20,

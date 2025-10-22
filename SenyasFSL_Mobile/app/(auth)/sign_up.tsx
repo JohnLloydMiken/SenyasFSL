@@ -7,7 +7,8 @@ import Modal_Terms from "@/components/authentication/Modal_Terms";
 import Modal_Privacy from "@/components/authentication/Modal_Privacy";
 import Informtaion from "@/assets/svgs/information.svg";
 import { IconSize } from "@/utils/sizes";
-import { registerUser } from "@/services/AuthService";
+import { registerUser, mapAuthError } from "@/services/authService"; // Import registerUser and mapAuthError
+import { userReason } from "@/utils/store/useUserStore"; // Import the store to get the reason
 
 export default function SignUp() {
   const [isTermsPressed, setIsTermsPressed] = useState(false);
@@ -18,11 +19,49 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Error states
+  // Get the reason from the Zustand store
+  const { reason } = userReason();
+
+  // Loading and Error states
+  const [isLoading, setIsLoading] = useState(false); // Added loading state
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
- 
+  // Handle the sign-up logic
+  const handleSignUp = async () => {
+    // 1. Check for empty fields
+    if (!username || !email || !password) {
+      setErrorMessage("Please fill in all fields.");
+      setIsError(true);
+      return;
+    }
+
+    // 2. Reset UI and start loading
+    setIsLoading(true);
+    setIsError(false);
+    setErrorMessage(null);
+
+    try {
+      // 3. Call the registerUser function from authService
+      await registerUser({
+        email: email.trim(),
+        password: password, // Passwords typically aren't trimmed
+        username: username.trim(),
+        reason: reason || "Other", // Use selected reason or fallback
+      });
+
+      // 4. On success, navigate to the congratulations screen
+      router.push("/(auth)/congrast");
+    } catch (error: any) {
+      // 5. On failure, map the error and show the modal
+      console.error("Sign up failed:", error);
+      setErrorMessage(mapAuthError(error));
+      setIsError(true);
+    } finally {
+      // 6. Stop loading
+      setIsLoading(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8">
@@ -61,7 +100,12 @@ export default function SignUp() {
       </View>
 
       <View className="w-11/12 absolute bottom-12">
-        <Authbutton content="Commit to my goal"  />
+        {/* Updated Authbutton with onPress handler and loading state */}
+        <Authbutton
+          content={isLoading ? "Signing up..." : "Commit to my goal"}
+          onPress={handleSignUp}
+          
+        />
       </View>
 
       {/* Modals */}
@@ -70,7 +114,7 @@ export default function SignUp() {
 
       {/* Error Modal */}
       {isError && (
-        <View className="absolute w-96 h-60 top-1/2 -translate-y-1/2 bg-white border border-[#FB990F] rounded-xl p-4 flex flex-col items-center justify-center gap-3">
+        <View className="absolute w-96 h-60 top-1/2 -translate-y-1/2 bg-white border border-[#FB990F] rounded-xl p-4 flex flex-col items-center justify-center gap-3 z-50">
           <Text className="text-red-500 text-center font-PoppinsBold text-4xl md:text-3xl">
             Failed to Sign up!
           </Text>

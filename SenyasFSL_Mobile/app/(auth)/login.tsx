@@ -5,6 +5,7 @@ import Authbutton from "@/components/authentication/button";
 import { router } from "expo-router";
 import { loginUser } from "@/services/authService";
 import { useAuthStore } from "@/utils/store/useAuthStore";
+import { Feather } from "@expo/vector-icons"; // ✅ 1. Import an icon library
 
 export default function Login() {
   // Local UI state
@@ -15,6 +16,7 @@ export default function Login() {
   const [resetEmail, setResetEmail] = useState("");
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // ✅ 2. Add state for password visibility
 
   // Zustand store
   const { user, loading: authLoading } = useAuthStore();
@@ -93,13 +95,24 @@ export default function Login() {
           <Text className="text-xl mt-12 mb-4 font-PoppinsBold md:text-2xl">
             Password
           </Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Password"
-            secureTextEntry
-            className="border-[1px] border-gray-400 rounded-md bg-white p-4 md:text-xl"
-          />
+          
+          {/* ✅ 3. Create a container for the input and icon */}
+          <View className="flex-row items-center border-[1px] border-gray-400 rounded-md bg-white pr-4">
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              secureTextEntry={!isPasswordVisible} // ✅ 4. Toggle secureTextEntry
+              className="flex-1 p-4 md:text-xl" // Make input take most space
+            />
+            <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+              <Feather
+                name={isPasswordVisible ? "eye-off" : "eye"} // ✅ 5. Change icon based on state
+                size={24}
+                color="gray"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 

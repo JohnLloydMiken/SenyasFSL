@@ -13,13 +13,16 @@ export interface CreateUserAccountData {
   email: string;
   password: string;
   username: string;
-  usernameLower?: string; // optional, backend will normalize if not provided
+  usernameLower?: string;
   reason: string;
+  role?: "user" | "admin";
+  verified?: boolean;
 }
+
 export interface CreateUserAccountResult {
   status: "success";
   uid: string;
-  code?: string; // optional machine-readable code for frontend mapping
+  code?: string;
 }
 // Payload and result for updating a user's profile
 export interface UpdateUserProfileData {
