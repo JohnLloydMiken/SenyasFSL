@@ -12,18 +12,19 @@ interface UserStoreState {
   unsubscribe: (() => void) | null;
   fetchUserData: (authUser: AuthUser | null) => void;
   clearUserData: () => void;
+  // ✅ 1. Add the new function to the interface
+  updateUserData: (newData: Partial<UserProfileData>) => void;
 }
 
-interface UserReason{
+interface UserReason {
   reason: string;
-  setReason: (value: string)=>void;
-
+  setReason: (value: string) => void;
 }
 
-export const userReason = create<UserReason>((set)=>({
-    reason: "",
+export const userReason = create<UserReason>((set) => ({
+  reason: "",
   setReason: (value: string) => set({ reason: value }),
-}))
+}));
 
 const parseUserData = (data: any, authUser: AuthUser): UserProfileData => {
   const defaults = {
@@ -90,5 +91,16 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
     const prevUnsub = get().unsubscribe;
     if (prevUnsub) prevUnsub();
     set({ userData: null, loading: false, unsubscribe: null });
+  },
+
+  // ✅ 2. Add the implementation for the new function
+  // This function allows any component to manually update the user's state.
+  updateUserData: (newData: Partial<UserProfileData>) => {
+    set((state) => ({
+      userData: {
+        ...(state.userData as UserProfileData), // Keep existing data (like uid, email)
+        ...newData, // Overwrite with the new data
+      },
+    }));
   },
 }));

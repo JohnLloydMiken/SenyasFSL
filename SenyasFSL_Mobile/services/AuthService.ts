@@ -86,11 +86,29 @@ export async function registerUser(
   data: CreateUserAccountData
 ): Promise<CreateUserAccountResult> {
   try {
+    // 1. Call the backend function to create the user entry
     const fn = httpsCallable<CreateUserAccountData, CreateUserAccountResult>(
       functions,
       "createUserAccount"
     );
     const res = await fn(data);
+
+    // 2. After success, sign in to the client to get the User object
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      data.email,
+      data.password
+    );
+
+    if (userCredential.user) {
+      // 3. Send the verification email
+      await sendVerificationEmail(userCredential.user);
+    }
+
+    // 4. Sign back out immediately
+    await signOut(auth);
+
+    // 5. Return the original success response
     return res.data;
   } catch (error) {
     throw new Error(mapAuthError(error));
@@ -106,6 +124,7 @@ export async function loginUser(email: string, password: string) {
     );
     const user = userCredential.user;
     if (!user.emailVerified) {
+      // This check is already in place and is correct!
       const error: any = new Error("Please verify your email first.");
       error.code = "auth/email-not-verified";
       throw error;
@@ -182,10 +201,16 @@ export async function sendVerificationEmail(user: User | null): Promise<void> {
         "No user object provided for sending verification email."
       );
     }
-    const actionCodeSettings = {
-      url: window.location.origin + "/",
-    };
-    await firebaseSendEmailVerification(user, actionCodeSettings);
+    
+    // ✅ Remove the actionCodeSettings object
+    //    const actionCodeSettings = {
+    //      url: window.location.origin + "/", // 👈 THIS IS THE PROBLEM
+    //    };
+    //    await firebaseSendEmailVerification(user, actionCodeSettings);
+    
+    // ✅ Call the function without actionCodeSettings
+    await firebaseSendEmailVerification(user);
+
   } catch (error: any) {
     console.error("Error sending verification email:", error);
     throw new Error(mapAuthError(error));

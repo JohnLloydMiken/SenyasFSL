@@ -14,7 +14,7 @@ export default function LearningSection({ onPressEdit }: Props) {
       </Text>
       <SectionItem
         icon={require("@/assets/images/reset.png")}
-        text="Edit personal data"
+        text="Reset all progress"
         onPress={onPressEdit}
       />
     </View>

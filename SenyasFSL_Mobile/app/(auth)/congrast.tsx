@@ -1,3 +1,4 @@
+// (auth)/congrast.tsx
 import { StyleSheet, Text, View , StatusBar} from 'react-native'
 import FSL_Hi from '@/assets/svgs/FSL_Hi.svg'
 import React from 'react'
@@ -14,11 +15,15 @@ export default function congrast() {
         </View>
         <FSL_Hi width={fslIconSize()} height={fslIconSize()}/>
          <View className='w-10/12 '>
-            <Text className='text-center text-lg md:text-2xl'>We’re excited to see you join our mission to bridge language barriers through FSL.</Text>
-            
+            {/* ✅ Updated Text */}
+            <Text className='text-center text-lg md:text-2xl'>
+              We just sent a verification link to your email.
+              Please check your inbox to activate your account!
+            </Text>
         </View>
          <View className='w-11/12 absolute bottom-12'>
-              <Authbutton content='Get Started' onPress={()=>router.push('/')}></Authbutton>
+              {/* ✅ Updated button text and navigation */}
+              <Authbutton content='Back to Home' onPress={()=>router.replace('/')}></Authbutton>
         </View>
     </View>
   )
