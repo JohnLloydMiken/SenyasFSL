@@ -32,11 +32,18 @@ export default function Login() {
       setIsLoading(true);
       await loginUser(email, password);
 
-      // ✅ Auth listener in Zustand will update `user` automatically
       router.push("/(auth)/welcome");
     } catch (err: any) {
-      console.error("Login failed:", err);
-      setIsError(true);
+      // ✅ Specific check for verification error
+      if (err.code === "auth/email-not-verified") {
+        Alert.alert(
+          "Email Not Verified",
+          "Please check your email and click the verification link before logging in."
+        );
+        setIsError(false); // Don't show the generic modal
+      } else {
+        setIsError(true); // Show generic modal for other errors (e.g., wrong password)
+      }
       setEmail("");
       setPassword("");
     } finally {
@@ -60,7 +67,6 @@ export default function Login() {
         setResetEmail("");
       }, 2000);
     } catch (err) {
-      console.error("Reset email failed:", err);
       setSendEmail(false);
     }
   };
@@ -95,7 +101,7 @@ export default function Login() {
           <Text className="text-xl mt-12 mb-4 font-PoppinsBold md:text-2xl">
             Password
           </Text>
-          
+
           {/* ✅ 3. Create a container for the input and icon */}
           <View className="flex-row items-center border-[1px] border-gray-400 rounded-md bg-white pr-4">
             <TextInput
@@ -105,7 +111,9 @@ export default function Login() {
               secureTextEntry={!isPasswordVisible} // ✅ 4. Toggle secureTextEntry
               className="flex-1 p-4 md:text-xl" // Make input take most space
             />
-            <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+            <TouchableOpacity
+              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+            >
               <Feather
                 name={isPasswordVisible ? "eye-off" : "eye"} // ✅ 5. Change icon based on state
                 size={24}

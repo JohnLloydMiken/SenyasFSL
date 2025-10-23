@@ -14,7 +14,7 @@ export default function SupportSection({ onPressHelp }: Props) {
       </Text>
       <SectionItem
         icon={require("@/assets/images/help.png")}
-        text="Edit personal data"
+        text="Help"
         onPress={onPressHelp}
       />
     </View>

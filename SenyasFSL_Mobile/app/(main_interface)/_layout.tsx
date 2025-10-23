@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Text,
   View,
   TouchableOpacity,
   useWindowDimensions,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Tabs, useRouter } from "expo-router";
@@ -22,6 +23,7 @@ import Authbutton from "@/components/authentication/button";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
 import { BottomSheetProvider, useBottomSheet } from "@/modules/contextProvider";
+import { updateUserProfile } from "@/services/authService";
 
 export default function RootLayout() {
   return (
@@ -44,14 +46,51 @@ function TabsWithBottomSheet() {
   const snapPoints = useMemo(() => {
     switch (sheet) {
       case "streak":
-        return ["50%"]; // shorter content
+        return ["50%"];
       case "editData":
       case "editPass":
-        return ["60%"]; // forms take more space
+        return ["60%"];
       default:
-        return ["1"]; // closed by default
+        return ["1"];
     }
   }, [sheet]);
+
+  const [username, setUsername] = useState(userData?.username || "");
+  const [email, setEmail] = useState(userData?.email || "");
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (isSheetOpen && sheet === "editData") {
+      setUsername(userData?.username || "");
+      setEmail(userData?.email || "");
+      setPassword("");
+    }
+  }, [isSheetOpen, sheet, userData]);
+
+  const handleUpdateProfile = async () => {
+    if (!password) {
+      Alert.alert(
+        "Password Required",
+        "Please enter your current password to save changes."
+      );
+      return;
+    }
+    try {
+      await updateUserProfile({
+        newUsername: username,
+        newEmail: email,
+      
+      });
+
+      Alert.alert("Success", "Profile updated successfully!");
+      bottomSheetRef.current?.close();
+    } catch (error: any) {
+      Alert.alert(
+        "Update Failed",
+        error.message || "An unknown error occurred."
+      );
+    }
+  };
 
   if (userLoading) {
     return (
@@ -96,6 +135,7 @@ function TabsWithBottomSheet() {
           tabBarInactiveTintColor: "#8B8B8B",
         }}
       >
+        {/* ...Tabs.Screen definitions... */}
         <Tabs.Screen
           name="index"
           options={{
@@ -158,7 +198,7 @@ function TabsWithBottomSheet() {
               <View className="w-full  relative flex-col justify-center items-center  h-full">
                 <UserStreak streakCount={1} protectionCount={1} />
 
-                <TouchableOpacity className="w-11/12 p-4 bg-[#FB990F] rounded-xl  absolute bottom-4">
+                <TouchableOpacity className="w-11/Vl p-4 bg-[#FB990F] rounded-xl  absolute bottom-4">
                   <Text className="font-PoppinsBold text-2xl text-center text-white">
                     Share your Streak
                   </Text>
@@ -170,17 +210,26 @@ function TabsWithBottomSheet() {
           {sheet === "editData" && (
             <>
               <View className="flex-1 flex-col justify-center items-center">
+                {/* --- START: Updated props for UserInput --- */}
                 <UserInput
                   title="Edit personal data"
                   usernameTitle="Username"
                   userEmailTitle="Email"
                   userPasswordTitle="Current password"
                   passwordTitleDescription="Type in your password to update your email"
+                  // Pass the state and setters to the correct props
+                  usernameValue={username}
+                  onUsernameChange={setUsername}
+                  emailValue={email}
+                  onEmailChange={setEmail}
+                  passwordValue={password}
+                  onPasswordChange={setPassword}
                 />
+                {/* --- END: Updated props for UserInput --- */}
                 <View className="w-11/12 absolute bottom-1">
                   <Authbutton
                     content="Save changes"
-                    onPress={() => bottomSheetRef.current?.close()}
+                    onPress={handleUpdateProfile}
                   />
                 </View>
               </View>
@@ -189,6 +238,7 @@ function TabsWithBottomSheet() {
 
           {sheet === "editPass" && (
             <>
+              {/* You would apply a similar state/handler logic here for changeUserPassword */}
               <UserInput
                 title="Edit personal data"
                 usernameTitle="Username"

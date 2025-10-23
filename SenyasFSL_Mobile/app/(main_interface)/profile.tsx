@@ -10,9 +10,11 @@ import SupportSection from "@/components/main_interface/profile/SupportSection";
 import FooterLinks from "@/components/main_interface/profile/FooterLinks";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
-import { logoutUser } from "@/services/authService";
+// Import logoutUser and the new sendPasswordResetIfExists
+import { logoutUser, sendPasswordResetIfExists } from "@/services/authService";
 
 export default function Profile() {
+  // This state is no longer used for the password button, but could be used for the editPass sheet
   const [editPassword, setEditPassword] = useState(false);
   const { handleSheetRender, openSheet } = useBottomSheet();
   const { user, loading: authLoading } = useAuthStore();
@@ -22,7 +24,7 @@ export default function Profile() {
   const handleLogout = async () => {
     try {
       await logoutUser(); // Call the auth service function
-      
+
       // Manually clear the separate user profile data store
       if (clearUserData) {
         clearUserData();
@@ -33,11 +35,28 @@ export default function Profile() {
       // We use 'replace' so the user can't go "back" to the profile.
       router.replace("./(auth)/");
       // --- END: Add navigation ---
-      
     } catch (error: any) {
-      Alert.alert("Logout Failed", error.message || "Could not log out. Please try again.");
+      Alert.alert(
+        "Logout Failed",
+        error.message || "Could not log out. Please try again."
+      );
     }
   };
+
+  // --- START: Add password reset handler ---
+  const handlePasswordReset = async () => {
+    if (!userData?.email) {
+      Alert.alert("Error", "Could not find your email address.");
+      return;
+    }
+    try {
+      const message = await sendPasswordResetIfExists(userData.email);
+      Alert.alert("Password Reset", message);
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Could not send reset email.");
+    }
+  };
+  // --- END: Add password reset handler ---
 
   if (userLoading) {
     return (
@@ -63,7 +82,11 @@ export default function Profile() {
       }}
     >
       {/* Profile Info */}
-      <User_info username={userData.username} xp={userData.xp} email={userData.email} />
+      <User_info
+        username={userData.username}
+        xp={userData.xp}
+        email={userData.email}
+      />
 
       {/* User Streak */}
       <View className="w-full flex items-center justify-center mt-32 mb-4">
@@ -76,7 +99,14 @@ export default function Profile() {
           handleSheetRender("editData");
           openSheet();
         }}
-        onChangePassword={() => setEditPassword(!editPassword)}
+        // --- START: Updated onChangePassword prop ---
+        onChangePassword={handlePasswordReset}
+        // --- END: Updated onChangePassword prop ---
+        // Note: To open the "editPass" sheet, you would use:
+        // onChangePassword={() => {
+        //   handleSheetRender("editPass");
+        //   openSheet();
+        // }}
       />
 
       {/* Learning Progress Section */}

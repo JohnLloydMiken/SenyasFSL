@@ -65,8 +65,8 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
         </Text>
       )}
 
-      <View className="w-11/12 h-96">
-        <SignLangRecogWebView />
+      <View className="w-10/12 h-80">
+        <SignLangRecogWebView modelName="ordinals"  handMode="one"/>
       </View>
 
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
