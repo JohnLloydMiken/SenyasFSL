@@ -5,6 +5,7 @@ import { db } from "@/firebaseConfig";
 import type { User as AuthUser } from "firebase/auth";
 import { UserProfileData } from "shared/types/user";
 import { useAuthStore } from "./useAuthStore";
+import { markFirestoreVerified } from "@/services/userService";
 
 interface UserStoreState {
   userData: UserProfileData | null;
@@ -45,11 +46,20 @@ const parseUserData = (data: any, authUser: AuthUser): UserProfileData => {
     chestCount: 0,
     achievements: [],
     lastUpdated: Timestamp.now(),
+    verified: false,
+    verifiedAt: null,
   };
 
   return {
     ...defaults,
     ...data,
+    // Ensure these timestamps are converted to numbers (milliseconds)
+    createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toMillis() : null,
+    lastActivityDate: data.lastActivityDate instanceof Timestamp ? data.lastActivityDate.toMillis() : null,
+    lastUpdated: data.lastUpdated instanceof Timestamp ? data.lastUpdated.toMillis() : null,
+    verifiedAt: data.verifiedAt instanceof Timestamp ? data.verifiedAt.toMillis() : null,
+    // Ensure these fields are always present
+    id: authUser.uid,
     uid: authUser.uid,
     email: authUser.email || "",
   };
@@ -74,8 +84,24 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
 
     const userDocRef = doc(db, "users", authUser.uid);
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const parsedData = parseUserData(docSnap.data(), authUser);
+     if (docSnap.exists()) {
+        const firestoreData = docSnap.data();
+
+        // --- START: ADDED VERIFICATION SYNC LOGIC ---
+        // We have both authUser (from Auth) and firestoreData (from DB)
+        // Now we can compare them.
+        if (authUser.emailVerified && !firestoreData.verified) {
+          console.log(
+            "Auth is verified but Firestore is not. Syncing now..."
+          );
+          // Don't wait for this to finish, let it run in the background
+          markFirestoreVerified().catch((err) =>
+            console.error("Failed to sync verification:", err)
+          );
+        }
+        // --- END: ADDED VERIFICATION SYNC LOGIC ---
+
+        const parsedData = parseUserData(firestoreData, authUser);
         set({ userData: parsedData });
       } else {
         console.warn("User document not found!");

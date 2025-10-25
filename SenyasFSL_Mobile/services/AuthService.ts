@@ -123,12 +123,16 @@ export async function loginUser(email: string, password: string) {
       password
     );
     const user = userCredential.user;
+
+    // --- THIS IS THE CRITICAL "GATEKEEPER" LOGIC ---
     if (!user.emailVerified) {
-      // This check is already in place and is correct!
+      await signOut(auth); // Log them out immediately
       const error: any = new Error("Please verify your email first.");
       error.code = "auth/email-not-verified";
       throw error;
     }
+    // --- END OF CRITICAL LOGIC ---
+
     return userCredential;
   } catch (error: any) {
     const mappedError: any = new Error(mapAuthError(error));

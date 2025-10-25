@@ -20,6 +20,7 @@ import LevelHeader from "@/components/LevelContent/levelHeader";
 import FSL_Hi from "@/assets/svgs/FSL_hello.svg";
 import { useUserStore } from "@/utils/store/useUserStore";
 import { Section } from "@/shared/types"; //
+import { useSectionStore } from "@/utils/store/useSectionStore";
 
 const MemoFSLHi = React.memo(FSL_Hi);
 const MemoBtnUp = React.memo(BtnUp);
@@ -30,11 +31,11 @@ interface RenderLevelProps {
 }
 
 const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
-  const { userData, loading: userLoading } = useUserStore(); //
+  const { userData, loading: userLoading } = useUserStore(); 
   const { width } = useWindowDimensions();
   const FSLHiSize = width < 768 ? 160 : 300;
   const BtnSize = width < 768 ? 40 : 80;
-
+  const { setSectionOrder } = useSectionStore();
   // ✅ REMOVED the old global `userProgress` useMemo.
   // We will now calculate progress inside `sectionsData`.
 
@@ -89,7 +90,7 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
         };
       });
 
-      return {
+      return {  
         title: section.name, //
         index: section.order,
         currentLevel: levelData[0]?.id || 1,
@@ -165,11 +166,16 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
   }, []);
 
   const handleLevelPress = useCallback((level: Level): void => {
-    if (level.isUnlocked) {
-      // ✅ Use the level ID directly from the pressed item
-      router.push(`/LevelSplashScreen?nextRoute=level&levelId=${level.id}`);
+  if (level.isUnlocked) {
+    // Find the section this level belongs to
+    const section = sections.find((s) => s.order === level.section);
+    if (section) {
+      setSectionOrder(section.order); // ✅ store the current section ID
     }
-  }, []);
+
+    router.push(`/LevelSplashScreen?nextRoute=level&levelId=${level.id}`);
+  }
+}, [sections]);
 
   // Renderers
   const renderLevelItem: SectionListRenderItem<Level, LevelSection> =

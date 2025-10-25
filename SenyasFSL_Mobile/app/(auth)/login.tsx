@@ -2,48 +2,56 @@ import { Text, View, TextInput, TouchableOpacity, Alert } from "react-native";
 import React, { useState } from "react";
 import "@/global.css";
 import Authbutton from "@/components/authentication/button";
-import { router } from "expo-router";
-import { loginUser } from "@/services/authService";
+import { loginUser, mapAuthError } from "@/services/authService"; // 👈 IMPORT mapAuthError
 import { useAuthStore } from "@/utils/store/useAuthStore";
-import { Feather } from "@expo/vector-icons"; // ✅ 1. Import an icon library
+import { Feather } from "@expo/vector-icons";
+import { sendPasswordResetEmail } from "firebase/auth"; // 👈 IMPORT for password reset
+import { auth } from "@/firebaseConfig"; // 👈 IMPORT for password reset
+import Toast from "react-native-toast-message";
+import { router } from "expo-router";
 
 export default function Login() {
   // Local UI state
   const [changePassword, setChangePassword] = useState(false);
-  const [sendEmail, setSendEmail] = useState<boolean | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [resetEmail, setResetEmail] = useState("");
-  const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false); // ✅ 2. Add state for password visibility
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   // Zustand store
-  const { user, loading: authLoading } = useAuthStore();
+  const { loading: authLoading } = useAuthStore();
 
-  // ✅ Handle login
+  // Handle login
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Missing Info", "Please enter both email and password.");
       return;
     }
 
+    setIsLoading(true);
     try {
-      setIsLoading(true);
+      // ✅ 1. Use your custom loginUser service.
+      // This function now handles the 'emailVerified' check,
+      // as we built in authService.ts.
       await loginUser(email, password);
 
       router.push("/(auth)/welcome");
+
+      // ✅ 2. REMOVED router.push()
+      // Your (auth)/_layout.tsx file will automatically
+      // detect the new user state and navigate,
+      // preventing the "coudn't fetch data" race condition.
     } catch (err: any) {
-      // ✅ Specific check for verification error
-      if (err.code === "auth/email-not-verified") {
-        Alert.alert(
-          "Email Not Verified",
-          "Please check your email and click the verification link before logging in."
-        );
-        setIsError(false); // Don't show the generic modal
-      } else {
-        setIsError(true); // Show generic modal for other errors (e.g., wrong password)
-      }
+      // ✅ 3. Use mapAuthError and Toast for all errors.
+      // This will show "Please verify your email first."
+      // or "Wrong password." etc.
+      Toast.show({
+        type: "error",
+        text1: "Login Failed",
+        text2: mapAuthError(err), // Use the error mapper
+        position: "bottom",
+      });
       setEmail("");
       setPassword("");
     } finally {
@@ -51,23 +59,37 @@ export default function Login() {
     }
   };
 
-  // ✅ Handle forgot password
+  // Handle forgot password
   const handleSendResetEmail = async () => {
     if (!resetEmail) {
       Alert.alert("Missing Info", "Please enter your email.");
       return;
     }
 
+    setIsLoading(true); // Add loading state
     try {
-      // await resetPassword(resetEmail); // implement in AuthService if needed
-      setSendEmail(true);
-      setTimeout(() => {
-        setChangePassword(false);
-        setSendEmail(null);
-        setResetEmail("");
-      }, 2000);
-    } catch (err) {
-      setSendEmail(false);
+      // ✅ 4. Added the REAL Firebase password reset function
+      await sendPasswordResetEmail(auth, resetEmail);
+
+      Toast.show({
+        type: "success",
+        text1: "Email Sent!",
+        text2: "Please check your inbox for a reset link.",
+        position: "bottom",
+      });
+
+      // Close modal on success
+      setChangePassword(false);
+      setResetEmail("");
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: "Failed to Send",
+        text2: mapAuthError(err),
+        position: "bottom",
+      });
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -102,20 +124,20 @@ export default function Login() {
             Password
           </Text>
 
-          {/* ✅ 3. Create a container for the input and icon */}
+          {/* Password Input with Visibility Toggle */}
           <View className="flex-row items-center border-[1px] border-gray-400 rounded-md bg-white pr-4">
             <TextInput
               value={password}
               onChangeText={setPassword}
               placeholder="Password"
-              secureTextEntry={!isPasswordVisible} // ✅ 4. Toggle secureTextEntry
-              className="flex-1 p-4 md:text-xl" // Make input take most space
+              secureTextEntry={!isPasswordVisible}
+              className="flex-1 p-4 md:text-xl"
             />
             <TouchableOpacity
               onPress={() => setIsPasswordVisible(!isPasswordVisible)}
             >
               <Feather
-                name={isPasswordVisible ? "eye-off" : "eye"} // ✅ 5. Change icon based on state
+                name={isPasswordVisible ? "eye-off" : "eye"}
                 size={24}
                 color="gray"
               />
@@ -126,7 +148,7 @@ export default function Login() {
 
       {/* Buttons */}
       <View className="w-11/12 absolute bottom-16">
-        <TouchableOpacity disabled={isError || isLoading || authLoading}>
+        <TouchableOpacity disabled={isLoading || authLoading}>
           <Authbutton
             content={isLoading || authLoading ? "Logging in..." : "Log In"}
             onPress={handleLogin}
@@ -135,7 +157,7 @@ export default function Login() {
 
         <TouchableOpacity
           onPress={() => setChangePassword(!changePassword)}
-          disabled={isError || isLoading || authLoading}
+          disabled={isLoading || authLoading}
         >
           <Text className="text-center font-PoppinsBold md:text-2xl text-[#626262]">
             Forgot Password?
@@ -159,7 +181,7 @@ export default function Login() {
                 Forgot Password?
               </Text>
               <Text className="font-PoppinsRegular text-sm md:text-lg text-center">
-                Enter your email address to receive a code to reset your
+                Enter your email address to receive a link to reset your
                 password.
               </Text>
             </View>
@@ -178,45 +200,22 @@ export default function Login() {
               />
             </View>
 
-            {sendEmail === true && (
-              <Text className="text-2xl md:text-3xl text-green-500 font-PoppinsRegular text-center">
-                Email has been sent!
-              </Text>
-            )}
-            {sendEmail === false && (
-              <Text className="text-2xl md:text-3xl text-red-500 font-PoppinsRegular text-center">
-                Failed to send email!
-              </Text>
-            )}
+            {/* ✅ 5. Removed the 'sendEmail' state text. Toast will handle this. */}
 
             <TouchableOpacity
               onPress={handleSendResetEmail}
+              disabled={isLoading} // Disable button while sending
               className="w-full bg-[#FB990F] rounded-2xl mt-2 p-4"
             >
               <Text className="font-PoppinsBold text-center text-xl md:text-2xl text-white">
-                Send Email
+                {isLoading ? "Sending..." : "Send Email"}
               </Text>
             </TouchableOpacity>
           </View>
         </>
       )}
 
-      {/* Error Popup */}
-      {isError && (
-        <View className="absolute w-96 h-60 top-1/2 -translate-y-1/2 bg-white border border-[#FB990F] rounded-xl p-4 flex flex-col items-center justify-center gap-3">
-          <Text className="text-red-500 text-center font-PoppinsBold text-4xl md:text-3xl">
-            Failed to Login!
-          </Text>
-          <Text className="text-center font-PoppinsRegular text-xl md:text-2xl">
-            Please check your Email and Password
-          </Text>
-          <TouchableOpacity onPress={() => setIsError(false)}>
-            <Text className="text-center text-[#FB990F] mt-4 font-PoppinsBold text-2xl ">
-              Close
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* ✅ 6. Removed the 'isError' modal. Toast notifications handle errors now. */}
     </View>
   );
 }

@@ -2,9 +2,10 @@
   {
     "id": 1,
     "title": "Alphabets",
-    "SvgSource": "Letter",
+    "fil": "Alpabeto",
+    "SvgSource": "Alphabets",
     "content": {
-      "letter": [
+      "eng": [
         "Letter A",
         "Letter B",
         "Letter C",
@@ -34,7 +35,7 @@
         "Letter Y",
         "Letter Z"
       ],
-      "letterFil": [
+      "fil": [
         "Letrang A",
         "Letrang B",
         "Letrang C",
@@ -64,7 +65,7 @@
         "Letrang Y",
         "Letrang Z"
       ],
-      "letterVidSource": [
+      "source": [
         "FSL_A.mp4",
         "FSL_B.mp4",
         "FSL_C.mp4",
@@ -98,10 +99,132 @@
   },
   {
     "id": 2,
-    "title": "Numbers",
-     "SvgSource": "Numbers",
+    "title": "Colors",
+    "fil": "Kulay",
+    "SvgSource": "Colors",
     "content": {
-      "number": [
+      "eng": [
+        "Black",
+        "Blue",
+        "Brown",
+        "Gray",
+        "Green",
+        "Orange",
+        "Pink",
+        "Rainbow",
+        "Red",
+        "Violet",
+        "White",
+        "Yellow"
+      ],
+      "fil": [
+        "Itim",
+        "Asul",
+        "Kayumanggi",
+        "Kulay-abo",
+        "Berde",
+        "Kahel",
+        "Kulay-rosas",
+        "Bahaghari",
+        "Pula",
+        "Lila",
+        "Puti",
+        "Dilaw"
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "title": "Family",
+    "fil": "Pamilya",
+    "SvgSource": "Family",
+    "content": {
+      "eng": [
+        "Family",
+        "Grand Child",
+        "Aunt",
+        "Brother",
+        "Child",
+        "Cousin",
+        "Husband",
+        "Grandmother",
+        "Grandfather",
+        "Mother",
+        "Nephew",
+        "Niece",
+        "Godmother",
+        "Godfather",
+        "Father",
+        "Sister",
+        "Uncle",
+        "Wife"
+      ],
+      "fil": [
+        "Pamilya",
+        "Apo",
+        "Tita",
+        "Kapatid na Lalaki",
+        "Anak",
+        "Pinsan",
+        "Asawang lalaki",
+        "Lola",
+        "Lolo",
+        "Ina",
+        "Pamangking Lalaki",
+        "Ninang",
+        "Ninong",
+        "Ama",
+        "Kapatid na babae",
+        "Tito",
+        "Asawang babae"
+      ]
+    }
+  },
+  {
+    "id": 4,
+    "title": "Months",
+    "fil": "Mga Buwan",
+    "SvgSource": "Months",
+     "content": {
+      "eng": [
+        "August",
+        "April",
+        "December",
+        "February",
+        "January",
+        "July",
+        "June",
+        "March",      
+        "May",
+        "Month",
+        "November",
+        "October",
+        "September"
+      ],
+      "fil": [
+        "Agosto",
+        "Abril",
+        "Disyembre",
+        "Pebrero",
+        "Enero",
+        "Hulyo",
+        "Hunyo",
+        "Marso",
+        "Mayo",
+        "Buwan",
+        "Nobyembre",
+        "Oktubre",
+        "Setyembre"
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "title": "Numbers",
+    "fil": "Numero",
+    "SvgSource": "Numbers",
+    "content": {
+      "eng": [
         "Number 1",
         "Number 2",
         "Number 3",
@@ -122,42 +245,10 @@
         "Number 18",
         "Number 19",
         "Number 20",
-        "Number 21",
-        "Number 30",
-        "Number 40",
-        "Number 50",
-        "Number 60",
-        "Number 70",
-        "Number 80",
-        "Number 90",
-        "Number 100",
-        "Number 200",
-        "Number 300",
-        "Number 400",
-        "Number 500",
-        "Number 600",
-        "Number 700",
-        "Number 800",
-        "Number 900",
-        "Number 1000",
-        "Number 10,00",
-        "Number 1,000,000",
-        "Number 1,000,000,000",
-        "Number 1,000,000,000,000",
-        "Ordinal Number 1st",
-        "Ordinal Number 1st",
-        "Ordinal Number 2nd",
-        "Ordinal Number 3rd",
-        "Ordinal Number 4th",
-        "Ordinal Number 5th",
-        "Ordinal Number 6th",
-        "Ordinal Number 7th",
-        "Ordinal Number 8th",
-        "Ordinal Number 9th",
-        "Ordinal Number 10th"
+        "Number 21"
       ],
-      "numberFil": [
-      "Number 1",
+      "fil": [
+        "Number 1",
         "Number 2",
         "Number 3",
         "Number 4",
@@ -177,42 +268,11 @@
         "Number 18",
         "Number 19",
         "Number 20",
-        "Number 21",
-        "Number 30",
-        "Number 40",
-        "Number 50",
-        "Number 60",
-        "Number 70",
-        "Number 80",
-        "Number 90",
-        "Number 100",
-        "Number 200",
-        "Number 300",
-        "Number 400",
-        "Number 500",
-        "Number 600",
-        "Number 700",
-        "Number 800",
-        "Number 900",
-        "Number 1000",
-        "Number 10,00",
-        "Number 1,000,000",
-        "Number 1,000,000,000",
-        "Number 1,000,000,000,000",
-        "Ordinal Number 1st",
-        "Ordinal Number 1st",
-        "Ordinal Number 2nd",
-        "Ordinal Number 3rd",
-        "Ordinal Number 4th",
-        "Ordinal Number 5th",
-        "Ordinal Number 6th",
-        "Ordinal Number 7th",
-        "Ordinal Number 8th",
-        "Ordinal Number 9th",
-        "Ordinal Number 10th"
+        "Number 21"
+     
       ],
-      "numberVidSource": [
-       "Number 1",
+      "source": [
+        "Number 1",
         "Number 2",
         "Number 3",
         "Number 4",
@@ -232,81 +292,106 @@
         "Number 18",
         "Number 19",
         "Number 20",
-        "Number 21",
-        "Number 30",
-        "Number 40",
-        "Number 50",
-        "Number 60",
-        "Number 70",
-        "Number 80",
-        "Number 90",
-        "Number 100",
-        "Number 200",
-        "Number 300",
-        "Number 400",
-        "Number 500",
-        "Number 600",
-        "Number 700",
-        "Number 800",
-        "Number 900",
-        "Number 1000",
-        "Number 10,00",
-        "Number 1,000,000",
-        "Number 1,000,000,000",
-        "Number 1,000,000,000,000",
-        "Ordinal Number 1st",
-        "Ordinal Number 1st",
-        "Ordinal Number 2nd",
-        "Ordinal Number 3rd",
-        "Ordinal Number 4th",
-        "Ordinal Number 5th",
-        "Ordinal Number 6th",
-        "Ordinal Number 7th",
-        "Ordinal Number 8th",
-        "Ordinal Number 9th",
-        "Ordinal Number 10th"
+        "Number 21"
+      ]
+    }
+  },
+
+  {
+    "id": 6,
+    "title": "Occupation",
+    "fil": "Hanapbuhay",
+    "SvgSource": "Occupation",
+       "content": {
+      "eng": [
+        "Architect",
+        "Chef",
+        "Doctor",
+        "Occupation",
+        "Photographer",
+        "student",
+        "Teacher"
+      ],
+      "fil": [
+        "Arkitekto",
+        "Tagapagluto",
+        "Doktor",
+        "Hanapbuhay",
+        "Litratista",
+        "Mag-aaral",
+        "Guro"
       ]
     }
   },
   {
-    "id": 3,
-    "title": "Labels",
-     "SvgSource": "Letter"
-  },
-  {
-    "id": 4,
-    "title": "Calendar & Time units",
-     "SvgSource": "Calendar"
-  },
-
-  {
-    "id": 5,
-    "title": "Family & Colors",
-     "SvgSource": "Family"
-  },
-  {
-    "id": 6,
-    "title": "Occupations & Relationships",
-     "SvgSource": "Occupation"
-  },
-  {
     "id": 7,
-    "title": "Food & Places",
-     "SvgSource": "Food"
+    "title": "Ordinals",
+    "fil": "Bilang panunuruan",
+    "SvgSource": "Ordinal",
+    "content": {
+      "eng": [
+      
+        "Ordinal Number 1st",
+        "Ordinal Number 1st",
+        "Ordinal Number 2nd",
+        "Ordinal Number 3rd",
+        "Ordinal Number 4th",
+        "Ordinal Number 5th",
+        "Ordinal Number 6th",
+        "Ordinal Number 7th",
+        "Ordinal Number 8th",
+        "Ordinal Number 9th",
+        "Ordinal Number 10th"
+      ],
+      "fil": [
+        "Ordinal Number 1st",
+        "Ordinal Number 1st",
+        "Ordinal Number 2nd",
+        "Ordinal Number 3rd",
+        "Ordinal Number 4th",
+        "Ordinal Number 5th",
+        "Ordinal Number 6th",
+        "Ordinal Number 7th",
+        "Ordinal Number 8th",
+        "Ordinal Number 9th",
+        "Ordinal Number 10th"
+      ],
+      "source": [
+        "Ordinal1st",
+        "Ordinal2nd",
+        "Ordinal3rd",
+        "Ordinal4th",
+        "Ordinal5th",
+        "Ordinal6th",
+        "Ordinal7th",
+        "Ordinal8th",
+        "Ordinal9th",
+        "Ordinal10th"
+      ]
+    }
   },
   {
     "id": 8,
-    "title": "Vocabulary & Subjects",
-     "SvgSource": "Vocabulary"
+    "title": "Places",
+    "fil": "Lugar sa bayan",
+    "SvgSource": "Places"
   },
   {
     "id": 9,
-    "title": "Basic Greetings",
-     "SvgSource": "Greetings"
+    "title": "Relationships",
+    "fil": "Kaugnayan",
+    "SvgSource": "Relationships"
   },
   {
     "id": 10,
-    "title": "Looks & Apperance",
-     "SvgSource": "Looks"
+    "title": "Time Expression",
+    "fil": "Ekspression ng Oras",
+    "SvgSource": "Time"
+  },
+  {
+    "id": 11,
+    "title": "Weather",
+    "fil": "Ibat Ibang panahon",
+    "SvgSource": "Weather"
   }
 ]
