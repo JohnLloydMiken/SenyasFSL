@@ -16,7 +16,7 @@ export interface UserProfileData {
   uid: string;
   username: string;
   email: string;
-  reason?: string; // Optional reason field (e.g. "work", "deaf", etc.)
+  reason?: string;
   currentStreak: number;
   streakFreezes: number;
   xp: number;
@@ -26,9 +26,13 @@ export interface UserProfileData {
   inventory: Inventory;
   chestCount: number;
   achievements: string[];
-  createdAt: number | null; // converted from Firestore Timestamp -> milliseconds
-  lastActivityDate: number | null; // converted from Firestore Timestamp -> milliseconds
-  lastUpdated: number | null; // converted from Firestore Timestamp -> milliseconds
+  createdAt: number | null;
+  lastActivityDate: number | null;
+  lastUpdated: number | null;
+
+  // --- ADD THESE TWO LINES ---
+  verified: boolean; // This field comes from your database
+  verifiedAt: number | null; // This field also comes from your database
 }
 
 // --- Existing Interfaces ---

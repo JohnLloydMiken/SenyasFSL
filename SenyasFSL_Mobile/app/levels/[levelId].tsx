@@ -11,10 +11,10 @@ import {
 import Sign_Prcatice from "@/components/Game_Modes/SignLangRecog";
 import FlowRenderer from "@/components/Game_Modes/FlowRenderer";
 import BossFight from "@/components/Game_Modes/BossFight";
-
+import { useSectionStore } from "@/utils/store/useSectionStore";
 export default function LevelContent() {
   const { levelId } = useLocalSearchParams();
-
+const { currentSectionOrder } = useSectionStore();
   const [loading, setLoading] = useState(true);
   const [levelData, setLevelData] = useState<any>(null);
   const [flowContent, setFlowContent] = useState<Map<string, any> | null>(
@@ -27,7 +27,8 @@ export default function LevelContent() {
       try {
         if (!levelId || typeof levelId !== "string") return;
 
-        const level = await getLevelData(`s1_lvl_${levelId}`);
+        const level = await getLevelData(`s${currentSectionOrder}_lvl_${levelId}`);
+    
         setLevelData(level);
 
         if (!level) return;

@@ -12,80 +12,67 @@ import { saveLevelProgress } from "@/services/gameService";
 import { CompleteLevelData } from "@/shared/types"; // Using "shared/types" as per your index
 import Toast from "react-native-toast-message"; // For error handling
 import { useUserStore } from "@/utils/store/useUserStore";
+import { useSaveProgress } from "@/utils/store/useSaveProgress";
+import { useSectionStore } from "@/utils/store/useSectionStore";
+
 
 const Eval_phase = () => {
   const { levelId, lessons, questions } = useLocalSearchParams();
   const parsedLessons = lessons ? JSON.parse(lessons as string) : [];
   const router = useRouter();
-
-  // ✅ 2. Get both score and reset function from your store
+  const { currentSectionOrder } = useSectionStore();
   const point = useUserPoints((state) => state.score ?? 0);
-  const resetScore = useUserPoints((state) => state.resetScore); // Get the reset function
+  const resetScore = useUserPoints((state) => state.resetScore);
   const totalQuestions = Number(questions) || 0;
-  const updateUserData = useUserStore((state) => state.updateUserData);
-  // ✅ 3. Add a loading state
-  const [isLoading, setIsLoading] = useState(false);
+
+  // ✅ 2. Use the new hook to get the 'mutate' function and loading state
+  const { mutate: saveProgress, isLoading } = useSaveProgress();
 
   const [step, setStep] = useState<
     "evaluation" | "streak" | "reminder" | "recap"
   >("evaluation");
 
   const calcEvalpoint = () => {
-    // Prevent division by zero if there are no questions
-    if (totalQuestions === 0) {
-      return 0;
-    }
-    // Make sure percentage is rounded
+    if (totalQuestions === 0) return 0;
     return Math.round((point / totalQuestions) * 100);
   };
 
-  // ✅ 4. Define your reward logic (you can adjust this)
   const calculateRewards = () => {
     const xpPerQuestion = 10;
     const coinsPerQuestion = 5;
     const xpGained = point * xpPerQuestion;
     const senyasCoinsGained = point * coinsPerQuestion;
-
-    // Award a chest for a perfect score
     const chestsEarned = point === totalQuestions && totalQuestions > 0 ? 1 : 0;
-
+  
     return { xpGained, senyasCoinsGained, chestsEarned };
   };
 
-  // ✅ 5. Create the final "Continue" handler
-  const handleSaveAndExit = async () => {
-    setIsLoading(true);
-    try {
-      const { xpGained, senyasCoinsGained, chestsEarned } = calculateRewards();
+  // ✅ 3. Simplify the "Continue" handler
+  const handleSaveAndExit = () => {
+    // This is no longer async, as the hook handles the async logic
+    const { xpGained, senyasCoinsGained, chestsEarned } = calculateRewards();
+    const normalizedLevelID = `s${currentSectionOrder}_lvl_${levelId}`
+    // Build the data payload
+    const data: CompleteLevelData = {
+      levelId: normalizedLevelID as string,
+      
+      xpGained,
+      senyasCoinsGained,
+      chestsEarned,
+    };
 
-      // Build the data payload
-      const data: CompleteLevelData = {
-        levelId: levelId as string,
-        xpGained,
-        senyasCoinsGained,
-        chestsEarned,
-      };
-
-      // Call the cloud function
-      await saveLevelProgress(data);
-
-      // Reset the score for the next level
-      resetScore();
-
-      // Navigate home
-      router.push("/(main_interface)");
-    } catch (error) {
-      console.error("Failed to save progress:", error);
-      Toast.show({
-        type: "error",
-        text1: "Save Error",
-        text2: "Could not save your progress. Please try again.",
-      });
-      setIsLoading(false); // Only set loading to false on error
-    }
+    // Call the 'mutate' function from the hook
+    saveProgress(data, {
+      onSuccess: () => {
+        // This code runs after the API call succeeds
+        resetScore();
+        router.push("/(main_interface)");
+      },
+      // onError is now handled automatically by the hook (shows toast, rolls back state)
+    });
   };
 
-  // ✅ 6. Add loading state check
+  // ✅ 4. The loading state check is now driven by the hook
   if (isLoading) {
     return (
       <>
@@ -105,7 +92,6 @@ const Eval_phase = () => {
           <Evaluation
             percent={calcEvalpoint()}
             onRetake={() => {
-              // ✅ 7. Add resetScore() on retake
               resetScore();
               router.replace({
                 pathname: "./[levelId]",
@@ -136,7 +122,7 @@ const Eval_phase = () => {
         return (
           <LearningRecap
             lessons={parsedLessons}
-            // ✅ 8. Use the new handler here
+            // ✅ 5. Use the new, simpler handler
             onContinue={handleSaveAndExit}
           />
         );
@@ -150,13 +136,10 @@ const Eval_phase = () => {
     <>
       <Stack.Screen options={{ headerShown: false, gestureEnabled: false }} />
       <View style={{ flex: 1 }}>{renderContent()}</View>
-      {/* Make sure Toast is rendered at the top level of your app */}
-      {/* <Toast /> */}
     </>
   );
 };
 
-// ✅ 9. Add styles for the loading view
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,

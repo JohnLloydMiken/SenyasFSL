@@ -1,9 +1,10 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Image} from "react-native";
 import React from "react";
 import Categories from "@/json_files/Categories.json";
 import { router, useLocalSearchParams } from "expo-router";
 
-import LetterIcon from "@/assets/svgs/DictionarySVGs/icons8-letters-60 1.svg"
+ 
+//import LetterIcon from "@/assets/images/dictionary_imgs/alphabets.png"
 import  NumbersIcon from "@/assets/svgs/DictionarySVGs/icons8-numbers-64 1.svg"
 import  LabelsIcon from "@/assets/svgs/DictionarySVGs/icons8-letters-60 1.svg"
 import  CalendarIcon from "@/assets/svgs/DictionarySVGs/icons8-google-calendar-50 1.svg"
@@ -14,18 +15,22 @@ import  VocabularyIcon from "@/assets/svgs/DictionarySVGs/icons8-vocabulary-64 1
 import  GreetingsIcon from "@/assets/svgs/DictionarySVGs/icons8-greetings-50 1.svg"
 import  LooksIcon from "@/assets/svgs/DictionarySVGs/icons8-try-and-buy-50 1.svg"
 
+
+
+
 // Central SVG mapping
 const SvgSource: Record<string, any> = {
-  Letter: LetterIcon,
-  Numbers: NumbersIcon,
-  Labels: LabelsIcon, 
-  Calendar: CalendarIcon,
-  Family: FamilyIcon,
-  Occupation: OccupationIcon,
-  Food: FoodIcon,
-  Vocabulary: VocabularyIcon,
-  Greetings: GreetingsIcon,
-  Looks: LooksIcon,
+  Alphabets: require('@/assets/images/dictionary_imgs/Alphabets.png') ,
+  Colors: require('@/assets/images/dictionary_imgs/Colors.png') , 
+  Family: require('@/assets/images/dictionary_imgs/Family.png') ,
+  Months: require('@/assets/images/dictionary_imgs/Month.png') ,
+  Numbers: require('@/assets/images/dictionary_imgs/Numbers.png') ,
+  Occupation: require('@/assets/images/dictionary_imgs/Occupation.png') ,
+  Ordinal: require('@/assets/images/dictionary_imgs/Ordinals.png') ,
+  Places: require('@/assets/images/dictionary_imgs/Places.png') ,
+  Relationships: require('@/assets/images/dictionary_imgs/Relationship.png') ,
+  Time: require('@/assets/images/dictionary_imgs/Time.png') ,
+  Weather: require('@/assets/images/dictionary_imgs/Weather.png') ,
 };
 
 const DictionaryCategories = () => {
@@ -65,11 +70,18 @@ const DictionaryCategories = () => {
                 justifyContent: "center",
                 alignItems: "center",
                 padding: 12,
+                backgroundColor: "white",
+                 elevation: 8
               }}
             >
-              {Icon && <Icon width={60} height={60} />}
-              <Text style={{ marginTop: 8, textAlign: "center" }}>
+              {Icon && <Image source={Icon} style={{width: 30, height: 30}} />}
+              <Text style={{ marginTop: 8, textAlign: "center" }} className="font-PoppinsSemiBold text-lg md:text-xl">
                 {item.title}
+               
+              </Text>
+               <Text style={{ textAlign: "center" }} className="font-PoppinsLightItallic text-lg md:text-xl"> 
+               
+                "{item.fil}"
               </Text>
             </TouchableOpacity>
           );

@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, useWindowDimensions } from 'react-native';
 import Dictionary from '@/assets/svgs/Dictionary.svg'
 import Dictionary_locked from '@/assets/svgs/Dictionary_locked.svg'
+
 type IconProp = {
   focused: boolean;
 };
