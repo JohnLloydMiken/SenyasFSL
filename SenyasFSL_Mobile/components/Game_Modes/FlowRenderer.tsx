@@ -2,24 +2,32 @@
 
 import { StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FillTheGap from "@/components/Game_Modes/FillTheGap";
 import LearnASign from "@/components/Game_Modes/LearnASign";
 import MultipleChoice from "@/components/Game_Modes/MultipleChoice";
 import TrueOrFalse from "@/components/Game_Modes/TrueOrFalse";
 import VideoMC from "@/components/Game_Modes/VideoMC";
-
+import { LevelData } from "@/utils/store/levelData";
 interface FlowRendererProps {
   levelData: any;
   flowContent: Map<string, any>;
 }
 
-export default function FlowRenderer({ levelData, flowContent }: FlowRendererProps) {
+export default function FlowRenderer({
+  levelData,
+  flowContent,
+}: FlowRendererProps) {
   const { levelId } = useLocalSearchParams();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
-
+  const setLevelStep = LevelData((state) => state.setLevelStep);
   // ⏩ Move to next step or evaluation
+
+  useEffect(() => {
+    setLevelStep(currentStep);
+  }, [currentStep, setLevelStep]);
+
   const handleNextStep = () => {
     if (levelData && currentStep + 1 < levelData.flow.length) {
       setCurrentStep((prev) => prev + 1);
@@ -29,7 +37,8 @@ export default function FlowRenderer({ levelData, flowContent }: FlowRendererPro
         pathname: "./Eval_phase",
         params: {
           levelId,
-          questions: levelData.flow.filter((f: any) => f.type === "question").length,
+          questions: levelData.flow.filter((f: any) => f.type === "question")
+            .length,
           lessons: JSON.stringify(
             levelData.flow
               .filter((f: any) => f.type === "lesson")
@@ -51,7 +60,7 @@ export default function FlowRenderer({ levelData, flowContent }: FlowRendererPro
   // 🧩 Get current step data
   const flowStep = levelData?.flow[currentStep];
   const content = flowContent.get(flowStep.ref);
-
+  setLevelStep(flowStep.step);
   // 🧠 Render Component based on type
   if (!flowStep || !content) {
     return (
@@ -138,7 +147,7 @@ export default function FlowRenderer({ levelData, flowContent }: FlowRendererPro
       <Text>Unknown step type: {flowStep.type}</Text>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },

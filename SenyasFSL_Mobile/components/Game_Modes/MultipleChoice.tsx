@@ -11,6 +11,7 @@ import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import Inventory from "../main_interface/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
+import { videoSpeed } from "@/utils/store/videoSpeed";
 interface Option {
   id: string;
   labelEn: string;
@@ -40,6 +41,7 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const incrementScore = useUserPoints((state) => state.incrementScore);
+  const speed = videoSpeed((state) => state.playingSpeed);
   // Initialize player (empty source first)
   const player = useVideoPlayer("", (player) => {
     player.loop = true;
@@ -60,6 +62,7 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
         setResolvedUrl(finalUrl);
         player.replace(finalUrl);
         player.play();
+        player.playbackRate = speed;
       } catch (error) {
       } finally {
         setLoading(false);
@@ -68,6 +71,12 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
 
     loadVideo();
   }, [videoUrl]);
+
+  useEffect(() => {
+      if (player) {
+        player.playbackRate = speed;
+      }
+    }, [speed, player]); // Dependencies: speed and player
 
   // ✅ Handle check button
   const handleCheck = useCallback(() => {
@@ -100,14 +109,12 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
     [options, choice, hasChecked]
   );
 
-  if(loading){
-    return(
+  if (loading) {
+    return (
       <View className="flex-1 bg-white justify-center items-center">
-        <Text className="text-center mt-8 text-gray-400">
-            Loading video...
-          </Text>
+        <Text className="text-center mt-8 text-gray-400">Loading video...</Text>
       </View>
-    )
+    );
   }
 
   return (

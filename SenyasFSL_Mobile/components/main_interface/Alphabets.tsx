@@ -8,9 +8,9 @@ interface Props {
 }
 
 const Alphabets: React.FC<Props> = ({ onPress }) => {
-  const data = Categories[0].content?.letter;
-  const dataFil = Categories[0].content?.letterFil;
-  const dataSource = Categories[0].content?.letterVidSource
+  const data = Categories[0].content?.eng;
+  const dataFil = Categories[0].content?.fil;
+  const dataSource = Categories[0].content?.source
   return (
     <SafeAreaView style={{ flex: 1}}>
       <ScrollView style={{ flex: 1 }}>
