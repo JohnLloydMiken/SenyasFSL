@@ -10,7 +10,7 @@ import VideoMCBTN from "./GameBtns/VideoMCBTN";
 import Inventory from "@/components/main_interface/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
-
+import { videoSpeed } from "@/utils/store/videoSpeed";
 // --- Interfaces ---
 export interface VideoQuestionOption {
   id: string;
@@ -43,7 +43,7 @@ const ViewMC: React.FC<ViewMCProps> = ({
     {}
   ); // Stores resolved video URLs
   const [loading, setLoading] = useState(true);
-
+  const speed = videoSpeed((state) => state.playingSpeed);
   // ✅ Determine the correct answer from options
   const correctAnswer = useMemo(() => {
     // ✅ This now correctly looks for the option where `isCorrect` is true

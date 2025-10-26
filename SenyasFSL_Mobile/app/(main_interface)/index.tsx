@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View, TouchableOpacity , Text} from "react-native";
+import { StyleSheet, View, TouchableOpacity, Text } from "react-native";
 import BGComponent from "@/assets/svgs/bg 1.svg";
 import TutorialSVG from "@/assets/svgs/Tutorial.svg";
 import Settings from "@/components/main_interface/Settings";
@@ -10,12 +10,16 @@ import { getSectionsData } from "@/services/gameService";
 import { Section } from "@/shared/types";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
+import { useAudioPlayer } from "expo-audio";
 
-// ✅ Memoize heavy components ONCE
+const audioSource = require("@/assets/audio/bg_music.mp3");
+
+// ✅ Memoized components
 const BG = React.memo(BGComponent);
 const RenderLevel = React.memo(RenderLevelBase);
 
 export default function Index() {
+  const player = useAudioPlayer(audioSource);
   const sectionRefs = useRef<React.RefObject<HTMLElement | null>[]>([]);
   const [isPressed, setIsPressed] = useState(false);
   const [tutorialPressed, setTutorialPressed] = useState(false);
@@ -23,6 +27,10 @@ export default function Index() {
   const [isMapLoading, setIsMapLoading] = useState(true);
   const { user, loading: authLoading } = useAuthStore();
   const { userData, loading: userLoading } = useUserStore();
+
+ 
+
+  // ✅ Fetch sections
   useEffect(() => {
     const fetchMapData = async () => {
       try {
@@ -40,21 +48,21 @@ export default function Index() {
 
   if (isMapLoading || userLoading) {
     return (
-      <View className="flex-1 bg-white">
-          <Text>Loading...</Text>
+      <View className="flex-1 bg-white justify-center items-center">
+        <Text>Loading...</Text>
       </View>
     );
   }
 
   return (
     <View className="bg-white flex-1 items-center">
-      {/* ✅ Background is now memoized */}
+      {/* Background */}
       <View className="w-full h-full absolute top-0 left-0">
         <BG width={"100%"} height={"100%"} scaleX={1.2} scaleY={1.2} />
       </View>
 
-      {/* ✅ Heavy component is now memoized */}
-      <RenderLevel  sections={sections}/>
+      {/* Render Level */}
+      <RenderLevel sections={sections} />
 
       {/* Floating Buttons */}
       <View className="flex-col justify-center items-center absolute bottom-2 left-2 gap-2 z-50">
@@ -64,16 +72,14 @@ export default function Index() {
         <Settings onPress={() => setIsPressed((prev) => !prev)} />
       </View>
 
-      {/* ✅ Correct overlay condition */}
+      {/* Overlay */}
       {(isPressed || tutorialPressed) && (
         <View className="absolute w-full h-full left-0 top-0 bg-black/60 z-40" />
       )}
 
       {/* Modals */}
       {isPressed && <SoundSettings onPress={() => setIsPressed(false)} />}
-      {tutorialPressed && (
-        <Tutorial onPress={() => setTutorialPressed(false)} />
-      )}
+      {tutorialPressed && <Tutorial onPress={() => setTutorialPressed(false)} />}
     </View>
   );
 }

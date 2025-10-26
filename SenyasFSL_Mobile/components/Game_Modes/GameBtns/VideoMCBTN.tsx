@@ -13,6 +13,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import ViDSelected from "@/assets/svgs/VidSelected.svg";
 import ViDCorrect from "@/assets/svgs/VidCorrect.svg";
 import VidWrong from "@/assets/svgs/VidWrong.svg";
+import { videoSpeed } from "@/utils/store/videoSpeed";
 
 interface VideoMCBTNProps {
   labeFil:string,
@@ -45,7 +46,7 @@ const VideoMCBTN: React.FC<VideoMCBTNProps> = ({
   const svgSize = width < 768 ? 34 : 50;
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
-
+  const speed = videoSpeed((state) => state.playingSpeed);
   // ✅ Init remote video
   const player = useVideoPlayer({ uri: videoSource }, (p) => {
     p.loop = true;
@@ -58,6 +59,7 @@ const VideoMCBTN: React.FC<VideoMCBTNProps> = ({
       try {
         setIsLoading(true);
         await player.play();
+          player.playbackRate = speed;
         setIsLoading(false);
       } catch (error) {
         setIsError(true);
@@ -67,6 +69,13 @@ const VideoMCBTN: React.FC<VideoMCBTNProps> = ({
     };
     loadVideo();
   }, [videoSource]);
+
+   useEffect(() => {
+        if (player) {
+          player.playbackRate = speed;
+        }
+      }, [speed, player]); // Dependencies: speed and player
+  
 
   // 🎨 Pick gradient
   let gradientColors: readonly [string, string] = gradients.default;

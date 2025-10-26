@@ -11,7 +11,7 @@ import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
 import Inventory from "../main_interface/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
-
+import { videoSpeed } from "@/utils/store/videoSpeed";
 export interface TrueFalseOption {
   id: string;
   isCorrect: boolean;
@@ -41,7 +41,8 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
   const [opacity, setOpacity] = useState(1);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
- const incrementScore = useUserPoints((state) => state.incrementScore);
+  const speed = videoSpeed((state) => state.playingSpeed);
+  const incrementScore = useUserPoints((state) => state.incrementScore);
   const correctAnswer = useMemo(() => {
     const correctOpt = options.find((opt) => !opt.isCorrect);
     return correctOpt ? correctOpt.labelEn : "";
@@ -64,6 +65,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
         setResolvedUrl(finalUrl);
         player.replace(finalUrl);
         player.play();
+         player.playbackRate = speed;
       } catch (error) {
         console.error("Error loading video URL:", error);
       } finally {
@@ -73,6 +75,13 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
     loadVideo();
   }, [videoURL]);
 
+   useEffect(() => {
+        if (player) {
+          player.playbackRate = speed;
+        }
+      }, [speed, player]); // Dependencies: speed and player
+  
+
   const handleCheck = () => {
     if (selectedChoice) {
       const selectedOption = options.find((opt) => opt.id === selectedChoice);
@@ -80,11 +89,10 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
       setIsCorrect(correct);
       setHasChecked(true);
       setOpacity(0);
-      if(correct){
+      if (correct) {
         incrementScore();
       }
     }
-    
   };
 
   if (loading) {

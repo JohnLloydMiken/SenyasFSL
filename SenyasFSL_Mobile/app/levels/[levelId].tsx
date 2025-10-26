@@ -12,23 +12,30 @@ import Sign_Prcatice from "@/components/Game_Modes/SignLangRecog";
 import FlowRenderer from "@/components/Game_Modes/FlowRenderer";
 import BossFight from "@/components/Game_Modes/BossFight";
 import { useSectionStore } from "@/utils/store/useSectionStore";
+import { LevelData } from "@/utils/store/levelData";
 export default function LevelContent() {
   const { levelId } = useLocalSearchParams();
-const { currentSectionOrder } = useSectionStore();
+  const { currentSectionOrder } = useSectionStore();
   const [loading, setLoading] = useState(true);
   const [levelData, setLevelData] = useState<any>(null);
-  const [flowContent, setFlowContent] = useState<Map<string, any> | null>(
-    null
-  );
+  const setLevelID = LevelData((state) => state.setLevelID);
+  const [flowContent, setFlowContent] = useState<Map<string, any> | null>(null);
 
   useEffect(() => {
     const fetchLevelAndFlow = async () => {
       setLoading(true);
       try {
-        if (!levelId || typeof levelId !== "string") return;
+        // 👇 Check for all required params first
+        if (!levelId || typeof levelId !== "string" || !currentSectionOrder) {
+          console.warn("Missing levelId or sectionOrder, skipping fetch");
+          return;
+        }
 
-        const level = await getLevelData(`s${currentSectionOrder}_lvl_${levelId}`);
-    
+        // 👇 **FIX 1: Construct the ID and set it in the store immediately**
+        const fullLevelId = `s${currentSectionOrder}_lvl_${levelId}`;
+        setLevelID(fullLevelId); // This updates the global store
+
+        const level = await getLevelData(fullLevelId); // Now fetch with the same ID
         setLevelData(level);
 
         if (!level) return;
@@ -60,10 +67,10 @@ const { currentSectionOrder } = useSectionStore();
     };
 
     fetchLevelAndFlow();
-  }, [levelId]);
+  }, [levelId, currentSectionOrder, setLevelID]);
 
   // ... The rest of your component remains the same
-  
+
   const renderLevel = () => {
     if (loading) {
       return (

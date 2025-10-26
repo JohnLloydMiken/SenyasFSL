@@ -5,7 +5,7 @@ import LevelContentBtn from "./GameBtns/LevelContentBtn";
 import LearnAsignBTN from "./GameBtns/LearnAsignBTN";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import { getVideoUrl } from "@/services/gameService";
-
+import { videoSpeed } from "@/utils/store/videoSpeed";
 interface LearnASignProps {
   videoURL: string;
   title: string;
@@ -24,7 +24,7 @@ const LearnASign: React.FC<LearnASignProps> = ({
   const [isClicked, setIsClicked] = useState(false);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const speed = videoSpeed((state)=> state.playingSpeed)
   // ✅ Create player hook ONCE
   const player = useVideoPlayer(null, (p) => {
     p.loop = true;
@@ -38,11 +38,13 @@ const LearnASign: React.FC<LearnASignProps> = ({
         let finalUrl = videoURL;
         if (videoURL.startsWith("gs://")) {
           finalUrl = await getVideoUrl(videoURL);
+          console.log(finalUrl)
         } else {
         }
         setResolvedUrl(finalUrl);
         player.replace(finalUrl); // ✅ Correct way to update video source
         player.pause();
+        player.playbackRate = speed
       } catch (error) {
       } finally {
         setLoading(false);
@@ -51,6 +53,14 @@ const LearnASign: React.FC<LearnASignProps> = ({
 
     loadVideo();
   }, [videoURL]);
+
+  // ✅ ADD THIS NEW EFFECT
+  // This effect updates the speed whenever the 'speed' from Zustand changes
+  useEffect(() => {
+    if (player) {
+      player.playbackRate = speed;
+    }
+  }, [speed, player]); // Dependencies: speed and player
 
   if (loading || !resolvedUrl) {
     return (
@@ -65,7 +75,7 @@ const LearnASign: React.FC<LearnASignProps> = ({
     <View className="flex-1 relative bg-white">
       {/* TITLE */}
       <Text className="text-center text-2xl md:text-3xl font-PoppinsBold my-2">
-        {title}
+        Learn A New Sign!
       </Text>
 
       {/* VIDEO */}

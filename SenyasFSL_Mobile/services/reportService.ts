@@ -1,6 +1,7 @@
-// src/services/reportService.ts
-import { httpsCallable } from "firebase/functions";
-import { functions } from "@/firebaseConfig";
+// services/reportService.ts
+import { httpsCallable, HttpsCallableResult } from "firebase/functions"; // 👈 From Web SDK
+import { functions } from "@/firebaseConfig"; // 👈 From your config
+import Toast from "react-native-toast-message"; // 👈 From React Native
 import {
   SubmitReportData,
   SubmitReportResult,
@@ -10,13 +11,54 @@ import {
   UpdateReportStatusResult,
   DeleteReportData,
   DeleteReportResult,
-} from "shared/types/report";
-import toast from "react-hot-toast";
+} from "shared/types/report"; // Make sure this path is correct
 
 /**
  * Calls the secure backend function to submit a user report.
- * @param data The report data from the modal.
+ * This is the mobile-native version.
  */
+export const submitReport = async (
+  data: SubmitReportData
+): Promise<SubmitReportResult> => {
+  // 1. Show a loading toast
+  Toast.show({
+    type: "info",
+    text1: "Submitting report...",
+    visibilityTime: 2000,
+  });
+
+  try {
+    // 2. Get the callable function (using your project's correct syntax)
+    const submitReportFunction = httpsCallable<
+      SubmitReportData,
+      SubmitReportResult
+    >(functions, "submitReport");
+
+    // 3. Call the function
+    const result = await submitReportFunction(data);
+
+    // 4. Show success toast
+    Toast.show({
+      type: "success",
+      text1: "Report submitted! Thank you.",
+    });
+
+    return result.data;
+  } catch (error) {
+    console.error("Error submitting report:", error);
+
+    // 5. Show error toast
+    Toast.show({
+      type: "error",
+      text1: "Could not submit report.",
+      text2: "Please try again later.",
+    });
+    throw new Error("Failed to submit report.");
+  }
+};
+
+// --- Other Admin Functions (Converted) ---
+
 export const updateReportStatus = async (
   reportId: string,
   newStatus: "new" | "pending" | "resolved"
@@ -34,9 +76,6 @@ export const updateReportStatus = async (
   }
 };
 
-/**
- * Deletes a specific report. Admin-only.
- */
 export const deleteReport = async (
   reportId: string
 ): Promise<DeleteReportResult> => {
@@ -52,38 +91,17 @@ export const deleteReport = async (
     throw error;
   }
 };
+
 export const getReports = async (): Promise<GetReportsResult> => {
   try {
     const getReportsFunction = httpsCallable<GetReportsData, GetReportsResult>(
       functions,
       "getReportsAsAdmin"
     );
-
     const result = await getReportsFunction({});
     return result.data;
   } catch (error) {
     console.error("Error getting reports:", error);
-    throw error; // Re-throw to be handled by the component
-  }
-};
-export const submitReport = async (
-  data: SubmitReportData
-): Promise<SubmitReportResult> => {
-  try {
-    const submitReportFunction = httpsCallable<
-      SubmitReportData,
-      SubmitReportResult
-    >(functions, "submitReport");
-
-    const result = await toast.promise(submitReportFunction(data), {
-      loading: "Submitting report...",
-      success: "Report submitted! Thank you.",
-      error: "Could not submit report.",
-    });
-
-    return result.data;
-  } catch (error) {
-    console.error("Error submitting report:", error);
-    throw new Error("Failed to submit report.");
+    throw error;
   }
 };

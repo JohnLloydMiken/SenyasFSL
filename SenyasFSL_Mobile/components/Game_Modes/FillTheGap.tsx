@@ -12,7 +12,7 @@ import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
-
+import { videoSpeed } from "@/utils/store/videoSpeed";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 
@@ -47,7 +47,8 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
   const [opacity, setOpacity] = useState(100);
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
- const incrementScore = useUserPoints((state) => state.incrementScore);
+  const incrementScore = useUserPoints((state) => state.incrementScore);
+  const speed = videoSpeed((state) => state.playingSpeed);
   // ✅ Find the correct option
   const correctOption = useMemo(
     () => options.find((opt) => opt.isCorrect) || null,
@@ -62,7 +63,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
       setIsCorrect(correct);
       setHasChecked(true);
       setOpacity(0);
-        if(correct){
+      if (correct) {
         incrementScore();
       }
     }
@@ -83,16 +84,25 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
           finalUrl = await getVideoUrl(videoURL);
         }
         setResolvedUrl(finalUrl);
-        player.replace(finalUrl);
-        player.play();
+        await player.replace({ uri: finalUrl });
+        await player.play();
+        player.playbackRate = speed;
       } catch (error) {
         console.error("Error loading video:", error);
       } finally {
         setLoading(false);
       }
     };
+
     loadVideo();
   }, [videoURL]);
+
+  useEffect(() => {
+    if (player) {
+      player.playbackRate = speed;
+    }
+  }, [speed, player]); // Dependencies: speed and player
+
   if (loading) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
