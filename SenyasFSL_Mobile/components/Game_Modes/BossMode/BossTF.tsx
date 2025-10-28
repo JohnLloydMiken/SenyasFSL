@@ -8,12 +8,12 @@ import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
-import Inventory from "@/components/main_interface/Inventory";
+import Inventory from "@/components/main_interface/treasure/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
-
+import { videoSpeed } from "@/utils/store/videoSpeed";
 export interface TrueFalseOption {
   id: string;
   isCorrect: boolean;
@@ -49,6 +49,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
   const [loading, setLoading] = useState(true);
   const [showWrongIcon, setShowWrongIcon] = useState(false);
   const incrementScore = useUserPoints((state) => state.incrementScore);
+  const speed = videoSpeed((state) => state.playingSpeed);
   const correctAnswer = useMemo(() => {
     const correctOpt = options.find((opt) => !opt.isCorrect);
     return correctOpt ? correctOpt.labelEn : "";
@@ -71,6 +72,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
         setResolvedUrl(finalUrl);
         player.replace(finalUrl);
         player.play();
+           player.playbackRate = speed;
       } catch (error) {
         console.error("Error loading video URL:", error);
       } finally {
@@ -108,6 +110,12 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
       }
     }
   };
+
+  useEffect(() => {
+          if (player) {
+            player.playbackRate = speed;
+          }
+        }, [speed, player]); // Dependencies: speed and player
 
   if (loading) {
     return (

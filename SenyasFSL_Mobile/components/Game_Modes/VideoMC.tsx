@@ -7,7 +7,7 @@ import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import LevelContentBtn from "./GameBtns/LevelContentBtn";
 import VideoMCBTN from "./GameBtns/VideoMCBTN";
-import Inventory from "@/components/main_interface/Inventory";
+import Inventory from "@/components/main_interface/treasure/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import { videoSpeed } from "@/utils/store/videoSpeed";

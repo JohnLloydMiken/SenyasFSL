@@ -10,12 +10,12 @@ import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
-import Inventory from "@/components/main_interface/Inventory";
+import Inventory from "@/components/main_interface/treasure/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
-
+import { videoSpeed } from "@/utils/store/videoSpeed";
 interface Option {
   id: string;
   labelEn: string;
@@ -49,7 +49,7 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const incrementScore = useUserPoints((state) => state.incrementScore);
-
+  const speed = videoSpeed((state) => state.playingSpeed);
   // ✅ 1. State to control the icon visibility
   const [showWrongIcon, setShowWrongIcon] = useState(false);
 
@@ -70,6 +70,7 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
         setResolvedUrl(finalUrl);
         player.replace(finalUrl);
         player.play();
+        player.playbackRate = speed;
       } catch (error) {
         console.error("Error loading video:", error);
       } finally {
@@ -78,6 +79,12 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
     };
     loadVideo();
   }, [videoUrl]);
+
+   useEffect(() => {
+          if (player) {
+            player.playbackRate = speed;
+          }
+        }, [speed, player]); 
 
   // ✅ 2. When an incorrect answer is checked, show the wrong icon temporarily
   useEffect(() => {

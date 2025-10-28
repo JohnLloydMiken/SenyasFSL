@@ -191,7 +191,7 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
       <LevelHeader
         title={section.title}
         section={section.index}
-        level={section.currentLevel}
+        level={section.currentLevel + 1}
       />
     ),
     []

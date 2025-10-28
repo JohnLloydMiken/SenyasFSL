@@ -7,11 +7,12 @@ import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import LevelContentBtn from "@/components/Game_Modes/GameBtns/LevelContentBtn";
 import VideoMCBTN from "@/components/Game_Modes/GameBtns/VideoMCBTN";
-import Inventory from "@/components/main_interface/Inventory";
+import Inventory from "@/components/main_interface/treasure/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
+import { videoSpeed } from "@/utils/store/videoSpeed";
 // --- Interfaces ---
 export interface VideoQuestionOption {
   id: string;
@@ -44,6 +45,7 @@ const BossViewMC: React.FC<ViewMCProps> = ({
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(100);
   const incrementScore = useUserPoints((state) => state.incrementScore);
+    const speed = videoSpeed((state) => state.playingSpeed);
   const [resolvedVideos, setResolvedVideos] = useState<Record<string, string>>(
     {}
   ); // Stores resolved video URLs

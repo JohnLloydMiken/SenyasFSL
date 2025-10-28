@@ -5,7 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import LevelContentBtn from "./GameBtns/LevelContentBtn";
 import MCBTN from "./GameBtns/MCBTN";
-import Inventory from "../main_interface/Inventory";
+import Inventory from "../main_interface/treasure/Inventory";
 
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";

@@ -14,15 +14,11 @@ interface FlowRendererProps {
   flowContent: Map<string, any>;
 }
 
-export default function FlowRenderer({
-  levelData,
-  flowContent,
-}: FlowRendererProps) {
+export default function FlowRenderer({ levelData, flowContent }: FlowRendererProps) {
   const { levelId } = useLocalSearchParams();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const setLevelStep = LevelData((state) => state.setLevelStep);
-  // ⏩ Move to next step or evaluation
 
   useEffect(() => {
     setLevelStep(currentStep);
@@ -32,13 +28,11 @@ export default function FlowRenderer({
     if (levelData && currentStep + 1 < levelData.flow.length) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      // 🏁 When last step is done → Go to Evaluation screen
       router.push({
         pathname: "./Eval_phase",
         params: {
           levelId,
-          questions: levelData.flow.filter((f: any) => f.type === "question")
-            .length,
+          questions: levelData.flow.filter((f: any) => f.type === "question").length,
           lessons: JSON.stringify(
             levelData.flow
               .filter((f: any) => f.type === "lesson")
@@ -57,11 +51,16 @@ export default function FlowRenderer({
     }
   };
 
-  // 🧩 Get current step data
   const flowStep = levelData?.flow[currentStep];
-  const content = flowContent.get(flowStep.ref);
-  setLevelStep(flowStep.step);
-  // 🧠 Render Component based on type
+  const content = flowStep ? flowContent.get(flowStep.ref) : null;
+
+  // ✅ FIX: setLevelStep inside useEffect
+  useEffect(() => {
+    if (flowStep?.step !== undefined) {
+      setLevelStep(flowStep.step);
+    }
+  }, [flowStep, setLevelStep]);
+
   if (!flowStep || !content) {
     return (
       <View style={styles.center}>

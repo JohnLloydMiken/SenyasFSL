@@ -1,3 +1,4 @@
+import React, { useRef, useState, useMemo } from "react";
 import {
   StyleSheet,
   Text,
@@ -5,51 +6,49 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import Slow from "@/assets/svgs/Slow_Vid.svg";
-import { Stack } from "expo-router";
-import BackToLevelsBtn from "@/components/authentication/BackToLevelsBtn";
-import { router } from "expo-router";
-import React, { useRef, useState, useMemo } from "react"; // 1. IMPORT useMemo
+import { Stack, router } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import Authbutton from "@/components/authentication/button";
-import Wait from "@/assets/svgs/Wait.svg";
-import Nomral from "@/assets/svgs/Slow.svg";
-import { videoSpeed } from "@/utils/store/videoSpeed";
-import MyIcon from "@/components/main_interface/MyIcon";
-import { LevelData } from "@/utils/store/levelData";
-// 2. IMPORT THE NEW COMPONENTS
 import Toast from "react-native-toast-message";
-import ReportBottomSheetContent from "@/components/main_interface/ReportBottomSheetContent"; // (Assuming this path is correct)
 
-export default function _layout() {
+import BackToLevelsBtn from "@/components/authentication/BackToLevelsBtn";
+import Authbutton from "@/components/authentication/button";
+import Slow from "@/assets/svgs/Slow_Vid.svg";
+import Nomral from "@/assets/svgs/Slow.svg";
+import Wait from "@/assets/svgs/Wait.svg";
+import MyIcon from "@/components/main_interface/MyIcon";
+import ReportBottomSheetContent from "@/components/main_interface/ReportBottomSheetContent";
+import { videoSpeed } from "@/utils/store/videoSpeed";
+import { LevelData } from "@/utils/store/levelData";
+
+export default function Layout() {
   return (
-    // 3. Add GestureHandlerRootView and Toast here
-    <GestureHandlerRootView style={styles.container}>
-      <BottomView />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <MainLayout />
       <Toast />
     </GestureHandlerRootView>
   );
 }
 
-// 4. BottomView will now contain ALL logic, refs, and components
-const BottomView = () => {
-  const [isPressed, setIsPressed] = useState(false);
+const MainLayout = () => {
+  const [isExitVisible, setIsExitVisible] = useState(false);
   const { width } = useWindowDimensions();
   const svgSize = width < 768 ? 220 : 300;
 
-  // --- Refs ---
-  const exitSheetRef = useRef<BottomSheet>(null); // Renamed from bottomSheetRef
-  const reportSheetRef = useRef<BottomSheet>(null); // 5. ADD REF FOR REPORT SHEET
+  // --- Bottom sheet refs ---
+  const exitSheetRef = useRef<BottomSheet>(null);
+  const reportSheetRef = useRef<BottomSheet>(null);
 
-  // --- Snap Points ---
+  // --- Snap points ---
+  const exitSnapPoints = useMemo(() => ["60%"], []);
   const reportSnapPoints = useMemo(() => ["75%"], []);
 
-  // --- Zustand State ---
+  // --- Zustand state ---
   const playingSpeed = videoSpeed((state) => state.playingSpeed);
   const setSpeed = videoSpeed((state) => state.setSpeed);
-  const LevelId = LevelData((state) => state.levelID)
-  const LevelStep = LevelData((state) => state.levelStep)
+  const LevelId = LevelData((state) => state.levelID);
+  const LevelStep = LevelData((state) => state.levelStep);
+
   // --- Handlers ---
   const handleToggleSpeed = () => {
     const newSpeed = playingSpeed === 1 ? 0.5 : 1;
@@ -57,17 +56,17 @@ const BottomView = () => {
   };
 
   const handleOpenExitSheet = () => {
-    setIsPressed(true); // Make sure exit content is visible
+    setIsExitVisible(true);
     exitSheetRef.current?.expand();
   };
 
   const handleCloseExitSheet = () => {
     exitSheetRef.current?.close();
-    // You might want to set isPressed(false) on close
-    // setIsPressed(false);
+    setIsExitVisible(false);
   };
 
   const handleOpenReportSheet = () => {
+    console.log("Opening report sheet...");
     reportSheetRef.current?.expand();
   };
 
@@ -77,7 +76,6 @@ const BottomView = () => {
 
   return (
     <>
-      {/* 6. Render the Stack directly, passing the handlers */}
       <Stack
         screenOptions={{
           headerLeft: () => <BackToLevelsBtn onPress={handleOpenExitSheet} />,
@@ -93,9 +91,11 @@ const BottomView = () => {
                   <Nomral width={25} height={25} />
                 )}
               </TouchableOpacity>
+
+              {/* ✅ Report button now correctly triggers the sheet */}
               <TouchableOpacity
                 className="p-1 rounded-xl bg-red-600"
-                onPress={handleOpenReportSheet} // 7. CONNECTED!
+                onPress={handleOpenReportSheet}
               >
                 <MyIcon color="white" size={25} />
               </TouchableOpacity>
@@ -108,14 +108,19 @@ const BottomView = () => {
         }}
       />
 
-      {/* 8. Your Existing "Exit Lesson" Bottom Sheet */}
-      <BottomSheet ref={exitSheetRef} snapPoints={["60%"]} index={-1}>
+      {/* ✅ Exit Lesson Bottom Sheet */}
+      <BottomSheet
+        ref={exitSheetRef}
+        index={-1}
+        snapPoints={exitSnapPoints}
+        enablePanDownToClose
+        backgroundStyle={styles.sheetBackground}
+        style={{ zIndex: 50 }}
+      >
         <BottomSheetView style={styles.contentContainer}>
-          {isPressed && ( // This state now correctly controls the content
-            <View className="flex-1 w-full h-full justify-center items-center p-4">
-              <View>
-                <Wait width={svgSize} height={svgSize} />
-              </View>
+          {isExitVisible && (
+            <View className="flex-1 w-full justify-center items-center p-4">
+              <Wait width={svgSize} height={svgSize} />
               <View>
                 <Text className="text-center text-xl md:text-2xl font-PoppinsBold">
                   Wait, don’t go!
@@ -125,18 +130,15 @@ const BottomView = () => {
                   for this lesson.
                 </Text>
               </View>
-              <View className="w-full">
-                <Authbutton
-                  onPress={handleCloseExitSheet} // Use the close handler
-                  content="Keep Learning"
-                />
+
+              <View className="w-full mt-4">
+                <Authbutton onPress={handleCloseExitSheet} content="Keep Learning" />
+
                 <TouchableOpacity
-                  onPress={() => {
-                    router.push("/(main_interface)");
-                  }}
-                  className="w-full md:p-6 p-4 bg-[#FAF3E0] rounded-md border-[4px]  border-[#FB990F] "
+                  onPress={() => router.push("/(main_interface)")}
+                  className="w-full p-4 bg-[#FAF3E0] rounded-md border-[4px] border-[#FB990F] mt-3"
                 >
-                  <Text className="text-2xl md:text-3xl text-center text-[#FB990F] font-PoppinsBold">
+                  <Text className="text-2xl text-center text-[#FB990F] font-PoppinsBold">
                     Exit Lesson
                   </Text>
                 </TouchableOpacity>
@@ -146,36 +148,36 @@ const BottomView = () => {
         </BottomSheetView>
       </BottomSheet>
 
-      {/* 9. ADD THE NEW REPORT BOTTOM SHEET */}
+      {/* ✅ Report Bottom Sheet */}
       <BottomSheet
         ref={reportSheetRef}
-        index={-1} // Start closed
+        index={-1}
         snapPoints={reportSnapPoints}
-        enablePanDownToClose={true}
+        enablePanDownToClose
         backgroundStyle={styles.reportSheetBackground}
+        style={{ zIndex: 999 }}
       >
-        <ReportBottomSheetContent
-          // 🚨 IMPORTANT 🚨
-          // You must get these values from your game's state store (like Zustand or Context)
-          levelId= {LevelId} // 👈 Replace with actual levelId
-          currentStep={LevelStep} // 👈 Replace with actual currentStep
-          onClose={handleCloseReportSheet}
-        />
+        <BottomSheetView style={{ flex: 1 }}>
+          <ReportBottomSheetContent
+            levelId={LevelId || "unknown"}
+            currentStep={LevelStep ?? 0}
+            onClose={handleCloseReportSheet}
+          />
+        </BottomSheetView>
       </BottomSheet>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    zIndex: 50,
+  sheetBackground: {
+    backgroundColor: "#FFF",
+  },
+  reportSheetBackground: {
+    backgroundColor: "#FAF3E0",
   },
   contentContainer: {
     flex: 1,
-    zIndex: 50,
-  },
-  reportSheetBackground: {
-    backgroundColor: "#FAF3E0", // Match your form style
+    padding: 16,
   },
 });
