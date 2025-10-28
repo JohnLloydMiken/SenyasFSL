@@ -1,38 +1,42 @@
-// src/components/FactSection.tsx
+// src/components/gameheader/FactSection.tsx
 import React, { useCallback } from "react";
 import { View } from "react-native";
-import type { Fact, SvgProps, ItemType } from "@/components/gameheader";
+import type { ProcessedAchievement } from "./AchievementScreen"; // Import the new type
+import type { SvgProps } from "@/components/gameheader";
 import GradientText from "./GradientText";
-import FactItem from "./FactItem";
-
-type SvgMap = Record<string, React.FC<SvgProps>>;
+import FactItem from "./FactItem"; // This component will also be updated
 
 type Props = {
-  facts: Fact[];
+  facts: ProcessedAchievement[]; // Use the new type
   unlockedCount: number;
   svgSize: number;
-  svgMap: SvgMap;
-  defaultUnlockedSvg: React.FC<SvgProps>;
-  onItemPress: (item: Fact, type: ItemType) => void;
+  lockedIcon: React.FC<SvgProps>; // Pass the locked icon component
+  onItemPress: (item: ProcessedAchievement) => void; // Use the new type
 };
 
-const FactSection: React.FC<Props> = ({ facts, unlockedCount, svgSize, svgMap, defaultUnlockedSvg, onItemPress }) => {
-  const handlePress = useCallback((fact: Fact) => onItemPress(fact, "fact"), [onItemPress]);
+const FactSection: React.FC<Props> = ({
+  facts,
+  unlockedCount,
+  svgSize,
+  lockedIcon,
+  onItemPress,
+}) => {
+  // This now just passes the 'fact' object, no 'type' needed
+  const handlePress = useCallback((fact: ProcessedAchievement) => onItemPress(fact), [onItemPress]);
 
   return (
-    <View className="mt-6">
+    <View>
       <View className="ml-4 mt-4">
         <GradientText text={`Facts (${unlockedCount})`} />
       </View>
 
-      <View className="w-full flex flex-row flex-wrap items-center justify-center gap-y-4 mt-4 px-4 pb-6">
+      <View className="w-full flex flex-row flex-wrap items-center justify-center gap-y-4 mt-4 px-4">
         {facts.map((f) => (
           <FactItem
             key={f.id}
-            fact={f}
+            fact={f} // Pass the full ProcessedAchievement object
             svgSize={svgSize}
-            svgMap={svgMap}
-            defaultUnlockedSvg={defaultUnlockedSvg}
+            lockedIcon={lockedIcon} // Pass the locked icon to the item
             onPress={handlePress}
           />
         ))}

@@ -16,7 +16,7 @@ import HeaderRightBtn from "@/components/authentication/headerRightBtn";
 import HomeIcon from "@/components/main_interface/homeIcon";
 import ProfileIcon from "@/components/main_interface/profileIcon";
 import DictionaryIcon from "@/components/main_interface/dictionaryIcon";
-import TreasureIcon from "@/components/main_interface/treasureIcon";
+import TreasureIcon from "@/components/main_interface/treasure/treasureIcon";
 import UserStreak from "@/components/main_interface/userStreak";
 import UserInput from "@/components/authentication/userInput";
 import Authbutton from "@/components/authentication/button";

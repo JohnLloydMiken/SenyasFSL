@@ -9,20 +9,22 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
-import Item from "@/components/main_interface/items";
+import Item from "@/components/main_interface/treasure/items";
 import Item_function from "@/json_files/item_function.json";
 import Tutorial from "@/assets/svgs/Tutorial.svg";
 import BGComponent from "@/assets/svgs/bg 1.svg";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
 
-// ✅ 1. Import the new toast and service
 import Toast from "react-native-toast-message";
-import { buyItem } from "@/services/gameService";
+import { buyItem, openChest } from "@/services/gameService";
+import { useRouter } from "expo-router";
+// ✅ 1. Import your new LootModal
+import LootModal from "@/components/main_interface/treasure/LootModal";
 
-// ... (BG, TreasureVideo, TutorialModal components remain the same) ...
 const BG = React.memo(BGComponent);
 
+// ✅ ADDED THIS COMPONENT FROM YOUR ORIGINAL FILE
 const TreasureVideo = React.memo(({ source }: { source: any }) => {
   const player = useVideoPlayer(source, (player) => {
     player.loop = true;
@@ -41,6 +43,7 @@ const TreasureVideo = React.memo(({ source }: { source: any }) => {
 });
 
 const TutorialModal = React.memo(({ onClose }: { onClose: () => void }) => (
+  // ... (Modal content remains the same) ...
   <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/60 z-40 justify-center items-center">
     <View className="bg-[#FAF3E0] w-2/3 p-4 rounded-2xl z-50">
       <View className="flex flex-row justify-between items-center border-b-2 border-b-[#F2C484]">
@@ -82,16 +85,33 @@ const TutorialModal = React.memo(({ onClose }: { onClose: () => void }) => (
   </View>
 ));
 
+const prizePool = [
+  { id: "xpMultiply", name: "XP Multiply" },
+  { id: "bomb", name: "Bomb" },
+  { id: "skip", name: "Skip" },
+  { id: "twotry", name: "2x Try" },
+  { id: "streakProtect", name: "Streak Protection" },
+];
+
+// Define the prize type
+interface Prize {
+  id: string;
+  name: string;
+}
+
 export default function Treasure() {
   const videoSource = require("@/assets/videos/Treasure.mp4");
   const [isShown, setIsShown] = useState(false);
   const { user, loading: authLoading } = useAuthStore();
-  const { userData, loading: userLoading, fetchUserData } = useUserStore(); // ✅ Get fetchUserData
+  const { userData, loading: userLoading, fetchUserData } = useUserStore();
+  const router = useRouter();
 
-  // ✅ 2. Add loading state for purchases
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isOpeningChest, setIsOpeningChest] = useState(false);
 
-  // ... (loading state check)
+  // ✅ 2. Add state to hold the won prize
+  const [wonPrize, setWonPrize] = useState<Prize | null>(null);
+
   if (authLoading || userLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
@@ -102,11 +122,9 @@ export default function Treasure() {
 
   const hasChest = (userData?.chestCount ?? 0) > 0;
 
-  // ✅ 3. Create the handler function to buy an item
   const handleBuyItem = async (itemId: string, itemCost: number) => {
-    if (isPurchasing || !user) return; // Prevent double-clicks or if user is somehow null
+    if (isPurchasing || isOpeningChest || !user) return; // Prevent action if busy
 
-    // Client-side check for coins
     if ((userData?.senyasCoins ?? 0) < itemCost) {
       Toast.show({
         type: "error",
@@ -116,31 +134,70 @@ export default function Treasure() {
       return;
     }
 
-    setIsPurchasing(true); // Set loading state
+    // ✅ THIS IS THE LOGIC THAT WAS MISSING
+    setIsPurchasing(true);
     try {
+      // The buyItem service shows its own "Purchasing..." and "Error" toasts
       const success = await buyItem(itemId, itemCost);
 
       if (success) {
-        // Show success message
+        // We just need to show the success toast
         Toast.show({
           type: "success",
           text1: "Purchase Successful!",
           text2: "The item has been added to your inventory.",
         });
-
-        // IMPORTANT: Re-fetch user data to update coin balance
         await fetchUserData(user);
       }
-      // If `success` is false, the `buyItem` service already showed an error toast
     } catch (error: any) {
-      // Fallback for unexpected errors
       Toast.show({
         type: "error",
         text1: "An Error Occurred",
         text2: error.message || "Could not complete purchase.",
       });
     } finally {
-      setIsPurchasing(false); // Clear loading state
+      setIsPurchasing(false);
+    }
+  }; // ✅ ADDED THE CLOSING BRACE HERE
+
+  // ✅ 3. Update the chest handler (Now outside handleBuyItem)
+  const handleOpenChest = async () => {
+    if (isOpeningChest || isPurchasing || !user) return;
+
+    setIsOpeningChest(true);
+    try {
+      const prize = prizePool[Math.floor(Math.random() * prizePool.length)];
+      await openChest(prize.id);
+
+      // ✅ 5. SET the prize in state to show the modal
+      setWonPrize(prize);
+
+      // Re-fetch user data
+      
+    } catch (error: any) {
+      // Error toast is fine
+      Toast.show({
+        type: "error",
+        text1: "An Error Occurred",
+        text2: error.message || "Could not open chest.",
+      });
+    } finally {
+      setIsOpeningChest(false); // Clear loading state
+    }
+  };
+
+  // ✅ 6. Add a handler to close the modal (Now outside handleBuyItem)
+  const handleCloseLootModal = async () => {
+  setWonPrize(null);
+  if (user) await fetchUserData(user);
+};
+
+  // ✅ (Now outside handleBuyItem)
+  const handleMainButtonPress = () => {
+    if (hasChest) {
+      handleOpenChest();
+    } else {
+      router.push("./index");
     }
   };
 
@@ -151,17 +208,17 @@ export default function Treasure() {
         <BG width={"100%"} height={"100%"} scaleX={1.2} scaleY={1.2} />
       </View>
 
-      {/* ... (Chest + Button section remains the same) ... */}
+      {/* Chest + Button */}
       <View className="w-11/12 flex justify-center items-center flex-col mb-4">
         {hasChest ? (
-         <>
-          <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
+          <>
+            <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
               You have {userData?.chestCount}. Open it to receive random item
             </Text>
-          <View className="w-full h-36 md:h-72">
-            <TreasureVideo source={videoSource} />
-          </View>
-         </>
+            <View className="w-full h-36 md:h-72">
+              <TreasureVideo source={videoSource} />
+            </View>
+          </>
         ) : (
           <>
             <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
@@ -174,8 +231,13 @@ export default function Treasure() {
             />
           </>
         )}
-
-        <TouchableOpacity className="w-2/3 p-4 bg-[#27D700] rounded-xl mt-4">
+        
+        {/* ✅ Main Button (Moved this up to match your new layout) */}
+        <TouchableOpacity
+          className="w-2/3 p-4 bg-[#27D700] rounded-xl mt-4"
+          onPress={handleMainButtonPress}
+          disabled={isOpeningChest || isPurchasing} // Disable when opening or purchasing
+        >
           <Text className="font-PoppinsBold text-white text-xl md:text-2xl text-center">
             {hasChest ? "Claim Chest" : "Start a lesson"}
           </Text>
@@ -184,24 +246,24 @@ export default function Treasure() {
 
 
       {/* Items */}
-      {/* ✅ 4. Pass the new props to each Item */}
+      {/* ✅ Pass the combined disabled state to each Item */}
       <View className="w-11/12 flex-col justify-center items-center md:mt-8">
         <View className="flex-row justify-center gap-24 mb-4 w-2/3">
           <Item
             itemName="XP Multiply"
             itemCost={350}
             itemIcon="Potion"
-            itemId="xpMultiply" // Use a unique ID
+            itemId="xpMultiply" // This ID must match the prizePool
             onPress={handleBuyItem}
-            disabled={isPurchasing}
+            disabled={isPurchasing || isOpeningChest} // Disable here
           />
           <Item
             itemName="Bomb"
             itemCost={20}
             itemIcon="Bomb"
-            itemId="bomb"
+            itemId="bomb" // This ID must match the prizePool
             onPress={handleBuyItem}
-            disabled={isPurchasing}
+            disabled={isPurchasing || isOpeningChest} // Disable here
           />
         </View>
         <View className="flex-row justify-center w-2/3 gap-24 mb-4">
@@ -209,17 +271,17 @@ export default function Treasure() {
             itemName="Skip"
             itemCost={50}
             itemIcon="Next"
-            itemId="skip"
+            itemId="skip" // This ID must match the prizePool
             onPress={handleBuyItem}
-            disabled={isPurchasing}
+            disabled={isPurchasing || isOpeningChest} // Disable here
           />
           <Item
             itemName="2x Try"
             itemCost={25}
             itemIcon="Retry"
-            itemId="twotry"
+            itemId="twotry" // This ID must match the prizePool
             onPress={handleBuyItem}
-            disabled={isPurchasing}
+            disabled={isPurchasing || isOpeningChest} // Disable here
           />
         </View>
         <View className="flex-row justify-center gap-4 mb-4">
@@ -227,9 +289,9 @@ export default function Treasure() {
             itemName="Streak Protection"
             itemCost={500}
             itemIcon="Protection"
-            itemId="streakProtect"
+            itemId="streakProtect" // This ID must match the prizePool
             onPress={handleBuyItem}
-            disabled={isPurchasing}
+            disabled={isPurchasing || isOpeningChest} // Disable here
           />
         </View>
       </View>
@@ -238,13 +300,16 @@ export default function Treasure() {
       <TouchableOpacity
         className="absolute bottom-4 left-4"
         onPress={() => setIsShown(true)}
+        disabled={isOpeningChest || isPurchasing}
       >
         <Tutorial width={44} height={44} />
       </TouchableOpacity>
 
       {/* Tutorial Modal */}
       {isShown && <TutorialModal onClose={() => setIsShown(false)} />}
+
+      {/* ✅ 7. Render the new LootModal conditionally */}
+      <LootModal prize={wonPrize} onClose={handleCloseLootModal} />
     </View>
   );
 }
-

@@ -4,7 +4,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { LinearGradient } from "expo-linear-gradient";
 import LevelContentBtn from "@/components/Game_Modes/GameBtns/LevelContentBtn";
 import MCBTN from "@/components/Game_Modes/GameBtns/MCBTN";
-import Inventory from "@/components/main_interface/Inventory";
+import Inventory from "@/components/main_interface/treasure/Inventory";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
@@ -14,6 +14,7 @@ import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
+import { videoSpeed } from "@/utils/store/videoSpeed";
 export interface QuestionOption {
   id: string;
   isCorrect: boolean;
@@ -28,8 +29,8 @@ interface FillTheGapProps {
   options: readonly QuestionOption[];
   message: string;
   onPress: () => void;
-   onAnswer: (isCorrect: boolean) => void
-    hearts: number;
+  onAnswer: (isCorrect: boolean) => void;
+  hearts: number;
 }
 
 const BossFillTheGap: React.FC<FillTheGapProps> = ({
@@ -39,8 +40,8 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
   options,
   message,
   onPress,
-   onAnswer,
-  hearts
+  onAnswer,
+  hearts,
 }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [choice, setChoice] = useState<string | null>(null); // store selected option id
@@ -51,6 +52,7 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
   const [loading, setLoading] = useState(true);
   const [showWrongIcon, setShowWrongIcon] = useState(false);
   const incrementScore = useUserPoints((state) => state.incrementScore);
+  const speed = videoSpeed((state) => state.playingSpeed);
   // ✅ Find the correct option
   const correctOption = useMemo(
     () => options.find((opt) => opt.isCorrect) || null,
@@ -65,11 +67,11 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
       setIsCorrect(correct);
       setHasChecked(true);
       setOpacity(0);
-      onAnswer(correct)
+      onAnswer(correct);
       if (correct) {
         incrementScore();
-      }else{
-         setShowWrongIcon(true);
+      } else {
+        setShowWrongIcon(true);
       }
     }
   };
@@ -91,6 +93,7 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
         setResolvedUrl(finalUrl);
         player.replace(finalUrl);
         player.play();
+        player.playbackRate = speed;
       } catch (error) {
         console.error("Error loading video:", error);
       } finally {
@@ -100,20 +103,25 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
     loadVideo();
   }, [videoURL]);
 
-    useEffect(() => {
-      // Only run this logic if an answer has been checked and it was wrong
-      if (hasChecked && isCorrect === false) {
-        // Set a timer to switch the icon back to the default "fight" icon
-        const timer = setTimeout(() => {
-          setShowWrongIcon(false);
-        }, 1500); // 1.5-second delay before hiding the wrong icon
-  
-        // Clean up the timer if the component unmounts
-        return () => clearTimeout(timer);
-      }
-    }, [hasChecked, isCorrect]);
-  
+  useEffect(() => {
+    // Only run this logic if an answer has been checked and it was wrong
+    if (hasChecked && isCorrect === false) {
+      // Set a timer to switch the icon back to the default "fight" icon
+      const timer = setTimeout(() => {
+        setShowWrongIcon(false);
+      }, 1500); // 1.5-second delay before hiding the wrong icon
 
+      // Clean up the timer if the component unmounts
+      return () => clearTimeout(timer);
+    }
+  }, [hasChecked, isCorrect]);
+
+  useEffect(() => {
+    if (player) {
+      player.playbackRate = speed;
+    }
+  }, [speed, player]); // Dependencies: speed and player
+  
   if (loading) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
@@ -126,7 +134,7 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
 
   return (
     <View className="flex-1 relative items-center bg-white">
-       <View className=" flex-row justify-center items-center ">
+      <View className=" flex-row justify-center items-center ">
         {Array.from({ length: hearts }).map((_, idx) => (
           <Text key={idx} style={{ fontSize: 24, color: "red" }}>
             ❤️
@@ -163,8 +171,6 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
 
       {/* Question */}
       <View className="w-11/12 rounded-md border border-[#F7D674] p-4 items-center">
-        
-
         {hasChecked ? (
           <LinearGradient
             colors={isCorrect ? ["#31F705", "#007D00"] : ["#FF6A6C", "#A20000"]}
