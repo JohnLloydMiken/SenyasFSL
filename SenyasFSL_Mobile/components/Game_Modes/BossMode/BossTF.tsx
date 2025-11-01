@@ -22,8 +22,8 @@ export interface TrueFalseOption {
 }
 
 interface TrueOrFalseProps {
-  enQuestion: string;
-  filQuestion: string;
+  enPrompt: string;
+  filPrompt: string;
   videoURL: string;
   options: readonly TrueFalseOption[];
   onPress: () => void;
@@ -32,8 +32,8 @@ interface TrueOrFalseProps {
 }
 
 const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
-  enQuestion,
-  filQuestion,
+  enPrompt,
+  filPrompt,
   videoURL,
   options,
   onPress,
@@ -144,10 +144,10 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
       </View>
       <View className="w-10/12">
         <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">
-          {filQuestion}
+          {enPrompt}
         </Text>
         <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">
-          {enQuestion}
+          {filPrompt}
         </Text>
       </View>
 

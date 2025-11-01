@@ -1,4 +1,4 @@
-// src/components/main_interface/items.tsx (or wherever this file is)
+// components/main_interface/treasure/items.tsx
 import React, { memo } from "react";
 import {
   TouchableOpacity,
@@ -15,15 +15,16 @@ import Bomb from "@/assets/svgs/Bomb.svg";
 import Next from "@/assets/svgs/Next.svg";
 import Potion from "@/assets/svgs/Potion.svg";
 import Star from "@/assets/svgs/Currency.svg";
+import { ItemId } from "@/shared/types/user"; // ✅ Import the specific ItemId type
 
 interface itemCardProps {
   itemName: string;
   itemCost: number;
   itemIcon: string;
   inGame?: boolean;
-  itemId: string; // ✅ Add a unique ID for the item
-  onPress: (itemId: string, itemCost: number) => void; // ✅ Add a press handler
-  disabled?: boolean; // ✅ Add a disabled state for loading
+  itemId: ItemId; // ✅ Use the ItemId type
+  onPress: (itemId: ItemId, itemCost: number) => void; // ✅ Use the ItemId type
+  disabled?: boolean;
 }
 
 const svgMap: { [key: string]: any } = {
@@ -34,28 +35,26 @@ const svgMap: { [key: string]: any } = {
   Bomb,
 };
 
-// ✅ define gradients as readonly tuples
 const borderGradient = ["#FB990F", "#EA0505"] as const;
 const textGradient = ["#2DE2E2", "#0922A0"] as const;
 const costGradient = ["#FB990F", "#EA0505"] as const;
 
+// This is the main Shop item
 const Item: React.FC<itemCardProps> = ({
   itemName,
   itemCost,
   itemIcon,
-  itemId, // ✅ Get new prop
-  onPress, // ✅ Get new prop
-  disabled = false, // ✅ Get new prop
+  itemId,
+  onPress,
+  disabled = false,
 }) => {
   const SvgIcon = svgMap[itemIcon];
   const { width } = useWindowDimensions();
-  
-  
 
   const svgSize = width < 768 ? 30 : 50;
   const svgStar = width < 768 ? 24 : 30;
-  const containerWidth = width < 768 ? 120 : 150;
-  const containerHeight = width < 768 ? 130 : 160;
+  const containerWidth = width < 768 ? 120 : 175;
+  const containerHeight = width < 768 ? 120 : 175;
 
   return (
     <LinearGradient
@@ -72,12 +71,10 @@ const Item: React.FC<itemCardProps> = ({
       }}
     >
       <TouchableOpacity
-        // ✅ Wire up the press handler and disabled state
         onPress={() => onPress(itemId, itemCost)}
         disabled={disabled}
         className="w-[101%] h-[98%] bg-[#FAF3E0] rounded-2xl p-4 flex justify-center items-center flex-col mx-auto my-0 gap-1"
       >
-        {/* ... (rest of the component's internals: SvgIcon, MaskedView, etc.) ... */}
         {SvgIcon && <SvgIcon width={svgSize} height={svgSize} />}
         <MaskedView
           maskElement={
@@ -128,27 +125,25 @@ const Item: React.FC<itemCardProps> = ({
   );
 };
 
-// ✅ smaller in-game version
+// This is the smaller in-game version
 export const ItemInGame: React.FC<itemCardProps> = ({
   itemName,
   itemCost,
   itemIcon,
-  itemId, // ✅ Add prop
-  onPress, // ✅ Add prop
-  disabled = false, // ✅ Add prop
+  itemId,
+  onPress,
+  disabled = false,
 }) => {
   const SvgIcon = svgMap[itemIcon];
-  // ... (sizing logic remains the same) ...
   const { width } = useWindowDimensions();
   const svgSize = width < 768 ? 20 : 50;
   const svgStar = width < 768 ? 15 : 30;
-  const containerWidth = width < 768 ? 80 : 120;
-  const containerHeight = width < 768 ? 80 : 120;
+  const containerWidth = width < 768 ? 100 : 120;
+  const containerHeight = width < 768 ? 100 : 120;
 
   return (
     <LinearGradient
       colors={borderGradient}
-      // ... (styles)
       style={{
         borderRadius: 16,
         padding: 2,
@@ -157,12 +152,10 @@ export const ItemInGame: React.FC<itemCardProps> = ({
       }}
     >
       <TouchableOpacity
-        // ✅ Wire up the press handler and disabled state
         onPress={() => onPress(itemId, itemCost)}
         disabled={disabled}
         className="w-full h-full bg-[#FAF3E0] rounded-2xl p-4 flex justify-center items-center flex-col mx-auto my-0 gap-1"
       >
-        {/* ... (rest of the component's internals) ... */}
         {SvgIcon && <SvgIcon width={svgSize} height={svgSize} />}
         <MaskedView
           maskElement={
@@ -213,6 +206,4 @@ export const ItemInGame: React.FC<itemCardProps> = ({
   );
 };
 
-// ✅ memoize for perf
 export default memo(Item);
-

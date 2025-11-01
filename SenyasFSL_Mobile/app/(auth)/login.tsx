@@ -2,13 +2,14 @@ import { Text, View, TextInput, TouchableOpacity, Alert } from "react-native";
 import React, { useState } from "react";
 import "@/global.css";
 import Authbutton from "@/components/authentication/button";
-import { loginUser, mapAuthError } from "@/services/authService"; // 👈 IMPORT mapAuthError
+import { loginUser, mapAuthError } from "@/services/authService"; // Already imported
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { Feather } from "@expo/vector-icons";
-import { sendPasswordResetEmail } from "firebase/auth"; // 👈 IMPORT for password reset
-import { auth } from "@/firebaseConfig"; // 👈 IMPORT for password reset
+import { sendPasswordResetEmail, signOut } from "firebase/auth"; // 👈 1. ADDED signOut
+import { auth, db } from "@/firebaseConfig"; // 👈 2. ADDED db
 import Toast from "react-native-toast-message";
 import { router } from "expo-router";
+import { doc, getDoc } from "firebase/firestore"; // 👈 3. ADDED doc and getDoc
 
 export default function Login() {
   // Local UI state
@@ -32,20 +33,51 @@ export default function Login() {
     setIsLoading(true);
     try {
       // ✅ 1. Use your custom loginUser service.
-      // This function now handles the 'emailVerified' check,
-      // as we built in authService.ts.
       await loginUser(email, password);
 
-      router.push("/(auth)/welcome");
+      // --- START: NEW ADMIN CHECK LOGIC ---
 
-      // ✅ 2. REMOVED router.push()
-      // Your (auth)/_layout.tsx file will automatically
-      // detect the new user state and navigate,
-      // preventing the "coudn't fetch data" race condition.
+      // 2. Get the newly authenticated user
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error("Failed to get user after login.");
+      }
+
+      // 3. Fetch their Firestore document to check their role
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        // This is a safety check. If they have an auth account but no
+        // firestore doc, something is wrong. Log them out.
+        await signOut(auth);
+        throw new Error("User profile not found. Please contact support.");
+      }
+
+      // 4. CHECK THE ROLE
+      const userRole = userDoc.data()?.role;
+
+      if (userRole === "admin") {
+        // 5. IF ADMIN: Show message, log out, and stop.
+        await signOut(auth); // Log them out of the mobile app
+        Toast.show({
+          type: "error",
+          text1: "Admin Account",
+          text2:
+            "Please use the web dashboard at https://iron-gizmo-471110-d0.web.app",
+          position: "bottom",
+          visibilityTime: 8000, // Show for 8 seconds
+        });
+        setEmail("");
+        setPassword("");
+      } else {
+        // 6. IF USER: Proceed to the welcome screen as normal
+        router.push("/(auth)/welcome");
+      }
+      // --- END: NEW ADMIN CHECK LOGIC ---
+
     } catch (err: any) {
-      // ✅ 3. Use mapAuthError and Toast for all errors.
-      // This will show "Please verify your email first."
-      // or "Wrong password." etc.
+      // This will now also catch the errors from the admin check
       Toast.show({
         type: "error",
         text1: "Login Failed",
@@ -66,9 +98,8 @@ export default function Login() {
       return;
     }
 
-    setIsLoading(true); // Add loading state
+    setIsLoading(true); 
     try {
-      // ✅ 4. Added the REAL Firebase password reset function
       await sendPasswordResetEmail(auth, resetEmail);
 
       Toast.show({
@@ -200,8 +231,6 @@ export default function Login() {
               />
             </View>
 
-            {/* ✅ 5. Removed the 'sendEmail' state text. Toast will handle this. */}
-
             <TouchableOpacity
               onPress={handleSendResetEmail}
               disabled={isLoading} // Disable button while sending
@@ -214,8 +243,6 @@ export default function Login() {
           </View>
         </>
       )}
-
-      {/* ✅ 6. Removed the 'isError' modal. Toast notifications handle errors now. */}
     </View>
   );
 }

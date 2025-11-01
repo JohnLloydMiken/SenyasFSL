@@ -1,3 +1,4 @@
+// components/main_interface/treasure/Inventory.tsx
 import React, { useMemo, useCallback, useEffect, useRef } from "react";
 import {
   View,
@@ -10,10 +11,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import Bag from "@/assets/svgs/Bag.svg";
-import { ItemInGame } from "./items";
+import { ItemInGame } from "./items"; // ✅ Imports your UI component
 import InventoryCount from "./InventoryCount";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
+import { useGameStore } from "@/hooks/useGameStore"; // ✅ Import game store
+import { ItemId } from "@/shared/types/user"; // ✅ Import ItemId type
 
 interface InventoryProps {
   onPress: () => void;
@@ -28,15 +31,19 @@ const Inventory: React.FC<InventoryProps> = React.memo(
 
     const { user } = useAuthStore();
     const { userData, loading: userLoading } = useUserStore();
+    
+    // ✅ Get the item functions from the game store
+    const useItem = useGameStore((state) => state.useItem);
+    const isUsingItem = useGameStore((state) => state.isUsingItem);
 
     const handlePress = useCallback(() => onPress(), [onPress]);
     const handleClose = useCallback(() => onClose(), [onClose]);
 
-    // 🔹 Animation Refs
+    // 🔹 Animation Refs (Your UI code)
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(100)).current;
 
-    // 🔹 Trigger animation on open/close
+    // 🔹 Trigger animation (Your UI code)
     useEffect(() => {
       if (isPressed) {
         Animated.parallel([
@@ -67,34 +74,58 @@ const Inventory: React.FC<InventoryProps> = React.memo(
       }
     }, [isPressed, fadeAnim, slideAnim]);
 
-    const items = useMemo(
-      () => [
+    // ✅ *** LOGIC FIX 1: This array now has the correct IDs ***
+    const items = useMemo(() => {
+      if (!userData?.inventory) return [];
+      const inv = userData.inventory;
+      return [
         {
+          id: "xpMultiply" as ItemId, // Correct ID
           name: "Potion",
-          cost: 350,
+          cost: 0, // Cost is 0 for "using"
           icon: "Potion",
-          qty: userData?.inventory?.xpMultiply ?? 0,
+          qty: inv.xpMultiply || 0,
         },
         {
+          id: "twotry" as ItemId, // Correct ID
           name: "Retry",
-          cost: 25,
+          cost: 0,
           icon: "Retry",
-          qty: userData?.inventory?.twotry ?? 0,
+          qty: inv.twotry || 0,
         },
         {
+          id: "bomb" as ItemId, // Correct ID
           name: "Bomb",
-          cost: 20,
+          cost: 0,
           icon: "Bomb",
-          qty: userData?.inventory?.bomb ?? 0,
+          qty: inv.bomb || 0,
         },
         {
+          id: "skip" as ItemId, // Correct ID
           name: "Next",
-          cost: 50,
+          cost: 0,
           icon: "Next",
-          qty: userData?.inventory?.skip ?? 0,
+          qty: inv.skip || 0,
         },
-      ],
-      [userData]
+      ];
+      // Removed filter, so items with 0 qty will show (as in your file)
+    }, [userData]);
+
+    // ✅ This function calls the game store to use the item
+    const handleItemPress = useCallback(
+      (itemId: ItemId, itemCost: number) => { // Receives both
+        if (userLoading || !userData?.inventory) return;
+
+        // Calls the 'useItem' function from useGameStore
+        // It ignores itemCost, which is 0 anyway
+        useItem(itemId, userData.inventory).catch((err) => {
+          console.error(
+            `[Inventory] Failed to use item ${itemId}:`,
+            err.message
+          );
+        });
+      },
+      [useItem, userLoading, userData]
     );
 
     if (userLoading) {
@@ -115,7 +146,7 @@ const Inventory: React.FC<InventoryProps> = React.memo(
 
     return (
       <View className="w-full relative ">
-        {/* 🔹 Animated Inventory Panel */}
+        {/* 🔹 Animated Inventory Panel (Your UI) */}
         <Animated.View
           style={{
             opacity: fadeAnim,
@@ -123,7 +154,7 @@ const Inventory: React.FC<InventoryProps> = React.memo(
               {
                 translateY: slideAnim.interpolate({
                   inputRange: [0, 100],
-                  outputRange: [0, 50], // slides slightly up
+                  outputRange: [0, 50],
                 }),
               },
             ],
@@ -166,12 +197,16 @@ const Inventory: React.FC<InventoryProps> = React.memo(
                 </View>
 
                 <View className="w-full flex-row flex-wrap gap-4 items-center justify-center">
+                  {/* ✅ *** LOGIC FIX 2: Added missing props *** */}
                   {items.map((item) => (
-                    <View key={item.name} className="gap-2 items-center">
+                    <View key={item.id} className="gap-2 items-center">
                       <ItemInGame
                         itemName={item.name}
                         itemCost={item.cost}
                         itemIcon={item.icon}
+                        itemId={item.id} // ✅ This was missing
+                        onPress={handleItemPress} // ✅ This was missing
+                        disabled={isUsingItem || item.qty <= 0} // ✅ Disable if 0
                       />
                       <InventoryCount number={item.qty} />
                     </View>
@@ -182,7 +217,7 @@ const Inventory: React.FC<InventoryProps> = React.memo(
           )}
         </Animated.View>
 
-        {/* 🔹 Floating Bag Button */}
+        {/* 🔹 Floating Bag Button (Your UI) */}
         <TouchableOpacity
           onPress={handlePress}
           className={`absolute bottom-0 my-3 w-14 h-14 rounded-xl ${
