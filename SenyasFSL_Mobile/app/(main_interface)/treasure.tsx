@@ -247,7 +247,7 @@ export default function Treasure() {
 
       {/* Items */}
       {/* ✅ Pass the combined disabled state to each Item */}
-      <View className="w-11/12 flex-col justify-center items-center md:mt-8">
+      <View className="w-11/12 flex-col justify-center items-center md:mt-8 ">
         <View className="flex-row justify-center gap-24 mb-4 w-2/3">
           <Item
             itemName="XP Multiply"

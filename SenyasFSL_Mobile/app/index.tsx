@@ -4,12 +4,28 @@ import Splash1 from "../components/authentication/splash1";
 import Splash2 from "../components/authentication/splashScreen";
 import GetStarted from "@/app/(auth)/index";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import { initDatabase } from '@/services/db/database'; // Adjust path
+import { syncData } from '@/services/syncService';
 export default function Splash() {
   const [screen, setScreen] = useState<"splash1" | "splash2" | "main">("splash1");
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(500)).current; // Off-screen right
+
+  useEffect(() => {
+    // 1. Create the local tables
+    initDatabase(); 
+
+    // 2. Start the sync process
+    // This will fetch from Firestore and save to SQLite
+    console.log("APP START: Kicking off data sync...");
+    syncData().then(() => {
+      console.log("APP START: Sync completed.");
+      // You could add a state 'isSyncComplete'
+      // to only show the app after this is done.
+    });
+
+  }, []);
 
   const fadeIn = () => {
     fadeAnim.setValue(0);

@@ -1,8 +1,8 @@
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "expo-router";
+import { shallow } from "zustand/shallow";
 
-// Components
 import Evaluation from "./Eval/Evaluation";
 import OutOfHearts from "./Eval/OutOfHearts";
 import BossFillTheGap from "./BossMode/BossFITG";
@@ -10,6 +10,9 @@ import BossMC from "./BossMode/BossMC";
 import BossTrueOrFalse from "./BossMode/BossTF";
 import BossVMC from "./BossMode/BossVMC";
 import Instruction from "./BossMode";
+import Inventory from "../main_interface/treasure/Inventory";
+import { useGameStore, type GameStore } from "@/hooks/useGameStore";
+import { useUserPoints } from "@/utils/store/userGameEval";
 
 interface BossFightProps {
   levelData: any;
@@ -24,10 +27,65 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [hearts, setHearts] = useState(5);
   const [score, setScore] = useState(0);
-  const [showInstructions, setShowInstructions] = useState(true); // ✅ Controls first screen
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [isInventoryClicked, setIsInventoryClicked] = useState(false);
 
+  // Zustand store (type-safe + shallow)
 
-  // ✅ Load questions from flowContent
+  const _setLevelData = useGameStore((state) => state._setLevelData);
+  const _setPhase = useGameStore((state) => state._setPhase);
+  const _setNextStep = useGameStore((state) => state._setNextStep);
+  const clearGame = useGameStore((state) => state.clearGame);
+  const setVisibleChoices = useGameStore((state) => state.setVisibleChoices);
+  const is2xTryActive = useGameStore((state) => state.is2xTryActive);
+
+  const incrementScore = useUserPoints((state) => state.incrementScore);
+  const resetScore = useUserPoints((state) => state.resetScore);
+
+  // --- Handlers ---
+  const handleAnswer = useCallback(
+    (isCorrect: boolean) => {
+      if (isCorrect) {
+        setScore((s) => s + 1);
+        incrementScore();
+      } else {
+        if (is2xTryActive) {
+          useGameStore.setState({ is2xTryActive: false });
+          return;
+        }
+        setHearts((h) => h - 1);
+      }
+    },
+    [is2xTryActive, incrementScore]
+  );
+
+  const handleNextStep = useCallback(() => {
+    if (hearts <= 0) return;
+    if (currentStep + 1 < steps.length) {
+      setCurrentStep((s) => s + 1);
+    } else {
+      router.replace({
+        pathname: "./Eval_phase",
+        params: { levelId: levelData.id, questions: steps.length },
+      });
+    }
+  }, [currentStep, levelData?.id, hearts, router, steps.length]);
+
+  // Initialize game state
+  useEffect(() => {
+    if (!levelData) return;
+    resetScore();
+    _setLevelData(levelData);
+    _setPhase("playing");
+    _setNextStep(handleNextStep);
+
+    return () => {
+      clearGame();
+      _setLevelData(null);
+    };
+  }, [levelData?.id, handleNextStep, resetScore, clearGame]);
+
+  // Load question steps
   useEffect(() => {
     if (!levelData || !flowContent) return;
 
@@ -35,131 +93,96 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
       setLoading(true);
       try {
         const questionKeys = levelData?.questionPool || [];
-       
         const fetchedQuestions = questionKeys
           .map((key: string) => flowContent.get(key))
           .filter(Boolean);
-     
+
+        fetchedQuestions.sort(() => Math.random() - 0.5);
         setSteps(fetchedQuestions);
-      } catch (err) {
-        console.error("Error fetching boss fight steps:", err);
+        if (fetchedQuestions.length > 0)
+          setVisibleChoices(fetchedQuestions[0].options || []);
+      } catch (e) {
+        console.error("Failed to process questions:", e);
       } finally {
         setLoading(false);
       }
     };
 
     fetchSteps();
-  }, [levelData, flowContent]);
+  }, [levelData?.id, flowContent, setVisibleChoices]);
 
-  // ✅ Handlers
-  const handleNextStep = () => {
-    setCurrentStep((prev) => prev + 1);
-  };
+  useEffect(() => {
+    if (steps[currentStep]) {
+      setVisibleChoices(steps[currentStep].options || []);
+    }
+  }, [currentStep, steps, setVisibleChoices]);
 
-  const handleAnswer = (isCorrect: boolean) => {
-    if (isCorrect) setScore((prev) => prev + 1);
-    else setHearts((prev) => Math.max(prev - 1, 0));
-  };
+  // --- Render Logic ---
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
-  const restartLevel = () => {
-    setHearts(5);
-    setScore(0);
-    setCurrentStep(0);
-    setShowInstructions(true); // ✅ Back to instructions when restarting
-  };
+  const step = steps[currentStep];
 
-  // ✅ Render question types
+  if (showInstructions) {
+    return (
+      <Instruction
+        data={levelData.introduction}
+        onPress={() => {
+          if (steps.length > 0) setShowInstructions(false);
+          else alert("No questions available for this boss fight.");
+        }}
+      />
+    );
+  }
+
+  if (hearts <= 0 && !showInstructions) {
+    return (
+      <OutOfHearts
+        onRetake={() => {
+          setHearts(5);
+          setScore(0);
+          setCurrentStep(0);
+          resetScore();
+        }}
+        onContinue={() => router.push("../")}
+      />
+    );
+  }
+
   const renderStep = () => {
-    if (hearts === 0) {
-      return (
-        <OutOfHearts
-          onContinue={() => router.push("/(main_interface)")}
-          onRetake={restartLevel}
-        />
-      );
-    }
-
-    if (!showInstructions && currentStep >= steps.length && steps.length > 0) {
-      const totalQuestions = steps.length;
-      const percent = (score / totalQuestions) * 100;
-      return (
-        <Evaluation
-          percent={percent}
-          onContinue={() => router.push("/(main_interface)")}
-          onRetake={restartLevel}
-        />
-      );
-    }
-
-    if (loading) {
-      return <ActivityIndicator size="large" color="#0000ff" />;
-    }
-
-    if (steps.length === 0) {
+    if (!step) {
       return (
         <View style={styles.center}>
-          <Text>No questions found for this boss fight.</Text>
+          <Text>Loading results...</Text>
         </View>
       );
     }
 
-    // ✅ FIX: Access props directly from the 'step' object
-    const step = steps[currentStep];
-    if (!step) return <Text>No content for this step.</Text>;
+    const commonProps = {
+      key: step.id,
+      enPrompt: step.enPrompt,
+      filPrompt: step.filPrompt,
+      options: step.options,
+      videoURL: step.videoUrl,
+      onAnswer: handleAnswer,
+      onPress: handleNextStep,
+      hearts,
+    };
 
-    switch (step.type) {
-      case "multiple_choice":
-        return (
-          <BossMC
-            key={step.id}
-            enPrompt={step.enPrompt}
-            filPrompt={step.filPrompt}
-            videoUrl={step.videoUrl} // Use 'videoUrl' to match Firestore
-            options={step.options}
-            onAnswer={handleAnswer}
-            onPress={handleNextStep}
-            hearts={hearts}
-          />
-        );
+    switch (step.type?.toLowerCase()) {
       case "fill_in_the_gap":
-        return (
-          <BossFillTheGap
-            key={step.id}
-            enPrompt={step.enPrompt}
-            filPrompt={step.filPrompt}
-            message="Alright!"
-            videoURL={step.videoUrl} // Use 'videoUrl'
-            options={step.options}
-            onAnswer={handleAnswer}
-            onPress={handleNextStep}
-            hearts={hearts}
-          />
-        );
+        return <BossFillTheGap {...commonProps} message="Alright!" />;
+      case "multiple_choice":
+        return <BossMC {...commonProps} />;
       case "true_or_false":
-        return (
-          <BossTrueOrFalse
-            key={step.id}
-            enQuestion={step.enPrompt}
-            filQuestion={step.filPrompt}
-            options={step.options}
-            videoURL={step.videoUrl} // Use 'videoUrl'
-            onAnswer={handleAnswer}
-            onPress={handleNextStep}
-            hearts={hearts}
-          />
-        );
+        return <BossTrueOrFalse {...commonProps} />;
       case "multiple_choice_video":
-        return (
-          <BossVMC
-            key={step.id}
-            enPrompt={step.enPrompt}
-            filPrompt={step.filPrompt}
-            options={step.options}
-            onAnswer={handleAnswer}
-            onPress={handleNextStep}
-            hearts={hearts}
-          />
-        );
+        return <BossVMC {...commonProps} />;
       default:
         return (
           <View style={styles.center}>
@@ -169,30 +192,16 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
     }
   };
 
-  // ✅ Main content renderer
-  const renderContent = () => {
-    // ✅ Step 1: Instruction first
-    if (showInstructions) {
-      return (
-        <Instruction
-          data={levelData.introduction}
-          onPress={() => {
-            // Only show game if steps exist
-            if (steps.length > 0) setShowInstructions(false);
-            else alert("No questions available for this boss fight.");
-          }}
-        />
-      );
-    }
-
-    // ✅ Step 2: Game or Eval
-    return renderStep();
-  };
-
   return (
     <View style={styles.container}>
-    
-      {renderContent()}
+      {renderStep()}
+      <View style={styles.inventoryContainer}>
+        <Inventory
+          onPress={() => setIsInventoryClicked((prev) => !prev)}
+          isPressed={isInventoryClicked}
+          onClose={() => setIsInventoryClicked(false)}
+        />
+      </View>
     </View>
   );
 };
@@ -200,14 +209,13 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", justifyContent: "center" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  heartsContainer: {
-    flexDirection: "row",
+  inventoryContainer: {
     position: "absolute",
-    top: 40,
-    left: 20,
-    zIndex: 10,
+    bottom: 0,
+    width: "100%",
+    paddingHorizontal: 16,
+    zIndex: 50,
   },
-  heart: { fontSize: 24, color: "red", marginRight: 4 },
 });
 
 export default BossFight;

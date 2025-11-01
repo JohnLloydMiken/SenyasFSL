@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ScrollView, View, TouchableOpacity, Text, Alert } from "react-native";
+import { ScrollView, View, TouchableOpacity, Text, Alert, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router"; // Import the router
 import UserStreak from "@/components/main_interface/userStreak";
 import User_info from "@/components/main_interface/profile/user_info";
@@ -58,18 +58,19 @@ export default function Profile() {
   };
   // --- END: Add password reset handler ---
 
-  if (userLoading) {
+  if (authLoading || userLoading) {
     return (
-      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Loading...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
       </View>
     );
   }
 
-  if (!userData) {
+  // 3. Add a check in case the user isn't logged in
+  if (!user || !userData) {
     return (
-      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Could not load user profile. Please try again later.</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Could not load user profile.</Text>
       </View>
     );
   }

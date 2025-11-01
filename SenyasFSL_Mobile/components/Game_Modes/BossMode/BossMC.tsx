@@ -26,7 +26,7 @@ interface Option {
 interface MultipleChoiceProps {
   enPrompt: string;
   filPrompt: string;
-  videoUrl: string;
+  videoURL: string;
   options: Option[];
   onPress: () => void;
   onAnswer: (isCorrect: boolean) => void;
@@ -36,7 +36,7 @@ interface MultipleChoiceProps {
 const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
   enPrompt,
   filPrompt,
-  videoUrl,
+  videoURL,
   options,
   onPress,
   onAnswer,
@@ -63,9 +63,9 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
     const loadVideo = async () => {
       try {
         setLoading(true);
-        let finalUrl = videoUrl;
-        if (videoUrl.startsWith("gs://")) {
-          finalUrl = await getVideoUrl(videoUrl);
+        let finalUrl = videoURL;
+        if (videoURL.startsWith("gs://")) {
+          finalUrl = await getVideoUrl(videoURL);
         }
         setResolvedUrl(finalUrl);
         player.replace(finalUrl);
@@ -78,7 +78,7 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
       }
     };
     loadVideo();
-  }, [videoUrl]);
+  }, [videoURL]);
 
    useEffect(() => {
           if (player) {

@@ -1,20 +1,24 @@
-// [levelId].tsx
+// levels/[levelId].tsx
 
 import { StyleSheet, Text, View, ActivityIndicator } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   getLevelData,
   getFlowContent,
-  getQuestionsFromPool, // Make sure this is imported
+  getQuestionsFromPool,
 } from "@/services/gameService";
-import Sign_Prcatice from "@/components/Game_Modes/SignLangRecog";
+
+// ✅ Import your NEW wrapper component
+import SignPracticeFlow from "@/components/Game_Modes/GesturePracticeFlow"; 
 import FlowRenderer from "@/components/Game_Modes/FlowRenderer";
 import BossFight from "@/components/Game_Modes/BossFight";
 import { useSectionStore } from "@/utils/store/useSectionStore";
 import { LevelData } from "@/utils/store/levelData";
+
 export default function LevelContent() {
   const { levelId } = useLocalSearchParams();
+  const router = useRouter(); 
   const { currentSectionOrder } = useSectionStore();
   const [loading, setLoading] = useState(true);
   const [levelData, setLevelData] = useState<any>(null);
@@ -25,34 +29,31 @@ export default function LevelContent() {
     const fetchLevelAndFlow = async () => {
       setLoading(true);
       try {
-        // 👇 Check for all required params first
         if (!levelId || typeof levelId !== "string" || !currentSectionOrder) {
           console.warn("Missing levelId or sectionOrder, skipping fetch");
           return;
         }
 
-        // 👇 **FIX 1: Construct the ID and set it in the store immediately**
         const fullLevelId = `s${currentSectionOrder}_lvl_${levelId}`;
-        setLevelID(fullLevelId); // This updates the global store
+        setLevelID(fullLevelId);
 
-        const level = await getLevelData(fullLevelId); // Now fetch with the same ID
+        const level = await getLevelData(fullLevelId);
         setLevelData(level);
 
         if (!level) return;
 
         let contentMap: Map<string, any> | null = null;
 
-        // ✅ FIX: Check that the array property exists AND is not empty.
-        // This satisfies TypeScript by confirming the value is not undefined.
         if (
           level.type === "quiz_survival" &&
-          level.questionPool && // 👈 Check for existence first
+          level.questionPool &&
           level.questionPool.length > 0
         ) {
           contentMap = await getQuestionsFromPool(level.questionPool);
         } else if (
-          level.type === "lesson_and_minigame" &&
-          level.flow && // 👈 Check for existence first
+          // ✅ FIX: Add "sign_practice" to your data fetching logic
+          (level.type === "lesson_and_minigame" || level.type === "sign_practice") && 
+          level.flow &&
           level.flow.length > 0
         ) {
           contentMap = await getFlowContent(level.flow);
@@ -68,8 +69,6 @@ export default function LevelContent() {
 
     fetchLevelAndFlow();
   }, [levelId, currentSectionOrder, setLevelID]);
-
-  // ... The rest of your component remains the same
 
   const renderLevel = () => {
     if (loading) {
@@ -100,8 +99,44 @@ export default function LevelContent() {
         }
         return <FlowRenderer levelData={levelData} flowContent={flowContent} />;
 
-      case "sign_practice":
-        return <Sign_Prcatice level={levelId} />;
+      // ✅ FIX: This 'case' now matches your database type
+      case "sign_practice": 
+        if (!flowContent) { 
+          return (
+            <View style={styles.center}>
+              <Text>Could not load practice signs.</Text>
+            </View>
+          );
+        }
+        // ✅ Render the new wrapper, passing the DB data
+        return (
+          <SignPracticeFlow
+            levelData={levelData} 
+            flowContent={flowContent} 
+            onPress={() => { // This is the navigation handler
+              router.push({
+                pathname: "./Eval_phase",
+                params: {
+                  levelId,
+                  questions: 0, 
+                  lessons: JSON.stringify(
+                    levelData.flow
+                      .filter((f: any) => f.type === "lesson")
+                      .map((f: any) => {
+                        const c = flowContent?.get(f.ref);
+                        return {
+                          id: c?.id,
+                          enTitle: c?.enTitle,
+                          filTitle: c?.filTitle,
+                          videoUrl: c?.videoUrl,
+                        };
+                      })
+                  ),
+                },
+              });
+            }}
+          />
+        );
 
       case "quiz_survival":
         if (!flowContent) {
@@ -113,6 +148,7 @@ export default function LevelContent() {
         }
         return <BossFight levelData={levelData} flowContent={flowContent} />;
 
+      // This is what is currently happening
       default:
         return (
           <View style={styles.center}>

@@ -1,41 +1,45 @@
-import { View, Text, TouchableOpacity, ScrollView, Image} from "react-native";
-import React from "react";
-import Categories from "@/json_files/Categories.json";
-import { router, useLocalSearchParams } from "expo-router";
+// DictionaryCategories.tsx
+import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { router } from "expo-router";
+import { db } from '@/services/db/database'; // Import our new sync db instance
 
- 
-//import LetterIcon from "@/assets/images/dictionary_imgs/alphabets.png"
-import  NumbersIcon from "@/assets/svgs/DictionarySVGs/icons8-numbers-64 1.svg"
-import  LabelsIcon from "@/assets/svgs/DictionarySVGs/icons8-letters-60 1.svg"
-import  CalendarIcon from "@/assets/svgs/DictionarySVGs/icons8-google-calendar-50 1.svg"
-import  FamilyIcon from "@/assets/svgs/DictionarySVGs/icons8-family-50 1.svg"
-import  OccupationIcon from "@/assets/svgs/DictionarySVGs/icons8-occupation-64 1.svg"
-import  FoodIcon from "@/assets/svgs/DictionarySVGs/icons8-pizza-80 1.svg"
-import  VocabularyIcon from "@/assets/svgs/DictionarySVGs/icons8-vocabulary-64 1.svg"
-import  GreetingsIcon from "@/assets/svgs/DictionarySVGs/icons8-greetings-50 1.svg"
-import  LooksIcon from "@/assets/svgs/DictionarySVGs/icons8-try-and-buy-50 1.svg"
+// Define a type for our Category data
+interface Category {
+  id: string;
+  title: string;
+  fil: string;
+  icon: string | null;
+}
 
-
-
-
-// Central SVG mapping
+// ... Your SvgSource mapping ...
 const SvgSource: Record<string, any> = {
   Alphabets: require('@/assets/images/dictionary_imgs/Alphabets.png') ,
-  Colors: require('@/assets/images/dictionary_imgs/Colors.png') , 
-  Family: require('@/assets/images/dictionary_imgs/Family.png') ,
-  Months: require('@/assets/images/dictionary_imgs/Month.png') ,
-  Numbers: require('@/assets/images/dictionary_imgs/Numbers.png') ,
-  Occupation: require('@/assets/images/dictionary_imgs/Occupation.png') ,
-  Ordinal: require('@/assets/images/dictionary_imgs/Ordinals.png') ,
-  Places: require('@/assets/images/dictionary_imgs/Places.png') ,
-  Relationships: require('@/assets/images/dictionary_imgs/Relationship.png') ,
-  Time: require('@/assets/images/dictionary_imgs/Time.png') ,
-  Weather: require('@/assets/images/dictionary_imgs/Weather.png') ,
+  // ... rest of your mappings
 };
 
 const DictionaryCategories = () => {
-  const { contentId } = useLocalSearchParams();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // This effect runs when the component mounts
+  useEffect(() => {
+    try {
+      // Use the synchronous API. It's much cleaner!
+      // Use getAllSync to get all results as an array
+      const results = db.getAllSync<Category>('SELECT * FROM Categories');
+      setCategories(results);
+    } catch (error) {
+      console.error("Error fetching categories from SQLite", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // The empty array means this runs once
+
+  if (isLoading) {
+    return <Text>Loading categories...</Text>; // Show a loading state
+  }
+  
   return (
     <ScrollView contentContainerStyle={{ alignItems: "center" }}>
       <View
@@ -47,16 +51,16 @@ const DictionaryCategories = () => {
           height: "100%",
         }}
       >
-        {Categories.map((item) => {
-          // Pick SVG based on the "SvgSource" key in JSON
-          const Icon = SvgSource[item.SvgSource];
-
+        {categories.map((item) => {
+          // Use the 'icon' field from your DB (which matches 'SvgSource' in your JSON)
+        
+          
           return (
             <TouchableOpacity
               onPress={() =>
                 router.push({
                   pathname: "/dictionary/[contentId]",
-                  params: { contentId: item.id.toString() },
+                  params: { contentId: item.id }, // Pass the category ID
                 })
               }
               key={item.id}
@@ -71,16 +75,14 @@ const DictionaryCategories = () => {
                 alignItems: "center",
                 padding: 12,
                 backgroundColor: "white",
-                 elevation: 8
+                elevation: 8
               }}
             >
-              {Icon && <Image source={Icon} style={{width: 30, height: 30}} />}
+        
               <Text style={{ marginTop: 8, textAlign: "center" }} className="font-PoppinsSemiBold text-lg md:text-xl">
                 {item.title}
-               
               </Text>
-               <Text style={{ textAlign: "center" }} className="font-PoppinsLightItallic text-lg md:text-xl"> 
-               
+              <Text style={{ textAlign: "center" }} className="font-PoppinsLightItallic text-lg md:text-xl"> 
                 "{item.fil}"
               </Text>
             </TouchableOpacity>
