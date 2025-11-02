@@ -16,9 +16,10 @@ import { useUserStore } from "@/utils/store/useUserStore";
 import { useAudioPlayer } from "expo-audio";
 
 // --- NEW IMPORTS ---
-// Import our new hook that DOES NOT use tanstack
 import { useSignOfTheDay } from "@/hooks/useSignOfTheDay"; 
 import SignOfTheDayModal from "@/components/main_interface/SignOfTheDayModal";
+// --- IMPORT AUDIO STORE ---
+import { useAudioStore } from "@/hooks/useAudioStore";
 // --- END NEW IMPORTS ---
 
 const audioSource = require("@/assets/audio/bg_music.mp3");
@@ -29,6 +30,9 @@ const RenderLevel = React.memo(RenderLevelBase);
 
 export default function Index() {
   const player = useAudioPlayer(audioSource);
+  // --- GET VOLUME FROM STORE ---
+  const { musicVolume } = useAudioStore();
+  
   const sectionRefs = useRef<React.RefObject<HTMLElement | null>[]>([]);
   const [isPressed, setIsPressed] = useState(false);
   const [tutorialPressed, setTutorialPressed] = useState(false);
@@ -37,10 +41,10 @@ export default function Index() {
   const { user, loading: authLoading } = useAuthStore();
   const { userData, loading: userLoading } = useUserStore();
 
+
   // --- NEW STATE FOR SIGN OF THE DAY ---
   const [showSignOfTheDay, setShowSignOfTheDay] = useState(false);
   const [hasShownSignModal, setHasShownSignModal] = useState(false);
-  // Use our new hook
   const { signOfTheDay, isLoading: isSignLoading } = useSignOfTheDay();
   // --- END NEW STATE ---
 
@@ -62,23 +66,41 @@ export default function Index() {
 
   // --- NEW EFFECT to show modal on load ---
   useEffect(() => {
-    // When all loading is finished, and we have a sign, and we haven't shown it yet...
     if (
       !isMapLoading &&
       !userLoading &&
-      !isSignLoading && // Use the loading state from our new hook
+      !isSignLoading && 
       signOfTheDay &&
       !hasShownSignModal
     ) {
-      // ...show the modal and mark it as shown.
       setShowSignOfTheDay(true);
       setHasShownSignModal(true);
     }
   }, [isMapLoading, userLoading, isSignLoading, signOfTheDay, hasShownSignModal]);
   // --- END NEW EFFECT ---
 
+  // --- NEW EFFECT TO PLAY AND CONTROL MUSIC ---
+  useEffect(() => {
+    if (player) {
+      player.play();
+      player.loop = true;
+    }
+    // Cleanup function to stop music when component unmounts
+    return () => {
+      player?.pause();
+    };
+  }, [player]);
+
+  // This effect updates the volume whenever it changes in the store
+  useEffect(() => {
+    if (player) {
+      player.volume = musicVolume;
+    }
+  }, [player, musicVolume]);
+  // --- END MUSIC EFFECTS ---
+
+
   if (isMapLoading || userLoading || (isSignLoading && !hasShownSignModal)) {
-    // Show loading screen while sign of the day is also loading for the first time
     return (
       <View className="flex-1 bg-white justify-center items-center">
         <Text>Loading...</Text>
@@ -100,16 +122,13 @@ export default function Index() {
       <View className="flex-col justify-center items-center absolute bottom-2 left-2 gap-2 z-50">
         {/* --- MODIFIED BUTTON LOGIC --- */}
         {hasShownSignModal ? (
-          // After modal is closed, show a new button to re-open it
           <TouchableOpacity
             onPress={() => setShowSignOfTheDay(true)}
-            // Using text as a placeholder since I don't have a new SVG
             style={styles.signOfTheDayButton} 
           >
             <Text style={styles.signOfTheDayButtonText}>🌟</Text>
           </TouchableOpacity>
         ) : (
-          // Original Tutorial Button
           <TouchableOpacity onPress={() => setTutorialPressed((prev) => !prev)}>
             <TutorialSVG />
           </TouchableOpacity>
@@ -125,6 +144,7 @@ export default function Index() {
       )}
 
       {/* Modals */}
+      {/* SoundSettings now needs no props for volume */}
       {isPressed && <SoundSettings onPress={() => setIsPressed(false)} />}
       {tutorialPressed && <Tutorial onPress={() => setTutorialPressed(false)} />}
 

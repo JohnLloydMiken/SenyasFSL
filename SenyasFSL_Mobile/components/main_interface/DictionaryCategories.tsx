@@ -2,7 +2,7 @@
 import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import React, { useState, useEffect } from "react";
 import { router } from "expo-router";
-import { db } from '@/services/db/database'; // Import our new sync db instance
+import { db } from "@/services/db/database"; // Import our new sync db instance
 
 // Define a type for our Category data
 interface Category {
@@ -14,8 +14,17 @@ interface Category {
 
 // ... Your SvgSource mapping ...
 const SvgSource: Record<string, any> = {
-  Alphabets: require('@/assets/images/dictionary_imgs/Alphabets.png') ,
-  // ... rest of your mappings
+  alphabet: require("@/assets/images/dictionary_imgs/Alphabets.png"),
+  colors: require("@/assets/images/dictionary_imgs/Colors.png"),
+  family: require("@/assets/images/dictionary_imgs/Family.png"),
+  months: require("@/assets/images/dictionary_imgs/Month.png"),
+  numbers: require("@/assets/images/dictionary_imgs/Numbers.png"),
+  occupation: require("@/assets/images/dictionary_imgs/Occupation.png"),
+  ordinal: require("@/assets/images/dictionary_imgs/Ordinals.png"),
+  places: require("@/assets/images/dictionary_imgs/Places.png"),
+  relationship: require("@/assets/images/dictionary_imgs/Relationship.png"),
+  timeExpression: require("@/assets/images/dictionary_imgs/Time.png"),
+  weather: require("@/assets/images/dictionary_imgs/Weather.png"),
 };
 
 const DictionaryCategories = () => {
@@ -27,7 +36,7 @@ const DictionaryCategories = () => {
     try {
       // Use the synchronous API. It's much cleaner!
       // Use getAllSync to get all results as an array
-      const results = db.getAllSync<Category>('SELECT * FROM Categories');
+      const results = db.getAllSync<Category>("SELECT * FROM Categories");
       setCategories(results);
     } catch (error) {
       console.error("Error fetching categories from SQLite", error);
@@ -39,6 +48,7 @@ const DictionaryCategories = () => {
   if (isLoading) {
     return <Text>Loading categories...</Text>; // Show a loading state
   }
+
   
   return (
     <ScrollView contentContainerStyle={{ alignItems: "center" }}>
@@ -51,10 +61,10 @@ const DictionaryCategories = () => {
           height: "100%",
         }}
       >
-        {categories.map((item) => {
+        {categories.map((item, index) => {
           // Use the 'icon' field from your DB (which matches 'SvgSource' in your JSON)
+          const Icon = SvgSource[item.id];
         
-          
           return (
             <TouchableOpacity
               onPress={() =>
@@ -75,14 +85,22 @@ const DictionaryCategories = () => {
                 alignItems: "center",
                 padding: 12,
                 backgroundColor: "white",
-                elevation: 8
+                elevation: 8,
               }}
             >
-        
-              <Text style={{ marginTop: 8, textAlign: "center" }} className="font-PoppinsSemiBold text-lg md:text-xl">
+              {Icon && (
+                <Image source={Icon} style={{ width: 30, height: 30 }} />
+              )}
+              <Text
+                style={{ marginTop: 8, textAlign: "center" }}
+                className="font-PoppinsSemiBold text-lg md:text-xl"
+              >
                 {item.title}
               </Text>
-              <Text style={{ textAlign: "center" }} className="font-PoppinsLightItallic text-lg md:text-xl"> 
+              <Text
+                style={{ textAlign: "center" }}
+                className="font-PoppinsLightItallic text-lg md:text-xl"
+              >
                 "{item.fil}"
               </Text>
             </TouchableOpacity>

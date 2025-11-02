@@ -8,24 +8,23 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useRef, useMemo, useState, useEffect } from "react";
-import { Stack, useLocalSearchParams } from "expo-router";
+// --- 1. Import router ---
+import { Stack, useLocalSearchParams, router } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { db } from "@/services/db/database"; // Import our SQLite DB
-
+import PlayBtn from "@/assets/svgs/PlayBtn.svg";
 // --- Types ---
-// Type for a single word/video entry from our DB
 interface DictionaryEntry {
   id: string;
   categoryId: string;
   enLabel: string;
   filLabel: string;
-  remoteVideoUrl: string; // We don't use this, but it's in the DB
-  localVideoUri: string; // This is what we need!
+  remoteVideoUrl: string;
+  localVideoUri: string;
 }
 
-// Type for a category from our DB
 interface Category {
   id: string;
   title: string;
@@ -41,7 +40,6 @@ const DictionaryContent = () => {
   useEffect(() => {
     if (contentId) {
       try {
-        // Fetch the category title from our *local* DB
         const result = db.getFirstSync<Category>(
           "SELECT * FROM Categories WHERE id = ?",
           contentId
@@ -57,12 +55,21 @@ const DictionaryContent = () => {
     <>
       <Stack.Screen
         options={{
-          // Set title from the DB result
           title: category?.title ?? "Loading...",
+
+          // --- 2. THIS IS THE FIX ---
+          // Add the custom headerLeft button you wanted
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ paddingRight: 10 }} // Added padding for easier tapping
+            >
+              <Text style={{ color: "#007AFF", fontSize: 16 }}>Back</Text>
+            </TouchableOpacity>
+          ),
         }}
       />
       <GestureHandlerRootView style={styles.container}>
-        {/* Pass the contentId to our list component */}
         {contentId ? (
           <DictionaryList contentId={contentId} />
         ) : (
@@ -78,17 +85,14 @@ const DictionaryContent = () => {
 export default DictionaryContent;
 
 // --- Reusable Video Player Hook ---
-// This hook is great! No changes needed here.
 const useSharedPlayer = () => {
   const player = useVideoPlayer(null, (player) => {
     player.loop = true;
     player.muted = true;
   });
 
-  // We change this to accept a direct URI, not a videoMap key
   const setSource = (uri: string | null) => {
     if (uri) {
-      // player.replace() can take a file URI directly!
       player.replace(uri);
       player.play();
     }
@@ -98,19 +102,16 @@ const useSharedPlayer = () => {
 };
 
 // --- Reusable Content List Component ---
-// This component replaces FSL_Alphabets and FSL_Numbers
 export const DictionaryList = ({ contentId }: { contentId: string }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<DictionaryEntry[]>([]);
-  
-  // State for the *selected* item in the bottom sheet
-  const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(null);
-
+  const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(
+    null
+  );
   const { player, setSource } = useSharedPlayer();
   const snapPoints = useMemo(() => ["50%"], []);
 
-  // Fetch all dictionary entries for this category from the local DB
   useEffect(() => {
     try {
       const results = db.getAllSync<DictionaryEntry>(
@@ -123,21 +124,16 @@ export const DictionaryList = ({ contentId }: { contentId: string }) => {
     }
   }, [contentId]);
 
-  // This function is called when a user taps on a word
   const handleSelect = (entry: DictionaryEntry) => {
     setSelectedEntry(entry);
     setLoading(true);
-    
-    // Set the source directly to the local file URI
-    setSource(entry.localVideoUri); 
-    
+    setSource(entry.localVideoUri);
     bottomSheetRef.current?.expand();
-    setTimeout(() => setLoading(false), 300); // Keep your loading logic
+    setTimeout(() => setLoading(false), 300);
   };
 
   return (
     <>
-      {/* ScrollView that lists all the words */}
       <ScrollView contentContainerStyle={styles.listContainer}>
         {entries.map((entry) => (
           <TouchableOpacity
@@ -145,12 +141,15 @@ export const DictionaryList = ({ contentId }: { contentId: string }) => {
             style={styles.wordButton}
             onPress={() => handleSelect(entry)}
           >
-            <Text style={styles.wordButtonText}>{entry.enLabel}</Text>
+            <PlayBtn width={50} height={50} />
+            <View >
+              <Text className="font-PoppinsBold text-2xl md:text-3xl">{entry.enLabel}</Text>
+              <Text className="font-PoppinsLightItallic text-xl md:text-2xl">"{entry.filLabel}"</Text>
+            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      {/* Bottom Sheet for the Video Player */}
       <BottomSheet
         ref={bottomSheetRef}
         snapPoints={snapPoints}
@@ -204,8 +203,14 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 20,
     marginVertical: 8,
-    borderRadius: 12,
+    borderRadius: 50,
     elevation: 3,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    borderColor: "#F7D674",
+    borderWidth: 2
   },
   wordButtonText: {
     fontSize: 18,

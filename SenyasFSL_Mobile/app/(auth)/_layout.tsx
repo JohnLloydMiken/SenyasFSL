@@ -39,6 +39,7 @@ export default function GetStarted(){
           },
           headerShadowVisible: false,
           gestureEnabled: false,
+          animation: "fade",
         })}
       />
 
@@ -54,6 +55,7 @@ export default function GetStarted(){
           },
           headerShadowVisible: false,
           gestureEnabled: false,
+          animation: "fade",
         })}
       />
 
@@ -94,6 +96,7 @@ export default function GetStarted(){
           },
           headerShadowVisible: false,
           gestureEnabled: false,
+          animation: "fade",
         })}
       />
       <Stack.Screen
@@ -133,6 +136,7 @@ export default function GetStarted(){
           },
           headerShadowVisible: false,
           gestureEnabled: false,
+          animation: "fade",
         })}
       />
       <Stack.Screen
@@ -172,6 +176,7 @@ export default function GetStarted(){
           },
           headerShadowVisible: false,
           gestureEnabled: false,
+          animation: "fade",
         })}
       />
       <Stack.Screen
@@ -211,18 +216,21 @@ export default function GetStarted(){
           },
           headerShadowVisible: false,
           gestureEnabled: false,
+          animation: "fade",
         })}
       />
       <Stack.Screen
         name="congrast"
         options={{
           headerShown: false,
+          animation: "fade",
         }}
       />
       <Stack.Screen
         name="welcome"
         options={{
           headerShown: false,
+          animation: "fade",
         }}
       />
     </Stack>

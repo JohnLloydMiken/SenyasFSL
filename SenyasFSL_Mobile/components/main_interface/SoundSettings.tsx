@@ -12,8 +12,9 @@ import Sound from "@/assets/svgs/sound.svg";
 import Music from "@/assets/svgs/Music.svg";
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
-import { useState } from "react";
+import { useState } from "react"; // Keep for slider width
 import { Ionicons } from "@expo/vector-icons";
+import { useAudioStore } from "@/hooks/useAudioStore"; // --- IMPORT STORE ---
 
 interface SoundSettingsProps{
     onPress: ()=> void;
@@ -25,10 +26,22 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({onPress}) => {
   const { width } = useWindowDimensions();
   const svgSize = width < 768 ? 30 : 50;
   const svgBG = width < 768 ? 60 : 80;
-  const [Soundvalue, setSoundValue] = useState(100);
-  const [Musicvalue, setMusicValue] = useState(100);
-  const SoundIconPosition = (sliderSoundWidth * Soundvalue) / 115 - svgSize / 2;
-  const MusicIconPosition = (sliderMusicWidth * Musicvalue) / 115 - svgSize / 2;
+
+  // --- USE GLOBAL STATE ---
+  const { 
+    musicVolume, 
+    setMusicVolume, 
+    soundEffectsVolume, 
+    setSoundEffectsVolume 
+  } = useAudioStore();
+
+  // Convert 0.0-1.0 to 0-100 for slider
+  const soundSliderValue = soundEffectsVolume * 100;
+  const musicSliderValue = musicVolume * 100;
+
+  const SoundIconPosition = (sliderSoundWidth * soundSliderValue) / 115 - svgSize / 2;
+  const MusicIconPosition = (sliderMusicWidth * musicSliderValue) / 115 - svgSize / 2;
+  // --- END GLOBAL STATE ---
 
   const handleSoundLayout = (event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout;
@@ -38,6 +51,16 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({onPress}) => {
     const { width } = event.nativeEvent.layout;
     setSliderMusicWidth(width);
   };
+
+  // --- HANDLERS TO UPDATE STORE (converts 0-100 to 0.0-1.0) ---
+  const handleSoundChange = (value: number) => {
+    setSoundEffectsVolume(value / 100);
+  };
+
+  const handleMusicChange = (value: number) => {
+    setMusicVolume(value / 100);
+  };
+  // --- END HANDLERS ---
 
   return (
     <LinearGradient
@@ -107,7 +130,7 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({onPress}) => {
             <Text
               className={`text-xl md:text-2xl font-PoppinsSemiBold absolute text-[#646464] z-50 bottom-20 right-0 `}
             >
-              {Soundvalue.toFixed()}%
+              {soundSliderValue.toFixed()}% 
             </Text>
             <LinearGradient
               colors={["#2DE2E2", "#0922A0"]}
@@ -119,8 +142,8 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({onPress}) => {
               style={styles.slider}
               minimumValue={0}
               maximumValue={100}
-              value={Soundvalue}
-              onValueChange={setSoundValue}
+              value={soundSliderValue} 
+              onValueChange={handleSoundChange} // Use handler
               minimumTrackTintColor="transparent"
               maximumTrackTintColor="transparent"
               thumbTintColor="transparent"
@@ -157,7 +180,7 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({onPress}) => {
             <Text
               className={`text-xl md:text-2xl font-PoppinsSemiBold absolute text-[#646464] z-50 bottom-20 right-0 `}
             >
-              {Musicvalue.toFixed()}%
+              {musicSliderValue.toFixed()}%
             </Text>
             <LinearGradient
               colors={["#2DE2E2", "#0922A0"]}
@@ -169,8 +192,8 @@ const SoundSettings: React.FC<SoundSettingsProps> = ({onPress}) => {
               style={styles.slider}
               minimumValue={0}
               maximumValue={100}
-              value={Musicvalue}
-              onValueChange={setMusicValue}
+              value={musicSliderValue}
+              onValueChange={handleMusicChange} // Use handler
               minimumTrackTintColor="transparent"
               maximumTrackTintColor="transparent"
               thumbTintColor="transparent"

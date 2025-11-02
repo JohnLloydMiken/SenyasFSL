@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 10,
+    padding: 4
   },
   closeButtonText: {
     color: "white",
@@ -212,11 +213,12 @@ const styles = StyleSheet.create({
   },
   turtleButton: {
     position: "absolute",
-    top: 60, // Adjusted to not overlap close button
-    right: 8,
+    top: 10, // Adjusted to not overlap close button
+    right: 50,
     zIndex: 10,
     backgroundColor: "rgba(0,0,0,0.3)",
-    padding: 8,
+    padding:2,
+    
     borderRadius: 999,
   },
   turtleButtonText: {

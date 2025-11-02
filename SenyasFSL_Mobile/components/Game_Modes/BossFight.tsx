@@ -195,13 +195,6 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
   return (
     <View style={styles.container}>
       {renderStep()}
-      <View style={styles.inventoryContainer}>
-        <Inventory
-          onPress={() => setIsInventoryClicked((prev) => !prev)}
-          isPressed={isInventoryClicked}
-          onClose={() => setIsInventoryClicked(false)}
-        />
-      </View>
     </View>
   );
 };

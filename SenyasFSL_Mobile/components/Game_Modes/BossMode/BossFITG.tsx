@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { View, Text, ActivityIndicator } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { LinearGradient } from "expo-linear-gradient";
@@ -15,6 +15,13 @@ import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
 import { videoSpeed } from "@/utils/store/videoSpeed";
+
+// ✅ --- IMPORTS FOR BOMB/RETRY ---
+import { useGameStore } from "@/hooks/useGameStore";
+import { QuestionOption as SharedQuestionOption } from "@/shared/types/index";
+import Toast from "react-native-toast-message";
+
+// --- Interfaces ---
 export interface QuestionOption {
   id: string;
   isCorrect: boolean;
@@ -31,6 +38,7 @@ interface FillTheGapProps {
   onPress: () => void;
   onAnswer: (isCorrect: boolean) => void;
   hearts: number;
+    key: string
 }
 
 const BossFillTheGap: React.FC<FillTheGapProps> = ({
@@ -42,6 +50,7 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
   onPress,
   onAnswer,
   hearts,
+  key
 }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [choice, setChoice] = useState<string | null>(null); // store selected option id
@@ -53,36 +62,69 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
   const [showWrongIcon, setShowWrongIcon] = useState(false);
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const speed = videoSpeed((state) => state.playingSpeed);
+
+  // ✅ --- GAME STORE STATE (BOMB/RETRY) ---
+  const visibleChoices = useGameStore((state) => state.visibleChoices);
+  const setVisibleChoices = useGameStore((state) => state.setVisibleChoices);
+  const is2xTryActive = useGameStore((state) => state.is2xTryActive);
+  const consume2xTry = useGameStore((state) => state._consume2xTry);
+
   // ✅ Find the correct option
   const correctOption = useMemo(
     () => options.find((opt) => opt.isCorrect) || null,
     [options]
   );
 
-  // ✅ Check answer correctly
-  const handleCheck = () => {
-    if (choice) {
-      const selectedOption = options.find((opt) => opt.id === choice);
-      const correct = selectedOption ? selectedOption.isCorrect : false;
-      setIsCorrect(correct);
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  const handleCheck = useCallback(() => {
+    if (!choice) return;
+
+    const selectedOption = options.find((opt) => opt.id === choice);
+    const isAnswerCorrect = selectedOption ? selectedOption.isCorrect : false;
+
+    if (isAnswerCorrect) {
+      // --- CORRECT ANSWER ---
+      incrementScore();
+      setIsCorrect(true);
       setHasChecked(true);
       setOpacity(0);
-      onAnswer(correct);
-      if (correct) {
-        incrementScore();
+      onAnswer(true);
+    } else {
+      // --- INCORRECT ANSWER ---
+      if (is2xTryActive) {
+        // --- 2xTRY IS ACTIVE ---
+        consume2xTry();
+        Toast.show({
+          type: "info",
+          text1: "Saved by 2x Try!",
+          text2: "That was incorrect, try again!",
+        });
+        setChoice(null); // Reset choice
       } else {
+        // --- 2xTRY IS NOT ACTIVE ---
+        setIsCorrect(false);
+        setHasChecked(true);
+        setOpacity(0);
+        onAnswer(false);
         setShowWrongIcon(true);
       }
     }
-  };
+  }, [
+    choice,
+    options,
+    onAnswer,
+    incrementScore,
+    is2xTryActive,
+    consume2xTry,
+  ]);
 
-  // Initialize video player
+  // --- Video Player Setup ---
   const player = useVideoPlayer(null, (p) => {
     p.loop = true;
     p.muted = true;
   });
 
-  // Fetch video URL from Firebase if gs://
+  // --- Video Loading Effects ---
   useEffect(() => {
     const loadVideo = async () => {
       try {
@@ -103,25 +145,65 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
     loadVideo();
   }, [videoURL]);
 
+  // --- Wrong Icon Effect ---
   useEffect(() => {
-    // Only run this logic if an answer has been checked and it was wrong
     if (hasChecked && isCorrect === false) {
-      // Set a timer to switch the icon back to the default "fight" icon
       const timer = setTimeout(() => {
         setShowWrongIcon(false);
-      }, 1500); // 1.5-second delay before hiding the wrong icon
-
-      // Clean up the timer if the component unmounts
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [hasChecked, isCorrect]);
 
+  // --- Video Speed Effect ---
   useEffect(() => {
     if (player) {
       player.playbackRate = speed;
     }
-  }, [speed, player]); // Dependencies: speed and player
-  
+  }, [speed, player]);
+
+  // ✅ --- EFFECT FOR BOMB ITEM ---
+  useEffect(() => {
+    if (options) {
+      setVisibleChoices(options as SharedQuestionOption[]);
+    }
+    return () => {
+      setVisibleChoices(null);
+    };
+  }, [options, setVisibleChoices]);
+
+  // ✅ --- RENDER OPTIONS (UPDATED FOR BOMB) ---
+  const renderOptions = useMemo(
+    () =>
+      (visibleChoices || options).map((option) => (
+        <View
+          key={option.id}
+          className="w-[48%]  relative items-center"
+        >
+          <View
+            className={`${
+              hasChecked && choice === option.id ? "opacity-0" : "opacity-100"
+            } w-full`}
+          >
+            <MCBTN
+              EnglishText={option.labelEn || ""}
+              FilipinoText={option.labelFil || ""}
+              rounded={6}
+              hasChecked={hasChecked}
+              isCorrect={option.id === correctOption?.id}
+              isSelected={choice === option.id}
+              onPress={() => {
+                if (!hasChecked) setChoice(option.id);
+              }}
+              clicked={hasChecked}
+            />
+          </View>
+          <View className="absolute w-24 h-8 bg-[#E6E6E6] rounded-md top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0" />
+        </View>
+      )),
+    [visibleChoices, options, choice, hasChecked, correctOption]
+  );
+
   if (loading) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
@@ -140,7 +222,6 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
             ❤️
           </Text>
         ))}
-        {/* ✅ 3. Conditionally render the correct SVG */}
         {showWrongIcon ? (
           <FSL_Wrong height={50} width={50} />
         ) : (
@@ -200,29 +281,7 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
 
       {/* Options */}
       <View className="w-11/12 flex-row flex-wrap justify-between mt-2">
-        {options.map((option) => (
-          <View key={option.id} className="w-[48%]  relative items-center">
-            <View
-              className={`${
-                hasChecked && choice === option.id ? "opacity-0" : "opacity-100"
-              } w-full`}
-            >
-              <MCBTN
-                EnglishText={option.labelEn}
-                FilipinoText={option.labelFil}
-                rounded={6}
-                hasChecked={hasChecked}
-                isCorrect={option.id === correctOption?.id}
-                isSelected={choice === option.id}
-                onPress={() => {
-                  if (!hasChecked) setChoice(option.id);
-                }}
-                clicked={hasChecked}
-              />
-            </View>
-            <View className="absolute w-24 h-8 bg-[#E6E6E6] rounded-md top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0" />
-          </View>
-        ))}
+        {renderOptions}
       </View>
 
       {/* Inventory Button */}

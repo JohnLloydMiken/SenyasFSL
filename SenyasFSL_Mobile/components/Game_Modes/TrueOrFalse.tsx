@@ -1,5 +1,5 @@
 import { View, Text, ActivityIndicator } from "react-native";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
 import LevelContentBtn from "./GameBtns/LevelContentBtn";
 import MCBTN from "./GameBtns/MCBTN";
@@ -12,6 +12,12 @@ import Inventory from "../main_interface/treasure/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import { videoSpeed } from "@/utils/store/videoSpeed";
+
+// ✅ --- IMPORTS FOR RETRY ---
+import { useGameStore } from "@/hooks/useGameStore";
+import Toast from "react-native-toast-message";
+
+// --- Interfaces ---
 export interface TrueFalseOption {
   id: string;
   isCorrect: boolean;
@@ -43,18 +49,23 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
   const [loading, setLoading] = useState(true);
   const speed = videoSpeed((state) => state.playingSpeed);
   const incrementScore = useUserPoints((state) => state.incrementScore);
+
+  // ✅ --- GAME STORE STATE (RETRY) ---
+  const is2xTryActive = useGameStore((state) => state.is2xTryActive);
+  const consume2xTry = useGameStore((state) => state._consume2xTry);
+
   const correctAnswer = useMemo(() => {
     const correctOpt = options.find((opt) => !opt.isCorrect);
     return correctOpt ? correctOpt.labelEn : "";
   }, [options]);
 
-  // Create video player without source initially
+  // Create video player
   const player = useVideoPlayer(null, (p) => {
     p.loop = true;
     p.muted = true;
   });
 
-  // Fetch and resolve video URL then update player
+  // Fetch and resolve video URL
   useEffect(() => {
     const loadVideo = async () => {
       try {
@@ -65,7 +76,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
         setResolvedUrl(finalUrl);
         player.replace(finalUrl);
         player.play();
-         player.playbackRate = speed;
+        player.playbackRate = speed;
       } catch (error) {
         console.error("Error loading video URL:", error);
       } finally {
@@ -75,25 +86,51 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
     loadVideo();
   }, [videoURL]);
 
-   useEffect(() => {
-        if (player) {
-          player.playbackRate = speed;
-        }
-      }, [speed, player]); // Dependencies: speed and player
-  
+  useEffect(() => {
+    if (player) {
+      player.playbackRate = speed;
+    }
+  }, [speed, player]);
 
-  const handleCheck = () => {
-    if (selectedChoice) {
-      const selectedOption = options.find((opt) => opt.id === selectedChoice);
-      const correct = selectedOption ? !selectedOption.isCorrect : false;
-      setIsCorrect(correct);
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  const handleCheck = useCallback(() => {
+    if (!selectedChoice) return;
+
+    const selectedOption = options.find((opt) => opt.id === selectedChoice);
+    // Note: Original logic for TF is inverted
+    const isAnswerCorrect = selectedOption ? !selectedOption.isCorrect : false;
+
+    if (isAnswerCorrect) {
+      // --- CORRECT ANSWER ---
+      incrementScore();
+      setIsCorrect(true);
       setHasChecked(true);
       setOpacity(0);
-      if (correct) {
-        incrementScore();
+    } else {
+      // --- INCORRECT ANSWER ---
+      if (is2xTryActive) {
+        // --- 2xTRY IS ACTIVE ---
+        consume2xTry();
+        Toast.show({
+          type: "info",
+          text1: "Saved by 2x Try!",
+          text2: "That was incorrect, try again!",
+        });
+        setSelectedChoice(null); // Reset choice
+      } else {
+        // --- 2xTRY IS NOT ACTIVE ---
+        setIsCorrect(false);
+        setHasChecked(true);
+        setOpacity(0);
       }
     }
-  };
+  }, [
+    selectedChoice,
+    options,
+    incrementScore,
+    is2xTryActive,
+    consume2xTry,
+  ]);
 
   if (loading) {
     return (
@@ -136,7 +173,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
             FilipinoText={`"${option.labelFil}"`}
             onPress={() => !hasChecked && setSelectedChoice(option.id)}
             clicked={hasChecked}
-            isCorrect={!option.isCorrect}
+            isCorrect={!option.isCorrect} // Original inverted logic
             isSelected={selectedChoice === option.id}
             hasChecked={hasChecked}
             rounded={50}
@@ -144,7 +181,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
         ))}
       </View>
 
-      <View
+       <View
         style={{ opacity }}
         className="w-full p-4 mx-auto absolute bottom-28 z-50"
       >
@@ -153,7 +190,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
           isPressed={isClicked}
           onClose={() => setIsClicked(false)}
         />
-      </View>
+      </View> 
 
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
         {isCorrect !== null && (

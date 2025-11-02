@@ -14,7 +14,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 interface LeaderboardItem {
   rank: number;
   name: string;
-  score: number;
+  points: number;
 }
 
 type LeaderboardData = {
@@ -26,7 +26,7 @@ type LeaderboardData = {
 interface CurrentUserInfo {
   rank: number;
   name: string;
-  score: number;
+  points: number;
 }
 
 interface LeaderboardPayload {
@@ -116,7 +116,7 @@ export default function AchievementComponent() {
             <Podium
               medal={require("@/assets/images/SilverMedal.png")}
               name={topThree[1].name}
-              score={topThree[1].score}
+              score={topThree[1].points}
               rank={topThree[1].rank}
               height={160}
               color="#C0C0C0"
@@ -124,7 +124,7 @@ export default function AchievementComponent() {
             <Podium
               medal={require("@/assets/images/GoldMedal.png")}
               name={topThree[0].name}
-              score={topThree[0].score}
+              score={topThree[0].points}
               rank={topThree[0].rank}
               height={210}
               color="#FFD700"
@@ -132,7 +132,7 @@ export default function AchievementComponent() {
             <Podium
               medal={require("@/assets/images/BronzeMedal.png")}
               name={topThree[2].name}
-              score={topThree[2].score}
+              score={topThree[2].points}
               rank={topThree[2].rank}
               height={130}
               color="#CD7F32"
@@ -159,7 +159,7 @@ export default function AchievementComponent() {
                 {item.name}
               </Text>
               <Text className="text-[#B5B5B5] font-PoppinsRegular text-base">
-                {item.score} pts
+                {item.points} pts
               </Text>
             </View>
           ))
