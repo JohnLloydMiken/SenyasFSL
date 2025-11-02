@@ -21,6 +21,7 @@ interface GameStoreState {
   isUsingItem: boolean; // Loading state
   phase: string;
   nextStep: () => void; // Function to advance the game
+ 
 }
 
 // Define the actions
@@ -33,6 +34,7 @@ interface GameStoreActions {
   _setLevelData: (level: Level | null) => void;
   _setPhase: (phase: string) => void;
   _setNextStep: (fn: () => void) => void; // Pass in your game's nextStep function
+   _consume2xTry: () => void;
 }
 
 // Initial state of the store
@@ -60,7 +62,7 @@ export const useGameStore = create<GameStoreState & GameStoreActions>()(
     // --- Public Actions ---
     setVisibleChoices: (choices) => set({ visibleChoices: choices }),
     clearGame: () => set(initialState),
-
+    _consume2xTry: () => set({ is2xTryActive: false }),
     useItem: async (itemId: ItemId, currentInventory: Inventory) => {
       if (get().isUsingItem) {
         console.log("Already using an item, please wait.");

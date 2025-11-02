@@ -1,5 +1,5 @@
 import { View, Text } from "react-native";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
@@ -11,6 +11,11 @@ import Inventory from "@/components/main_interface/treasure/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import { videoSpeed } from "@/utils/store/videoSpeed";
+
+// ✅ --- IMPORTS FOR RETRY ---
+import { useGameStore } from "@/hooks/useGameStore";
+import Toast from "react-native-toast-message";
+
 // --- Interfaces ---
 export interface VideoQuestionOption {
   id: string;
@@ -34,24 +39,28 @@ const ViewMC: React.FC<ViewMCProps> = ({
   onPress,
 }) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [choice, setChoice] = useState<string | null>(null);
+  const [choice, setChoice] = useState<string | null>(null); // Stores labelEn
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(100);
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const [resolvedVideos, setResolvedVideos] = useState<Record<string, string>>(
     {}
-  ); // Stores resolved video URLs
+  );
   const [loading, setLoading] = useState(true);
   const speed = videoSpeed((state) => state.playingSpeed);
-  // ✅ Determine the correct answer from options
+
+  // ✅ --- GAME STORE STATE (RETRY) ---
+  const is2xTryActive = useGameStore((state) => state.is2xTryActive);
+  const consume2xTry = useGameStore((state) => state._consume2xTry);
+
+  // Determine the correct answer
   const correctAnswer = useMemo(() => {
-    // ✅ This now correctly looks for the option where `isCorrect` is true
     const correctOption = options.find((opt) => opt.isCorrect);
     return correctOption ? correctOption.labelEn : "";
   }, [options]);
 
-  // ✅ Fetch video URLs (Firebase "gs://" → HTTPS)
+  // Fetch video URLs
   useEffect(() => {
     const fetchVideoUrls = async () => {
       try {
@@ -72,10 +81,8 @@ const ViewMC: React.FC<ViewMCProps> = ({
               );
             }
           }
-
           results[option.id] = finalUrl;
         }
-
         setResolvedVideos(results);
       } catch (err) {
         console.error("❌ Error fetching video URLs:", err);
@@ -87,18 +94,39 @@ const ViewMC: React.FC<ViewMCProps> = ({
     fetchVideoUrls();
   }, [options]);
 
-  const handleBG = () => {
-    if (choice) {
-      setIsCorrect(choice === correctAnswer);
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  const handleBG = useCallback(() => {
+    if (!choice) return;
+
+    const isAnswerCorrect = choice === correctAnswer;
+
+    if (isAnswerCorrect) {
+      // --- CORRECT ANSWER ---
+      incrementScore();
+      setIsCorrect(true);
       setHasChecked(true);
       setOpacity(0);
+    } else {
+      // --- INCORRECT ANSWER ---
+      if (is2xTryActive) {
+        // --- 2xTRY IS ACTIVE ---
+        consume2xTry();
+        Toast.show({
+          type: "info",
+          text1: "Saved by 2x Try!",
+          text2: "That was incorrect, try again!",
+        });
+        setChoice(null); // Reset choice
+      } else {
+        // --- 2xTRY IS NOT ACTIVE ---
+        setIsCorrect(false);
+        setHasChecked(true);
+        setOpacity(0);
+      }
     }
-    if (choice === correctAnswer) {
-      incrementScore();
-    }
-  };
+  }, [choice, correctAnswer, incrementScore, is2xTryActive, consume2xTry]);
 
-  // ✅ Render options once all video URLs are loaded
+  // Render options (No changes needed for Bomb)
   const renderOptions = useMemo(() => {
     return options.map((option) => (
       <VideoMCBTN
@@ -115,7 +143,7 @@ const ViewMC: React.FC<ViewMCProps> = ({
         videoSource={resolvedVideos[option.id] || option.videoSrc}
       />
     ));
-  }, [options, choice, hasChecked, loading, resolvedVideos]);
+  }, [options, choice, hasChecked, loading, resolvedVideos, correctAnswer]);
 
   if (loading) {
     return (
@@ -140,7 +168,6 @@ const ViewMC: React.FC<ViewMCProps> = ({
       {/* VIDEO CHOICES */}
       <View className="w-2/3">{renderOptions}</View>
 
-      {/* INVENTORY BUTTON */}
       <View
         className={`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}
       >

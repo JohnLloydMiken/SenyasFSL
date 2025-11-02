@@ -187,14 +187,7 @@ export default function FlowRenderer({
     <View style={styles.container}>
       {QuestionComponent}
 
-      {/* ✅ INVENTORY COMPONENT */}
-      <View style={styles.inventoryContainer}>
-        <Inventory
-          onPress={() => setIsInventoryClicked((prev) => !prev)}
-          isPressed={isInventoryClicked}
-          onClose={() => setIsInventoryClicked(false)}
-        />
-      </View>
+  
     </View>
   );
 }

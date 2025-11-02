@@ -6,11 +6,12 @@ import {
   useWindowDimensions,
   StyleSheet,
   Alert,
+  Share,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Tabs, useRouter } from "expo-router";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-
+import { shareStreak } from "@/utils/shareUtils"; // (adjust path if needed)
 import Curency from "@/components/main_interface/curency";
 import HeaderRightBtn from "@/components/authentication/headerRightBtn";
 import HomeIcon from "@/components/main_interface/homeIcon";
@@ -67,6 +68,8 @@ function TabsWithBottomSheet() {
     }
   }, [isSheetOpen, sheet, userData]);
 
+
+
   const handleUpdateProfile = async () => {
     if (!password) {
       Alert.alert(
@@ -79,7 +82,6 @@ function TabsWithBottomSheet() {
       await updateUserProfile({
         newUsername: username,
         newEmail: email,
-      
       });
 
       Alert.alert("Success", "Profile updated successfully!");
@@ -193,12 +195,21 @@ function TabsWithBottomSheet() {
         enablePanDownToClose
       >
         <BottomSheetView style={styles.container}>
-          {sheet === "streak" && (
+        {sheet === "streak" && (
             <>
-              <View className="w-full  relative flex-col justify-center items-center  h-full">
-                <UserStreak streakCount={1} protectionCount={1} />
+              <View className="w-full relative flex-col justify-center items-center h-full">
+                <UserStreak 
+                  streakFreezes={userData.streakFreezes} 
+                  currentStreak={userData.currentStreak} 
+                  activityDays={userData.activityDays} 
+                />
 
-                <TouchableOpacity className="w-11/Vl p-4 bg-[#FB990F] rounded-xl  absolute bottom-4">
+                {/* --- 3. UPDATE THE BUTTON'S onPress --- */}
+                <TouchableOpacity 
+                  className="w-11/12 p-4 bg-[#FB990F] rounded-xl absolute bottom-10"
+                  // Call the imported function directly
+                  onPress={() => shareStreak(userData.currentStreak)}
+                >
                   <Text className="font-PoppinsBold text-2xl text-center text-white">
                     Share your Streak
                   </Text>

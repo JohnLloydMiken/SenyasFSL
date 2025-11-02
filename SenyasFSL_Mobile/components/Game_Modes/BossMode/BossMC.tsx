@@ -16,6 +16,10 @@ import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
 import { videoSpeed } from "@/utils/store/videoSpeed";
+import { useGameStore } from "@/hooks/useGameStore";
+import { QuestionOption } from "@/shared/types/index";
+import Toast from "react-native-toast-message"; // ✅ FIX: Import Toast for the retry item
+
 interface Option {
   id: string;
   labelEn: string;
@@ -24,6 +28,7 @@ interface Option {
 }
 
 interface MultipleChoiceProps {
+  key: string
   enPrompt: string;
   filPrompt: string;
   videoURL: string;
@@ -34,6 +39,7 @@ interface MultipleChoiceProps {
 }
 
 const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
+  key,
   enPrompt,
   filPrompt,
   videoURL,
@@ -50,15 +56,26 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
   const [loading, setLoading] = useState(true);
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const speed = videoSpeed((state) => state.playingSpeed);
-  // ✅ 1. State to control the icon visibility
   const [showWrongIcon, setShowWrongIcon] = useState(false);
 
+  // --- Game Store State ---
+
+  // ✅ FIX: Get state for Bomb item
+  const visibleChoices = useGameStore((state) => state.visibleChoices);
+  const setVisibleChoices = useGameStore((state) => state.setVisibleChoices);
+
+  // ✅ FIX: Get state for Retry item
+  const is2xTryActive = useGameStore((state) => state.is2xTryActive);
+  const consume2xTry = useGameStore((state) => state._consume2xTry);
+
+  // --- Player Setup ---
   const player = useVideoPlayer("", (player) => {
     player.loop = true;
     player.muted = true;
     player.play();
   });
 
+  // --- Video Loading Effects ---
   useEffect(() => {
     const loadVideo = async () => {
       try {
@@ -78,60 +95,93 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
       }
     };
     loadVideo();
-  }, [videoURL]);
+  }, [videoURL]); // This is correct
 
-   useEffect(() => {
-          if (player) {
-            player.playbackRate = speed;
-          }
-        }, [speed, player]); 
-
-  // ✅ 2. When an incorrect answer is checked, show the wrong icon temporarily
   useEffect(() => {
-    // Only run this logic if an answer has been checked and it was wrong
+    if (player) {
+      player.playbackRate = speed;
+    }
+  }, [speed, player]); // This is correct
+
+  // ✅ FIX: Add this useEffect to load options into the store for the BOMB item
+  useEffect(() => {
+    if (options) {
+      // Set the initial full list of options in the store
+      setVisibleChoices(options as QuestionOption[]);
+    }
+    // When the component unmounts (question changes), clear the choices
+    return () => {
+      setVisibleChoices(null);
+    };
+  }, [options, setVisibleChoices]); // Run when the options prop changes
+
+  // This is your logic for the wrong icon, it's fine
+  useEffect(() => {
     if (hasChecked && isCorrect === false) {
-      // Set a timer to switch the icon back to the default "fight" icon
       const timer = setTimeout(() => {
         setShowWrongIcon(false);
-      }, 1500); // 1.5-second delay before hiding the wrong icon
-
-      // Clean up the timer if the component unmounts
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [hasChecked, isCorrect]);
 
+  // ✅ FIX: REPLACE your handleCheck with this new one for the RETRY item
   const handleCheck = useCallback(() => {
     if (!choice) return;
 
-    const correct = choice.isCorrect;
-    setIsCorrect(correct);
-    setHasChecked(true);
-    onAnswer(correct);
+    const isAnswerCorrect = choice.isCorrect;
 
-    if (correct) {
+    if (isAnswerCorrect) {
+      // --- CORRECT ANSWER ---
       incrementScore();
+      setIsCorrect(true);
+      setHasChecked(true);
+      onAnswer(true); // Tell the BossFight component it was correct
     } else {
-      // If the answer is wrong, trigger the icon change
-      setShowWrongIcon(true);
+      // --- INCORRECT ANSWER ---
+      if (is2xTryActive) {
+        // --- 2xTRY IS ACTIVE ---
+        // 1. Consume the item
+        consume2xTry();
+        // 2. Show a toast message
+        Toast.show({
+          type: "info",
+          text1: "Saved by 2x Try!",
+          text2: "That was incorrect, try again!",
+        });
+        // 3. Reset the user's choice so they can pick again
+        setChoice(null);
+        // We DON'T set isCorrect, hasChecked, or call onAnswer(false)
+      } else {
+        // --- 2xTRY IS NOT ACTIVE ---
+        // Normal incorrect logic
+        setIsCorrect(false);
+        setHasChecked(true);
+        onAnswer(false); // Tell the BossFight component it was wrong
+        setShowWrongIcon(true); // Trigger your icon change
+      }
     }
-  }, [choice, onAnswer, incrementScore]);
+  }, [choice, onAnswer, incrementScore, is2xTryActive, consume2xTry]);
 
+  // ✅ FIX: Update renderOptions to use `visibleChoices` from the store
   const renderOptions = useMemo(
     () =>
-      options.map((item) => (
+      // Use the store's list first, fall back to props.options if store is empty
+      (visibleChoices || options).map((item) => (
         <MCBTN
-          key={item.id}
-          EnglishText={item.labelEn}
-          FilipinoText={item.labelFil}
-          onPress={() => !hasChecked && setChoice(item)}
+          // ✅ FIX: Add fallback values
+          EnglishText={item.labelEn ?? ""}
+          FilipinoText={item.labelFil ?? ""}
+          onPress={() => !hasChecked && setChoice(item as Option)}
           clicked={hasChecked}
-          isCorrect={item.isCorrect}
+          // ✅ FIX: Add fallback value
+          isCorrect={item.isCorrect ?? false}
           isSelected={choice?.id === item.id}
           hasChecked={hasChecked}
           rounded={50}
         />
       )),
-    [options, choice, hasChecked]
+    [visibleChoices, options, choice, hasChecked] // ✅ FIX: Add visibleChoices dependency
   );
 
   if (loading) {
@@ -142,6 +192,8 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
     );
   }
 
+  // --- JSX Render ---
+  // (Your JSX is perfect, no changes needed here)
   return (
     <View className="flex-1 relative bg-white">
       <View className=" flex-row justify-center items-center ">
@@ -150,7 +202,6 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
             ❤️
           </Text>
         ))}
-        {/* ✅ 3. Conditionally render the correct SVG */}
         {showWrongIcon ? (
           <FSL_Wrong height={50} width={50} />
         ) : (

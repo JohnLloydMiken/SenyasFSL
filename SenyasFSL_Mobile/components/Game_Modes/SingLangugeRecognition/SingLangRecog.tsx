@@ -1,5 +1,3 @@
-// Game_Modes/SingLangugeRecognition/SingLangRecog.tsx
-
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import React, { useEffect, useState, useMemo } from "react";
 import SignLangRecogWebView from "./SignLangRecogWebView";
@@ -22,16 +20,23 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
 }) => {
   // --- State ---
   const [count, setCount] = useState(0);
-  const prediction = usePredictionStore((state: { prediction: any }) => state.prediction);
-  const setPrediction = usePredictionStore((state: { setPrediction: (value: string) => void }) => state.setPrediction);
+  const prediction = usePredictionStore(
+    (state: { prediction: any }) => state.prediction
+  );
+  const setPrediction = usePredictionStore(
+    (state: { setPrediction: (value: string) => void }) => state.setPrediction
+  );
 
   const signsToPractice = useMemo(() => {
     return Array.from(flowContent.values());
   }, [flowContent]);
 
   // --- Dynamic Content ---
-  const currentSign = signsToPractice.length > count ? signsToPractice[count] : null;
-  const correctSignLetter = (currentSign?.enTitle.split(" ").pop() || "").toUpperCase();
+  const currentSign =
+    signsToPractice.length > count ? signsToPractice[count] : null;
+  const correctSignLetter = (
+    currentSign?.enTitle.split(" ").pop() || ""
+  ).toUpperCase();
   const enTitle = currentSign?.enTitle;
   const filTitle = currentSign?.filTitle;
 
@@ -41,7 +46,7 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
   // --- Video Player Logic ---
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const player = useVideoPlayer(null, (player) => {
     player.loop = true;
     player.muted = true;
@@ -53,7 +58,7 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
         setLoading(false);
         return;
       }
-      
+
       setLoading(true);
       try {
         let finalUrl = currentSign.videoUrl;
@@ -75,8 +80,12 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
 
   // --- Prediction Logic ---
   useEffect(() => {
-    if (prediction && correctSignLetter && prediction.toUpperCase() === correctSignLetter) {
-      setPrediction(""); 
+    if (
+      prediction &&
+      correctSignLetter &&
+      prediction.toUpperCase() === correctSignLetter
+    ) {
+      setPrediction("");
       setCount((prev) => prev + 1);
     }
   }, [prediction, correctSignLetter, setPrediction]);
@@ -84,9 +93,8 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
   // --- Render ---
   return (
     <View style={styles.container}>
-      {/* ✅ Removed the duplicate hardcoded title */}
-      <Text className="font-PoppinsBold text-[1.75rem] md:text-4xl text-center pt-2">
-        Sign To Practice {/* Dynamic title from DB */}
+      <Text className="font-PoppinsBold text-[1.75rem] md:text-4xl text-center">
+        Sign To Practice
       </Text>
 
       {/* Content Area */}
@@ -104,7 +112,7 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
             <View style={styles.videoPlayerWrapper}>
               {loading || !resolvedUrl ? (
                 <View style={styles.loadingIndicator}>
-                  <ActivityIndicator size="large" />
+                  <ActivityIndicator size="large" color="#ffffff" />
                 </View>
               ) : (
                 <VideoView
@@ -125,9 +133,9 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
               handMode={handMode}
             />
           </View>
-          
-          <Text className="text-center text-gray-500">
-            Prediction: {prediction}
+
+          <Text className="text-center text-gray-500 text-xl mt-1">
+            Prediction: {prediction || "..."}
           </Text>
         </View>
       ) : (
@@ -165,59 +173,58 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   contentArea: {
-    flex: 1, 
-    justifyContent: "center",
+    flex: 1,
+    justifyContent: "flex-start",
     alignItems: "center",
-    // ✅ FIX: Add padding at the bottom to avoid overlap
-    // with your absolute-positioned buttons
-    paddingBottom: 100, // Adjust this value as needed
+    paddingBottom: 100, // Make space for button/background
+    zIndex: 20, // ✅ FIX: Place content *above* background
   },
   videoContainer: {
-    // ✅ FIX: Removed 'flex' and gave a fixed height
-    height: "35%", // 35% of the content area
+    height: "45%", // 45% of the content area
     width: "90%",
     justifyContent: "center",
+    marginTop: 10, // ✅ IMPROVEMENT: Add space from title
   },
   videoPlayerWrapper: {
-    flex: 1, // This is correct, it fills its parent (videoContainer)
+    flex: 1,
     width: "100%",
     borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#000", // ✅ IMPROVEMENT: Black BG for video
   },
   loadingIndicator: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#000", // ✅ IMPROVEMENT: Match wrapper
   },
   videoPlayer: {
     width: "100%",
     height: "100%",
+    backgroundColor: "#000", // ✅ IMPROVEMENT: Match wrapper
   },
   webviewContainer: {
-    // ✅ FIX: Removed 'flex' and 'height: 100'
-    // Replaced with a percentage height
     height: "45%", // 45% of the content area
-    width: "90%", 
+    width: "90%",
     marginTop: 10,
     borderRadius: 12,
-    overflow: "hidden", 
+    overflow: "hidden",
     borderWidth: 2,
     borderColor: "#e0e0e0",
   },
   buttonContainer: {
     position: "absolute",
-    bottom: 16,
+    bottom: 24,
     width: 224, // w-56
     left: "50%",
     marginLeft: -112, // -translate-x-1/2
-    zIndex: 50,
+    zIndex: 50, // On top of everything
   },
   backgroundContainer: {
     position: "absolute",
     width: "100%",
     bottom: 0,
-    zIndex: 10,
+    zIndex: 10, // Behind content, in front of main bg
   },
 });
 

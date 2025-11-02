@@ -12,6 +12,12 @@ import Inventory from "../main_interface/treasure/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import { videoSpeed } from "@/utils/store/videoSpeed";
+
+// ✅ --- IMPORTS FOR RETRY ---
+import { useGameStore } from "@/hooks/useGameStore";
+import Toast from "react-native-toast-message";
+
+// --- Interfaces ---
 interface Option {
   id: string;
   labelEn: string;
@@ -42,14 +48,19 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
   const [loading, setLoading] = useState(true);
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const speed = videoSpeed((state) => state.playingSpeed);
-  // Initialize player (empty source first)
+
+  // ✅ --- GAME STORE STATE (RETRY) ---
+  const is2xTryActive = useGameStore((state) => state.is2xTryActive);
+  const consume2xTry = useGameStore((state) => state._consume2xTry);
+
+  // Initialize player
   const player = useVideoPlayer("", (player) => {
     player.loop = true;
     player.muted = true;
     player.play();
   });
 
-  // ✅ Load and update video
+  // Load and update video
   useEffect(() => {
     const loadVideo = async () => {
       try {
@@ -73,22 +84,42 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
   }, [videoUrl]);
 
   useEffect(() => {
-      if (player) {
-        player.playbackRate = speed;
-      }
-    }, [speed, player]); // Dependencies: speed and player
+    if (player) {
+      player.playbackRate = speed;
+    }
+  }, [speed, player]);
 
-  // ✅ Handle check button
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
   const handleCheck = useCallback(() => {
     if (!choice) return;
-    if (choice.isCorrect) {
-      incrementScore(); // Add a point only if correct
-    }
-    setIsCorrect(choice.isCorrect);
-    setHasChecked(true);
-  }, [choice]);
 
-  // ✅ Render options efficiently
+    const isAnswerCorrect = choice.isCorrect;
+
+    if (isAnswerCorrect) {
+      // --- CORRECT ANSWER ---
+      incrementScore();
+      setIsCorrect(true);
+      setHasChecked(true);
+    } else {
+      // --- INCORRECT ANSWER ---
+      if (is2xTryActive) {
+        // --- 2xTRY IS ACTIVE ---
+        consume2xTry();
+        Toast.show({
+          type: "info",
+          text1: "Saved by 2x Try!",
+          text2: "That was incorrect, try again!",
+        });
+        setChoice(null); // Reset choice
+      } else {
+        // --- 2xTRY IS NOT ACTIVE ---
+        setIsCorrect(false);
+        setHasChecked(true);
+      }
+    }
+  }, [choice, incrementScore, is2xTryActive, consume2xTry]);
+
+  // Render options (No changes needed for Bomb)
   const renderOptions = useMemo(
     () =>
       options.map((item) => (
@@ -140,15 +171,13 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({
 
       {/* MULTIPLE CHOICE OPTIONS */}
       <View className="w-11/12 mx-auto mt-4">{renderOptions}</View>
-
-      {/* INVENTORY */}
-      <View className="w-full p-4 mx-auto absolute bottom-20 z-50">
+ <View className="w-full p-4 mx-auto absolute bottom-20 z-50">
         <Inventory
           onPress={() => setIsClicked((prev) => !prev)}
           isPressed={isClicked}
           onClose={() => setIsClicked(false)}
         />
-      </View>
+      </View> 
 
       {/* RESULT + BUTTONS */}
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">

@@ -1,5 +1,5 @@
 import { View, Text, ActivityIndicator } from "react-native";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
 import LevelContentBtn from "@/components/Game_Modes/GameBtns/LevelContentBtn";
 import MCBTN from "@/components/Game_Modes/GameBtns/MCBTN";
@@ -14,9 +14,16 @@ import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
 import { videoSpeed } from "@/utils/store/videoSpeed";
+
+// ✅ --- IMPORTS FOR BOMB/RETRY ---
+import { useGameStore } from "@/hooks/useGameStore";
+import { QuestionOption as SharedQuestionOption } from "@/shared/types/index";
+import Toast from "react-native-toast-message";
+
+// --- Interfaces ---
 export interface TrueFalseOption {
   id: string;
-  isCorrect: boolean;
+  isCorrect: boolean; // Note: In TF, this logic is inverted
   labelEn: string;
   labelFil: string;
 }
@@ -29,6 +36,7 @@ interface TrueOrFalseProps {
   onPress: () => void;
   onAnswer: (isCorrect: boolean) => void;
   hearts: number;
+    key: string
 }
 
 const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
@@ -39,6 +47,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
   onPress,
   onAnswer,
   hearts,
+  key
 }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null); // stores option id
@@ -50,18 +59,26 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
   const [showWrongIcon, setShowWrongIcon] = useState(false);
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const speed = videoSpeed((state) => state.playingSpeed);
+
+  // ✅ --- GAME STORE STATE (BOMB/RETRY) ---
+  const visibleChoices = useGameStore((state) => state.visibleChoices);
+  const setVisibleChoices = useGameStore((state) => state.setVisibleChoices);
+  const is2xTryActive = useGameStore((state) => state.is2xTryActive);
+  const consume2xTry = useGameStore((state) => state._consume2xTry);
+
+  // Note: This logic seems intentionally inverted in the original file
   const correctAnswer = useMemo(() => {
     const correctOpt = options.find((opt) => !opt.isCorrect);
     return correctOpt ? correctOpt.labelEn : "";
   }, [options]);
 
-  // Create video player without source initially
+  // Create video player
   const player = useVideoPlayer(null, (p) => {
     p.loop = true;
     p.muted = true;
   });
 
-  // Fetch and resolve video URL then update player
+  // Fetch video
   useEffect(() => {
     const loadVideo = async () => {
       try {
@@ -72,7 +89,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
         setResolvedUrl(finalUrl);
         player.replace(finalUrl);
         player.play();
-           player.playbackRate = speed;
+        player.playbackRate = speed;
       } catch (error) {
         console.error("Error loading video URL:", error);
       } finally {
@@ -82,40 +99,95 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
     loadVideo();
   }, [videoURL]);
 
+  // Wrong icon effect
   useEffect(() => {
-        // Only run this logic if an answer has been checked and it was wrong
-        if (hasChecked && isCorrect === false) {
-          // Set a timer to switch the icon back to the default "fight" icon
-          const timer = setTimeout(() => {
-            setShowWrongIcon(false);
-          }, 1500); // 1.5-second delay before hiding the wrong icon
-    
-          // Clean up the timer if the component unmounts
-          return () => clearTimeout(timer);
-        }
-      }, [hasChecked, isCorrect]);
+    if (hasChecked && isCorrect === false) {
+      const timer = setTimeout(() => {
+        setShowWrongIcon(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [hasChecked, isCorrect]);
 
-  const handleCheck = () => {
-    if (selectedChoice) {
-      const selectedOption = options.find((opt) => opt.id === selectedChoice);
-      const correct = selectedOption ? !selectedOption.isCorrect : false;
-      setIsCorrect(correct);
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  const handleCheck = useCallback(() => {
+    if (!selectedChoice) return;
+
+    const selectedOption = options.find((opt) => opt.id === selectedChoice);
+    // Original logic: the *correct* answer has isCorrect: false
+    const isAnswerCorrect = selectedOption ? !selectedOption.isCorrect : false;
+
+    if (isAnswerCorrect) {
+      // --- CORRECT ANSWER ---
+      incrementScore();
+      setIsCorrect(true);
       setHasChecked(true);
       setOpacity(0);
-      onAnswer(correct);
-      if (correct) {
-        incrementScore();
-      }else{
-         setShowWrongIcon(true);
+      onAnswer(true);
+    } else {
+      // --- INCORRECT ANSWER ---
+      if (is2xTryActive) {
+        // --- 2xTRY IS ACTIVE ---
+        consume2xTry();
+        Toast.show({
+          type: "info",
+          text1: "Saved by 2x Try!",
+          text2: "That was incorrect, try again!",
+        });
+        setSelectedChoice(null); // Reset choice
+      } else {
+        // --- 2xTRY IS NOT ACTIVE ---
+        setIsCorrect(false);
+        setHasChecked(true);
+        setOpacity(0);
+        onAnswer(false);
+        setShowWrongIcon(true);
       }
     }
-  };
+  }, [
+    selectedChoice,
+    options,
+    onAnswer,
+    incrementScore,
+    is2xTryActive,
+    consume2xTry,
+  ]);
 
+  // Video speed effect
   useEffect(() => {
-          if (player) {
-            player.playbackRate = speed;
-          }
-        }, [speed, player]); // Dependencies: speed and player
+    if (player) {
+      player.playbackRate = speed;
+    }
+  }, [speed, player]);
+
+  // ✅ --- EFFECT FOR BOMB ITEM ---
+  useEffect(() => {
+    if (options) {
+      setVisibleChoices(options as SharedQuestionOption[]);
+    }
+    return () => {
+      setVisibleChoices(null);
+    };
+  }, [options, setVisibleChoices]);
+
+  // ✅ --- RENDER OPTIONS (UPDATED FOR BOMB) ---
+  const renderOptions = useMemo(
+    () =>
+      (visibleChoices || options).map((option) => (
+        <MCBTN
+          key={option.id}
+          EnglishText={option.labelEn || ""}
+          FilipinoText={`"${option.labelFil}"`}
+          onPress={() => !hasChecked && setSelectedChoice(option.id)}
+          clicked={hasChecked}
+          isCorrect={!option.isCorrect} // Original logic
+          isSelected={selectedChoice === option.id}
+          hasChecked={hasChecked}
+          rounded={50}
+        />
+      )),
+    [visibleChoices, options, selectedChoice, hasChecked]
+  );
 
   if (loading) {
     return (
@@ -135,7 +207,6 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
             ❤️
           </Text>
         ))}
-        {/* ✅ 3. Conditionally render the correct SVG */}
         {showWrongIcon ? (
           <FSL_Wrong height={50} width={50} />
         ) : (
@@ -163,21 +234,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
         </View>
       </View>
 
-      <View className="w-11/12 mx-auto">
-        {options.map((option) => (
-          <MCBTN
-            key={option.id}
-            EnglishText={option.labelEn}
-            FilipinoText={`"${option.labelFil}"`}
-            onPress={() => !hasChecked && setSelectedChoice(option.id)}
-            clicked={hasChecked}
-            isCorrect={!option.isCorrect}
-            isSelected={selectedChoice === option.id}
-            hasChecked={hasChecked}
-            rounded={50}
-          />
-        ))}
-      </View>
+      <View className="w-11/12 mx-auto">{renderOptions}</View>
 
       <View
         style={{ opacity }}

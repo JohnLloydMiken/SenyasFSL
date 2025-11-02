@@ -91,7 +91,7 @@ export default function Profile() {
 
       {/* User Streak */}
       <View className="w-full flex items-center justify-center mt-32 mb-4">
-        <UserStreak streakCount={userData.currentStreak} protectionCount={1} />
+        <UserStreak currentStreak={userData.currentStreak} streakFreezes={userData.streakFreezes} activityDays={userData.activityDays} />
       </View>
 
       {/* Account Section */}

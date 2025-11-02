@@ -1,5 +1,5 @@
 import { View, Text } from "react-native";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
@@ -13,6 +13,12 @@ import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
 import { videoSpeed } from "@/utils/store/videoSpeed";
+
+// ✅ --- IMPORTS FOR BOMB/RETRY ---
+import { useGameStore } from "@/hooks/useGameStore";
+import { QuestionOption as SharedQuestionOption } from "@/shared/types/index";
+import Toast from "react-native-toast-message";
+
 // --- Interfaces ---
 export interface VideoQuestionOption {
   id: string;
@@ -29,6 +35,7 @@ interface ViewMCProps {
   onPress: () => void;
   onAnswer: (isCorrect: boolean) => void;
   hearts: number;
+  key: string
 }
 
 const BossViewMC: React.FC<ViewMCProps> = ({
@@ -38,27 +45,34 @@ const BossViewMC: React.FC<ViewMCProps> = ({
   onPress,
   onAnswer,
   hearts,
+  key,
 }) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [choice, setChoice] = useState<string | null>(null);
+  const [choice, setChoice] = useState<string | null>(null); // Stores labelEn
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(100);
   const incrementScore = useUserPoints((state) => state.incrementScore);
-    const speed = videoSpeed((state) => state.playingSpeed);
+  const speed = videoSpeed((state) => state.playingSpeed);
   const [resolvedVideos, setResolvedVideos] = useState<Record<string, string>>(
     {}
-  ); // Stores resolved video URLs
+  );
   const [loading, setLoading] = useState(true);
   const [showWrongIcon, setShowWrongIcon] = useState(false);
+
+  // ✅ --- GAME STORE STATE (BOMB/RETRY) ---
+  const visibleChoices = useGameStore((state) => state.visibleChoices);
+  const setVisibleChoices = useGameStore((state) => state.setVisibleChoices);
+  const is2xTryActive = useGameStore((state) => state.is2xTryActive);
+  const consume2xTry = useGameStore((state) => state._consume2xTry);
+
   // ✅ Determine the correct answer from options
   const correctAnswer = useMemo(() => {
-    // ✅ This now correctly looks for the option where `isCorrect` is true
     const correctOption = options.find((opt) => opt.isCorrect);
     return correctOption ? correctOption.labelEn : "";
   }, [options]);
 
-  // ✅ Fetch video URLs (Firebase "gs://" → HTTPS)
+  // ✅ Fetch video URLs
   useEffect(() => {
     const fetchVideoUrls = async () => {
       try {
@@ -79,10 +93,8 @@ const BossViewMC: React.FC<ViewMCProps> = ({
               );
             }
           }
-
           results[option.id] = finalUrl;
         }
-
         setResolvedVideos(results);
       } catch (err) {
         console.error("❌ Error fetching video URLs:", err);
@@ -90,55 +102,101 @@ const BossViewMC: React.FC<ViewMCProps> = ({
         setLoading(false);
       }
     };
-
     fetchVideoUrls();
   }, [options]);
 
+  // Wrong icon effect
   useEffect(() => {
-    // Only run this logic if an answer has been checked and it was wrong
     if (hasChecked && isCorrect === false) {
-      // Set a timer to switch the icon back to the default "fight" icon
       const timer = setTimeout(() => {
         setShowWrongIcon(false);
-      }, 1500); // 1.5-second delay before hiding the wrong icon
-
-      // Clean up the timer if the component unmounts
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [hasChecked, isCorrect]);
 
-  const handleBG = () => {
-    if (choice) {
-      setIsCorrect(choice === correctAnswer);
+  // ✅ --- EFFECT FOR BOMB ITEM ---
+  useEffect(() => {
+    if (options) {
+      setVisibleChoices(options as SharedQuestionOption[]);
+    }
+    return () => {
+      setVisibleChoices(null);
+    };
+  }, [options, setVisibleChoices]);
+
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  const handleBG = useCallback(() => {
+    if (!choice) return;
+
+    const isAnswerCorrect = choice === correctAnswer;
+
+    if (isAnswerCorrect) {
+      // --- CORRECT ANSWER ---
+      incrementScore();
+      setIsCorrect(true);
       setHasChecked(true);
       setOpacity(0);
-      onAnswer(choice === correctAnswer);
+      onAnswer(true);
+    } else {
+      // --- INCORRECT ANSWER ---
+      if (is2xTryActive) {
+        // --- 2xTRY IS ACTIVE ---
+        consume2xTry();
+        Toast.show({
+          type: "info",
+          text1: "Saved by 2x Try!",
+          text2: "That was incorrect, try again!",
+        });
+        setChoice(null); // Reset choice
+      } else {
+        // --- 2xTRY IS NOT ACTIVE ---
+        setIsCorrect(false);
+        setHasChecked(true);
+        setOpacity(0);
+        onAnswer(false);
+        setShowWrongIcon(true);
+      }
     }
-    if (choice === correctAnswer) {
-      incrementScore();
-    }else{
-       setShowWrongIcon(true);
-    }
-  };
+  }, [
+    choice,
+    correctAnswer,
+    onAnswer,
+    incrementScore,
+    is2xTryActive,
+    consume2xTry,
+  ]);
 
-  // ✅ Render options once all video URLs are loaded
+  // ✅ --- RENDER OPTIONS (UPDATED FOR BOMB) ---
   const renderOptions = useMemo(() => {
-    return options.map((option) => (
-      <VideoMCBTN
-        key={option.id}
-        labeFil={option.labelFil}
-        labelEn={option.labelEn}
-        isCorrect={option.labelEn === correctAnswer}
-        hasChecked={hasChecked}
-        clicked={hasChecked}
-        isSelected={choice === option.labelEn}
-        onPress={() => {
-          if (!hasChecked) setChoice(option.labelEn);
-        }}
-        videoSource={resolvedVideos[option.id] || option.videoSrc}
-      />
-    ));
-  }, [options, choice, hasChecked, loading, resolvedVideos]);
+    // Map over the store's choices, but cast to VideoQuestionOption
+    // as the store's filter logic preserves the original objects.
+    return ((visibleChoices || options) as VideoQuestionOption[]).map(
+      (option) => (
+        <VideoMCBTN
+          key={option.id}
+          labeFil={option.labelFil}
+          labelEn={option.labelEn}
+          isCorrect={option.labelEn === correctAnswer}
+          hasChecked={hasChecked}
+          clicked={hasChecked}
+          isSelected={choice === option.labelEn}
+          onPress={() => {
+            if (!hasChecked) setChoice(option.labelEn);
+          }}
+          videoSource={resolvedVideos[option.id] || option.videoSrc}
+        />
+      )
+    );
+  }, [
+    visibleChoices,
+    options,
+    choice,
+    hasChecked,
+    loading,
+    resolvedVideos,
+    correctAnswer,
+  ]);
 
   if (loading) {
     return (
@@ -152,13 +210,12 @@ const BossViewMC: React.FC<ViewMCProps> = ({
 
   return (
     <View className="flex-1 relative items-center bg-white">
-     <View className=" flex-row justify-center items-center ">
+      <View className=" flex-row justify-center items-center ">
         {Array.from({ length: hearts }).map((_, idx) => (
           <Text key={idx} style={{ fontSize: 24, color: "red" }}>
             ❤️
           </Text>
         ))}
-        {/* ✅ 3. Conditionally render the correct SVG */}
         {showWrongIcon ? (
           <FSL_Wrong height={50} width={50} />
         ) : (

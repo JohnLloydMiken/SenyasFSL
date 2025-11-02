@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { View, Text, ActivityIndicator } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,6 +16,11 @@ import { videoSpeed } from "@/utils/store/videoSpeed";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 
+// ✅ --- IMPORTS FOR RETRY ---
+import { useGameStore } from "@/hooks/useGameStore";
+import Toast from "react-native-toast-message";
+
+// --- Interfaces ---
 export interface QuestionOption {
   id: string;
   isCorrect: boolean;
@@ -49,25 +54,55 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
   const [loading, setLoading] = useState(true);
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const speed = videoSpeed((state) => state.playingSpeed);
-  // ✅ Find the correct option
+
+  // ✅ --- GAME STORE STATE (RETRY) ---
+  const is2xTryActive = useGameStore((state) => state.is2xTryActive);
+  const consume2xTry = useGameStore((state) => state._consume2xTry);
+
+  // Find the correct option
   const correctOption = useMemo(
     () => options.find((opt) => opt.isCorrect) || null,
     [options]
   );
 
-  // ✅ Check answer correctly
-  const handleCheck = () => {
-    if (choice) {
-      const selectedOption = options.find((opt) => opt.id === choice);
-      const correct = selectedOption ? selectedOption.isCorrect : false;
-      setIsCorrect(correct);
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  const handleCheck = useCallback(() => {
+    if (!choice) return;
+
+    const selectedOption = options.find((opt) => opt.id === choice);
+    const isAnswerCorrect = selectedOption ? selectedOption.isCorrect : false;
+
+    if (isAnswerCorrect) {
+      // --- CORRECT ANSWER ---
+      incrementScore();
+      setIsCorrect(true);
       setHasChecked(true);
       setOpacity(0);
-      if (correct) {
-        incrementScore();
+    } else {
+      // --- INCORRECT ANSWER ---
+      if (is2xTryActive) {
+        // --- 2xTRY IS ACTIVE ---
+        consume2xTry();
+        Toast.show({
+          type: "info",
+          text1: "Saved by 2x Try!",
+          text2: "That was incorrect, try again!",
+        });
+        setChoice(null); // Reset choice
+      } else {
+        // --- 2xTRY IS NOT ACTIVE ---
+        setIsCorrect(false);
+        setHasChecked(true);
+        setOpacity(0);
       }
     }
-  };
+  }, [
+    choice,
+    options,
+    incrementScore,
+    is2xTryActive,
+    consume2xTry,
+  ]);
 
   // Initialize video player
   const player = useVideoPlayer(null, (p) => {
@@ -75,7 +110,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
     p.muted = true;
   });
 
-  // Fetch video URL from Firebase if gs://
+  // Fetch video URL
   useEffect(() => {
     const loadVideo = async () => {
       try {
@@ -101,7 +136,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
     if (player) {
       player.playbackRate = speed;
     }
-  }, [speed, player]); // Dependencies: speed and player
+  }, [speed, player]);
 
   if (loading) {
     return (
@@ -116,8 +151,8 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
   return (
     <View className="flex-1 relative items-center bg-white">
       {/* Prompts */}
-      <Text className="font-PoppinsBold text-2xl md:text-3xl">{enPrompt}</Text>
-      <Text className="font-PoppinsLightItallic text-xl md:text-3xl">
+      <Text className="font-PoppinsBold text-2xl md:text-3xl w-11/12">{enPrompt}</Text>
+      <Text className="font-PoppinsLightItallic text-xl md:text-3xl w-11/12">
         {filPrompt}
       </Text>
 
@@ -173,7 +208,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
       {/* Options */}
       <View className="w-11/12 flex-row flex-wrap justify-between mt-4">
         {options.map((option) => (
-          <View key={option.id} className="w-[48%] mb-5 relative items-center">
+          <View key={option.id} className="w-[48%] mb-3 relative items-center">
             <View
               className={`${
                 hasChecked && choice === option.id ? "opacity-0" : "opacity-100"
@@ -197,16 +232,17 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
         ))}
       </View>
 
-      {/* Inventory Button */}
-      <View
-        className={`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}
+    
+
+     <View
+        className={`w-full p-4 mx-auto absolute bottom-20 z-50 opacity-${opacity}`}
       >
         <Inventory
           onPress={() => setIsClicked(!isClicked)}
           isPressed={isClicked}
           onClose={() => setIsClicked(false)}
         />
-      </View>
+      </View> 
 
       {/* Feedback Section */}
       <View className="absolute bottom-6 w-96 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
