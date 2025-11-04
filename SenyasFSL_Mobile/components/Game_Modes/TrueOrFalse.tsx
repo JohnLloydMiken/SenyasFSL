@@ -17,6 +17,9 @@ import { videoSpeed } from "@/utils/store/videoSpeed";
 import { useGameStore } from "@/hooks/useGameStore";
 import Toast from "react-native-toast-message";
 
+// ✅ --- IMPORT SOUND HOOK ---
+import { useAnswerSounds } from "@/hooks/useAnswerSounds";
+
 // --- Interfaces ---
 export interface TrueFalseOption {
   id: string;
@@ -53,6 +56,9 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
   // ✅ --- GAME STORE STATE (RETRY) ---
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
+
+  // ✅ --- USE SOUND HOOK ---
+  const { playCorrectSound, playIncorrectSound } = useAnswerSounds();
 
   const correctAnswer = useMemo(() => {
     const correctOpt = options.find((opt) => !opt.isCorrect);
@@ -102,6 +108,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
 
     if (isAnswerCorrect) {
       // --- CORRECT ANSWER ---
+      playCorrectSound(); // ✅ ADDED
       incrementScore();
       setIsCorrect(true);
       setHasChecked(true);
@@ -119,6 +126,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
         setSelectedChoice(null); // Reset choice
       } else {
         // --- 2xTRY IS NOT ACTIVE ---
+        playIncorrectSound(); // ✅ ADDED
         setIsCorrect(false);
         setHasChecked(true);
         setOpacity(0);
@@ -130,6 +138,8 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
     incrementScore,
     is2xTryActive,
     consume2xTry,
+    playCorrectSound, // ✅ ADDED
+    playIncorrectSound, // ✅ ADDED
   ]);
 
   if (loading) {

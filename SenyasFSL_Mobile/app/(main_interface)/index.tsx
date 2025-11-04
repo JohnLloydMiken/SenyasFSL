@@ -86,9 +86,7 @@ export default function Index() {
       player.loop = true;
     }
     // Cleanup function to stop music when component unmounts
-    return () => {
-      player?.pause();
-    };
+   
   }, [player]);
 
   // This effect updates the volume whenever it changes in the store

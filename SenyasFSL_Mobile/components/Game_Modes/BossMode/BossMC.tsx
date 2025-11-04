@@ -20,6 +20,9 @@ import { useGameStore } from "@/hooks/useGameStore";
 import { QuestionOption } from "@/shared/types/index";
 import Toast from "react-native-toast-message"; // ✅ FIX: Import Toast for the retry item
 
+// ✅ --- IMPORT SOUND HOOK ---
+import { useAnswerSounds } from "@/hooks/useAnswerSounds";
+
 interface Option {
   id: string;
   labelEn: string;
@@ -67,6 +70,9 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
   // ✅ FIX: Get state for Retry item
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
+
+  // ✅ --- USE SOUND HOOK ---
+  const { playCorrectSound, playIncorrectSound } = useAnswerSounds();
 
   // --- Player Setup ---
   const player = useVideoPlayer("", (player) => {
@@ -133,6 +139,7 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
 
     if (isAnswerCorrect) {
       // --- CORRECT ANSWER ---
+      playCorrectSound(); // ✅ ADDED
       incrementScore();
       setIsCorrect(true);
       setHasChecked(true);
@@ -155,13 +162,22 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
       } else {
         // --- 2xTRY IS NOT ACTIVE ---
         // Normal incorrect logic
+        playIncorrectSound(); // ✅ ADDED
         setIsCorrect(false);
         setHasChecked(true);
         onAnswer(false); // Tell the BossFight component it was wrong
         setShowWrongIcon(true); // Trigger your icon change
       }
     }
-  }, [choice, onAnswer, incrementScore, is2xTryActive, consume2xTry]);
+  }, [
+    choice,
+    onAnswer,
+    incrementScore,
+    is2xTryActive,
+    consume2xTry,
+    playCorrectSound, // ✅ ADDED
+    playIncorrectSound, // ✅ ADDED
+  ]);
 
   // ✅ FIX: Update renderOptions to use `visibleChoices` from the store
   const renderOptions = useMemo(

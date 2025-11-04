@@ -16,6 +16,9 @@ import { videoSpeed } from "@/utils/store/videoSpeed";
 import { useGameStore } from "@/hooks/useGameStore";
 import Toast from "react-native-toast-message";
 
+// ✅ --- IMPORT SOUND HOOK ---
+import { useAnswerSounds } from "@/hooks/useAnswerSounds";
+
 // --- Interfaces ---
 export interface VideoQuestionOption {
   id: string;
@@ -53,6 +56,9 @@ const ViewMC: React.FC<ViewMCProps> = ({
   // ✅ --- GAME STORE STATE (RETRY) ---
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
+
+  // ✅ --- USE SOUND HOOK ---
+  const { playCorrectSound, playIncorrectSound } = useAnswerSounds();
 
   // Determine the correct answer
   const correctAnswer = useMemo(() => {
@@ -102,6 +108,7 @@ const ViewMC: React.FC<ViewMCProps> = ({
 
     if (isAnswerCorrect) {
       // --- CORRECT ANSWER ---
+      playCorrectSound(); // ✅ ADDED
       incrementScore();
       setIsCorrect(true);
       setHasChecked(true);
@@ -119,12 +126,21 @@ const ViewMC: React.FC<ViewMCProps> = ({
         setChoice(null); // Reset choice
       } else {
         // --- 2xTRY IS NOT ACTIVE ---
+        playIncorrectSound(); // ✅ ADDED
         setIsCorrect(false);
         setHasChecked(true);
         setOpacity(0);
       }
     }
-  }, [choice, correctAnswer, incrementScore, is2xTryActive, consume2xTry]);
+  }, [
+    choice,
+    correctAnswer,
+    incrementScore,
+    is2xTryActive,
+    consume2xTry,
+    playCorrectSound, // ✅ ADDED
+    playIncorrectSound, // ✅ ADDED
+  ]);
 
   // Render options (No changes needed for Bomb)
   const renderOptions = useMemo(() => {
