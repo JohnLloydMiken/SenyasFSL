@@ -1,6 +1,6 @@
 // components/main_interface/LootModal.tsx
 import React from "react";
-import { View, Text, TouchableOpacity, Modal } from "react-native";
+import { Modal, Text, TouchableOpacity, View } from "react-native";
 
 // Define the prize prop type
 interface Prize {

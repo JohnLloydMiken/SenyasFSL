@@ -1,49 +1,77 @@
-import React, { useMemo, useState, useEffect } from "react";
-import {
-  Text,
-  View,
-  TouchableOpacity,
-  useWindowDimensions,
-  StyleSheet,
-  Alert,
-  Share,
-} from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Tabs, useRouter } from "expo-router";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import { shareStreak } from "@/utils/shareUtils"; // (adjust path if needed)
-import Curency from "@/components/main_interface/curency";
+// app/(main_interface)/_layout.tsx
+import Authbutton from "@/components/authentication/button";
 import HeaderRightBtn from "@/components/authentication/headerRightBtn";
+import UserInput from "@/components/authentication/userInput";
+import Curency from "@/components/main_interface/curency";
+import DictionaryIcon from "@/components/main_interface/dictionaryIcon";
 import HomeIcon from "@/components/main_interface/homeIcon";
 import ProfileIcon from "@/components/main_interface/profileIcon";
-import DictionaryIcon from "@/components/main_interface/dictionaryIcon";
 import TreasureIcon from "@/components/main_interface/treasure/treasureIcon";
 import UserStreak from "@/components/main_interface/userStreak";
-import UserInput from "@/components/authentication/userInput";
-import Authbutton from "@/components/authentication/button";
+import { shareStreak } from "@/utils/shareUtils";
 import { useAuthStore } from "@/utils/store/useAuthStore";
-import { useUserStore } from "@/utils/store/useUserStore";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { Tabs, useRouter } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View
+} from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+// 🚫 import { useUserStore } from "@/utils/store/useUserStore"; // No longer needed
 import { BottomSheetProvider, useBottomSheet } from "@/modules/contextProvider";
-import { updateUserProfile } from "@/services/authService";
+import { updateUserProfile } from "@/services/authService"; //
+
+// ✅ 1. Import TanStack Query
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+
+// ✅ 2. Import your user profile fetcher
+import { fetchUserProfile } from "@/services/userService"; //
+
+// ✅ 3. Create the client (do this once)
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   return (
+    // ✅ 4. Wrap your entire app in GestureHandlerRootView
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetProvider>
-        <TabsWithBottomSheet />
-      </BottomSheetProvider>
+      {/* ✅ 5. Wrap everything in the QueryClientProvider */}
+      <QueryClientProvider client={queryClient}>
+        <BottomSheetProvider>
+          <TabsWithBottomSheet />
+        </BottomSheetProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }
 
 function TabsWithBottomSheet() {
   const { user, loading: authLoading } = useAuthStore();
-  const { userData, loading: userLoading } = useUserStore();
+  const router = useRouter();
   const { bottomSheetRef, handleSheetChanges, isSheetOpen, sheet } =
     useBottomSheet();
-  const router = useRouter();
   const { width } = useWindowDimensions();
   const titleSize = width < 768 ? 12 : 18;
+
+  // ✅ 6. Get the query client instance
+  const queryClient = useQueryClient();
+
+  // ✅ 7. Fetch user data using useQuery (replaces useUserStore)
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["user", user?.uid],
+    queryFn: () => fetchUserProfile(user!.uid), //
+    enabled: !!user,
+  });
+
   const snapPoints = useMemo(() => {
     switch (sheet) {
       case "streak":
@@ -68,8 +96,6 @@ function TabsWithBottomSheet() {
     }
   }, [isSheetOpen, sheet, userData]);
 
-
-
   const handleUpdateProfile = async () => {
     if (!password) {
       Alert.alert(
@@ -82,10 +108,14 @@ function TabsWithBottomSheet() {
       await updateUserProfile({
         newUsername: username,
         newEmail: email,
-      });
+      }); //
 
       Alert.alert("Success", "Profile updated successfully!");
       bottomSheetRef.current?.close();
+
+      // ✅ 8. CRITICAL: Invalidate the user query on success
+      // This tells TanStack Query to refetch the user data
+      queryClient.invalidateQueries({ queryKey: ["user", user?.uid] });
     } catch (error: any) {
       Alert.alert(
         "Update Failed",
@@ -94,7 +124,8 @@ function TabsWithBottomSheet() {
     }
   };
 
-  if (userLoading) {
+  // ✅ 9. This loading check now uses the 'isLoading' from useQuery
+  if (authLoading || userLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
         <Text>Loading...</Text>
@@ -102,6 +133,7 @@ function TabsWithBottomSheet() {
     );
   }
 
+  // ✅ 10. This check is still valid. If useQuery finishes and data is null.
   if (!userData) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
@@ -109,6 +141,7 @@ function TabsWithBottomSheet() {
       </View>
     );
   }
+
   return (
     <>
       <Tabs
@@ -153,7 +186,7 @@ function TabsWithBottomSheet() {
           name="treasure"
           options={{
             lazy: false,
-            tabBarIcon: ({ focused }) => <TreasureIcon focused={focused} />,
+            tabBarIcon: ({ focused }) => <TreasureIcon focused={focused} />, //
             title: "Treasure",
             tabBarLabelStyle: {
               fontSize: titleSize,
@@ -195,19 +228,17 @@ function TabsWithBottomSheet() {
         enablePanDownToClose
       >
         <BottomSheetView style={styles.container}>
-        {sheet === "streak" && (
+          {sheet === "streak" && (
             <>
               <View className="w-full relative flex-col justify-center items-center h-full">
-                <UserStreak 
-                  streakFreezes={userData.streakFreezes} 
-                  currentStreak={userData.currentStreak} 
-                  activityDays={userData.activityDays} 
+                <UserStreak
+                  streakFreezes={userData.streakFreezes}
+                  currentStreak={userData.currentStreak}
+                  activityDays={userData.activityDays}
                 />
 
-                {/* --- 3. UPDATE THE BUTTON'S onPress --- */}
-                <TouchableOpacity 
+                <TouchableOpacity
                   className="w-11/12 p-4 bg-[#FB990F] rounded-xl absolute bottom-10"
-                  // Call the imported function directly
                   onPress={() => shareStreak(userData.currentStreak)}
                 >
                   <Text className="font-PoppinsBold text-2xl text-center text-white">
@@ -221,14 +252,12 @@ function TabsWithBottomSheet() {
           {sheet === "editData" && (
             <>
               <View className="flex-1 flex-col justify-center items-center">
-                {/* --- START: Updated props for UserInput --- */}
                 <UserInput
                   title="Edit personal data"
                   usernameTitle="Username"
                   userEmailTitle="Email"
                   userPasswordTitle="Current password"
                   passwordTitleDescription="Type in your password to update your email"
-                  // Pass the state and setters to the correct props
                   usernameValue={username}
                   onUsernameChange={setUsername}
                   emailValue={email}
@@ -236,7 +265,6 @@ function TabsWithBottomSheet() {
                   passwordValue={password}
                   onPasswordChange={setPassword}
                 />
-                {/* --- END: Updated props for UserInput --- */}
                 <View className="w-11/12 absolute bottom-1">
                   <Authbutton
                     content="Save changes"
@@ -249,7 +277,6 @@ function TabsWithBottomSheet() {
 
           {sheet === "editPass" && (
             <>
-              {/* You would apply a similar state/handler logic here for changeUserPassword */}
               <UserInput
                 title="Edit personal data"
                 usernameTitle="Username"
@@ -257,7 +284,7 @@ function TabsWithBottomSheet() {
                 userPasswordTitle="Current password"
                 passwordTitleDescription="Type in your password to update your email"
               />
-              <View className="w-11/12 absolute bottom-1">
+              <View className="w-11/11 absolute bottom-1">
                 <Authbutton
                   content="Update password"
                   onPress={() => bottomSheetRef.current?.close()}
