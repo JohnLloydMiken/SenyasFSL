@@ -7,14 +7,14 @@ import CurrentStreak from "@/components/Game_Modes/Eval/CurrentStreak";
 import ReminderNotif from "@/components/Game_Modes/Eval/ReminderNotif";
 import LearningRecap from "@/components/Game_Modes/Eval/LearningRecap";
 
-// ✅ 1. Import the necessary function, type, and components
+// ✅ 1. Import the necessary functions, type, and components
 import { saveLevelProgress } from "@/services/gameService";
+import { recordActivity } from "@/services/userService"; // ✅ Import recordActivity
 import { CompleteLevelData } from "@/shared/types"; // Using "shared/types" as per your index
 import Toast from "react-native-toast-message"; // For error handling
 import { useUserStore } from "@/utils/store/useUserStore";
 import { useSaveProgress } from "@/utils/store/useSaveProgress";
 import { useSectionStore } from "@/utils/store/useSectionStore";
-
 
 const Eval_phase = () => {
   const { levelId, lessons, questions } = useLocalSearchParams();
@@ -28,6 +28,9 @@ const Eval_phase = () => {
   // ✅ 2. Use the new hook to get the 'mutate' function and loading state
   const { mutate: saveProgress, isLoading } = useSaveProgress();
 
+  // ✅ 3. Add a new loading state for recording the streak
+  const [isRecordingStreak, setIsRecordingStreak] = useState(false);
+
   const [step, setStep] = useState<
     "evaluation" | "streak" | "reminder" | "recap"
   >("evaluation");
@@ -39,23 +42,25 @@ const Eval_phase = () => {
 
   const calculateRewards = () => {
     const xpPerQuestion = 10;
-    const coinsPerQuestion = 5;
+    // --- THIS IS THE CHANGE ---
+    const coinsPerQuestion = 10; // Changed from 5 to 10 to match the web app
+    // ---
     const xpGained = point * xpPerQuestion;
     const senyasCoinsGained = point * coinsPerQuestion;
     const chestsEarned = point === totalQuestions && totalQuestions > 0 ? 1 : 0;
-  
+
     return { xpGained, senyasCoinsGained, chestsEarned };
   };
 
-  // ✅ 3. Simplify the "Continue" handler
+  // ✅ 4. Simplify the "Continue" handler
   const handleSaveAndExit = () => {
     // This is no longer async, as the hook handles the async logic
     const { xpGained, senyasCoinsGained, chestsEarned } = calculateRewards();
-    const normalizedLevelID = `s${currentSectionOrder}_lvl_${levelId}`
+    const normalizedLevelID = `s${currentSectionOrder}_lvl_${levelId}`;
     // Build the data payload
     const data: CompleteLevelData = {
       levelId: normalizedLevelID as string,
-      
+
       xpGained,
       senyasCoinsGained,
       chestsEarned,
@@ -72,14 +77,34 @@ const Eval_phase = () => {
     });
   };
 
-  // ✅ 4. The loading state check is now driven by the hook
-  if (isLoading) {
+  // ✅ 5. Create a new handler to call recordActivity
+  const handleContinueFromEval = async () => {
+    if (isRecordingStreak) return; // Prevent double-taps
+    setIsRecordingStreak(true);
+    try {
+      await recordActivity();
+      console.log("Streak activity recorded successfully.");
+    } catch (error) {
+      console.error("Failed to record streak activity:", error);
+      // Don't block the user, just log the error and continue
+    } finally {
+      setIsRecordingStreak(false);
+      setStep("streak"); // Move to the next step
+    }
+  };
+
+  // ✅ 6. The loading state check is now driven by the hook AND our new state
+  if (isLoading || isRecordingStreak) {
     return (
       <>
         <Stack.Screen options={{ headerShown: false, gestureEnabled: false }} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FB990F" />
-          <Text style={styles.loadingText}>Saving your progress...</Text>
+          <Text style={styles.loadingText}>
+            {isLoading
+              ? "Saving your progress..."
+              : "Updating your streak..."}
+          </Text>
         </View>
       </>
     );
@@ -98,7 +123,7 @@ const Eval_phase = () => {
                 params: { levelId },
               });
             }}
-            onContinue={() => setStep("streak")}
+            onContinue={handleContinueFromEval} // ✅ Use the new handler
           />
         );
 
@@ -114,7 +139,7 @@ const Eval_phase = () => {
         return (
           <ReminderNotif
             onContinue={() => setStep("recap")}
-            onRemind={() => ""}
+            onRemind={() => setStep("recap")}
           />
         );
 
@@ -122,7 +147,7 @@ const Eval_phase = () => {
         return (
           <LearningRecap
             lessons={parsedLessons}
-            // ✅ 5. Use the new, simpler handler
+            // ✅ 7. Use the simpler save/exit handler
             onContinue={handleSaveAndExit}
           />
         );

@@ -20,6 +20,9 @@ import { useGameStore } from "@/hooks/useGameStore";
 import { QuestionOption as SharedQuestionOption } from "@/shared/types/index";
 import Toast from "react-native-toast-message";
 
+// ✅ --- IMPORT SOUND HOOK ---
+import { useAnswerSounds } from "@/hooks/useAnswerSounds";
+
 // --- Interfaces ---
 export interface TrueFalseOption {
   id: string;
@@ -65,6 +68,9 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
   const setVisibleChoices = useGameStore((state) => state.setVisibleChoices);
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
+
+  // ✅ --- USE SOUND HOOK ---
+  const { playCorrectSound, playIncorrectSound } = useAnswerSounds();
 
   // Note: This logic seems intentionally inverted in the original file
   const correctAnswer = useMemo(() => {
@@ -119,6 +125,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
 
     if (isAnswerCorrect) {
       // --- CORRECT ANSWER ---
+      playCorrectSound(); // ✅ ADDED
       incrementScore();
       setIsCorrect(true);
       setHasChecked(true);
@@ -137,6 +144,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
         setSelectedChoice(null); // Reset choice
       } else {
         // --- 2xTRY IS NOT ACTIVE ---
+        playIncorrectSound(); // ✅ ADDED
         setIsCorrect(false);
         setHasChecked(true);
         setOpacity(0);
@@ -151,6 +159,8 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
     incrementScore,
     is2xTryActive,
     consume2xTry,
+    playCorrectSound, // ✅ ADDED
+    playIncorrectSound, // ✅ ADDED
   ]);
 
   // Video speed effect

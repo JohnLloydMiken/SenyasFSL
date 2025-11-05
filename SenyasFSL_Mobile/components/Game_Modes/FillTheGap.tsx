@@ -20,6 +20,9 @@ import { useUserPoints } from "@/utils/store/userGameEval";
 import { useGameStore } from "@/hooks/useGameStore";
 import Toast from "react-native-toast-message";
 
+// ✅ --- IMPORT SOUND HOOK ---
+import { useAnswerSounds } from "@/hooks/useAnswerSounds";
+
 // --- Interfaces ---
 export interface QuestionOption {
   id: string;
@@ -59,6 +62,9 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
 
+  // ✅ --- USE SOUND HOOK ---
+  const { playCorrectSound, playIncorrectSound } = useAnswerSounds();
+
   // Find the correct option
   const correctOption = useMemo(
     () => options.find((opt) => opt.isCorrect) || null,
@@ -74,6 +80,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
 
     if (isAnswerCorrect) {
       // --- CORRECT ANSWER ---
+      playCorrectSound(); // ✅ ADDED
       incrementScore();
       setIsCorrect(true);
       setHasChecked(true);
@@ -91,6 +98,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
         setChoice(null); // Reset choice
       } else {
         // --- 2xTRY IS NOT ACTIVE ---
+        playIncorrectSound(); // ✅ ADDED
         setIsCorrect(false);
         setHasChecked(true);
         setOpacity(0);
@@ -102,6 +110,8 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
     incrementScore,
     is2xTryActive,
     consume2xTry,
+    playCorrectSound, // ✅ ADDED
+    playIncorrectSound, // ✅ ADDED
   ]);
 
   // Initialize video player
