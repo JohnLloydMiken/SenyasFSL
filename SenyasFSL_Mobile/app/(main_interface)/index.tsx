@@ -16,10 +16,12 @@ import { useUserStore } from "@/utils/store/useUserStore";
 import { useAudioPlayer } from "expo-audio";
 
 // --- NEW IMPORTS ---
-import { useSignOfTheDay } from "@/hooks/useSignOfTheDay"; 
+import { useSignOfTheDay } from "@/hooks/useSignOfTheDay";
 import SignOfTheDayModal from "@/components/main_interface/SignOfTheDayModal";
 // --- IMPORT AUDIO STORE ---
 import { useAudioStore } from "@/hooks/useAudioStore";
+import { useQuery } from "@tanstack/react-query";
+import { fetchUserProfile } from "@/services/userService";
 // --- END NEW IMPORTS ---
 
 const audioSource = require("@/assets/audio/bg_music.mp3");
@@ -32,15 +34,19 @@ export default function Index() {
   const player = useAudioPlayer(audioSource);
   // --- GET VOLUME FROM STORE ---
   const { musicVolume } = useAudioStore();
-  
+
   const sectionRefs = useRef<React.RefObject<HTMLElement | null>[]>([]);
   const [isPressed, setIsPressed] = useState(false);
   const [tutorialPressed, setTutorialPressed] = useState(false);
   const [sections, setSections] = useState<Section[]>([]);
   const [isMapLoading, setIsMapLoading] = useState(true);
   const { user, loading: authLoading } = useAuthStore();
-  const { userData, loading: userLoading } = useUserStore();
 
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["user", user?.uid],
+    queryFn: () => fetchUserProfile(user!.uid), // Needs a queryFn, but won't run if cached
+    enabled: !!user,
+  });
 
   // --- NEW STATE FOR SIGN OF THE DAY ---
   const [showSignOfTheDay, setShowSignOfTheDay] = useState(false);
@@ -69,14 +75,20 @@ export default function Index() {
     if (
       !isMapLoading &&
       !userLoading &&
-      !isSignLoading && 
+      !isSignLoading &&
       signOfTheDay &&
       !hasShownSignModal
     ) {
       setShowSignOfTheDay(true);
       setHasShownSignModal(true);
     }
-  }, [isMapLoading, userLoading, isSignLoading, signOfTheDay, hasShownSignModal]);
+  }, [
+    isMapLoading,
+    userLoading,
+    isSignLoading,
+    signOfTheDay,
+    hasShownSignModal,
+  ]);
   // --- END NEW EFFECT ---
 
   // --- NEW EFFECT TO PLAY AND CONTROL MUSIC ---
@@ -86,7 +98,6 @@ export default function Index() {
       player.loop = true;
     }
     // Cleanup function to stop music when component unmounts
-   
   }, [player]);
 
   // This effect updates the volume whenever it changes in the store
@@ -97,8 +108,12 @@ export default function Index() {
   }, [player, musicVolume]);
   // --- END MUSIC EFFECTS ---
 
-
-  if (isMapLoading || userLoading || (isSignLoading && !hasShownSignModal)) {
+ if (
+    isMapLoading ||
+    userLoading ||
+    authLoading || // 👈 Good to check authLoading too
+    (isSignLoading && !hasShownSignModal)
+  ) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
         <Text>Loading...</Text>
@@ -122,7 +137,7 @@ export default function Index() {
         {hasShownSignModal ? (
           <TouchableOpacity
             onPress={() => setShowSignOfTheDay(true)}
-            style={styles.signOfTheDayButton} 
+            style={styles.signOfTheDayButton}
           >
             <Text style={styles.signOfTheDayButtonText}>🌟</Text>
           </TouchableOpacity>
@@ -144,7 +159,9 @@ export default function Index() {
       {/* Modals */}
       {/* SoundSettings now needs no props for volume */}
       {isPressed && <SoundSettings onPress={() => setIsPressed(false)} />}
-      {tutorialPressed && <Tutorial onPress={() => setTutorialPressed(false)} />}
+      {tutorialPressed && (
+        <Tutorial onPress={() => setTutorialPressed(false)} />
+      )}
 
       {/* --- RENDER SIGN OF THE DAY MODAL --- */}
       {showSignOfTheDay && signOfTheDay && (

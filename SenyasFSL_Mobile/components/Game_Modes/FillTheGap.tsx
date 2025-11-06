@@ -23,6 +23,16 @@ import Toast from "react-native-toast-message";
 // ✅ --- IMPORT SOUND HOOK ---
 import { useAnswerSounds } from "@/hooks/useAnswerSounds";
 
+// ✅ --- REANIMATED IMPORTS ---
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+  Extrapolation,
+} from "react-native-reanimated";
+
 // --- Interfaces ---
 export interface QuestionOption {
   id: string;
@@ -39,6 +49,56 @@ interface FillTheGapProps {
   message: string;
   onPress: () => void;
 }
+
+// ✅ --- SHUFFLE HELPER ---
+const shuffleArray = (array: any[]) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
+// ✅ --- REANIMATED BUTTON WRAPPER ---
+// This component wraps MCBTN to give it a "pop" on selection
+const AnimatedMCButton: React.FC<{
+  option: QuestionOption;
+  isSelected: boolean;
+  isCorrect: boolean;
+  hasChecked: boolean;
+  onPress: () => void;
+}> = ({ option, isSelected, isCorrect, hasChecked, onPress }) => {
+  const scale = useSharedValue(1);
+
+  // Animate scale based on selection
+  useEffect(() => {
+    scale.value = withSpring(isSelected ? 1.03 : 1, {
+      damping: 15,
+      stiffness: 300,
+    });
+  }, [isSelected, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <MCBTN
+        EnglishText={option.labelEn}
+        FilipinoText={option.labelFil}
+        rounded={6}
+        hasChecked={hasChecked}
+        isCorrect={isCorrect}
+        isSelected={isSelected}
+        onPress={onPress}
+        clicked={hasChecked}
+      />
+    </Animated.View>
+  );
+};
 
 const FillTheGap: React.FC<FillTheGapProps> = ({
   enPrompt,
@@ -58,6 +118,10 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const speed = videoSpeed((state) => state.playingSpeed);
 
+  // ✅ --- REANIMATED SHARED VALUE ---
+  // 0 = "Check" visible, 1 = "Next" visible
+  const hasCheckedAnim = useSharedValue(0);
+
   // ✅ --- GAME STORE STATE (RETRY) ---
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
@@ -65,15 +129,39 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
   // ✅ --- USE SOUND HOOK ---
   const { playCorrectSound, playIncorrectSound } = useAnswerSounds();
 
-  // Find the correct option
+  // Find the correct option (used for both logic and 2-option selection)
   const correctOption = useMemo(
     () => options.find((opt) => opt.isCorrect) || null,
     [options]
   );
 
-  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  // ✅ --- 2-OPTION LOGIC ---
+  const limitedOptions = useMemo(() => {
+    const incorrectOptions = options.filter((opt) => !opt.isCorrect);
+
+    if (!correctOption) {
+      // Fallback in case data is malformed
+      return options.slice(0, 2);
+    }
+    if (incorrectOptions.length === 0) {
+      // Fallback if only one option is provided
+      return [correctOption];
+    }
+
+    // Get one random incorrect option
+    const randomIncorrectOption =
+      incorrectOptions[Math.floor(Math.random() * incorrectOptions.length)];
+
+    // Create and shuffle the new 2-item array
+    return shuffleArray([correctOption, randomIncorrectOption]);
+  }, [options, correctOption]); // This recalculates only when the options prop changes
+
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY AND ANIMATION) ---
   const handleCheck = useCallback(() => {
     if (!choice) return;
+
+    // ✅ --- TRIGGER REANIMATED ANIMATION ---
+    hasCheckedAnim.value = withTiming(1, { duration: 300 });
 
     const selectedOption = options.find((opt) => opt.id === choice);
     const isAnswerCorrect = selectedOption ? selectedOption.isCorrect : false;
@@ -96,6 +184,8 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
           text2: "That was incorrect, try again!",
         });
         setChoice(null); // Reset choice
+        // ✅ --- REVERSE ANIMATION ON RETRY ---
+        hasCheckedAnim.value = withTiming(0, { duration: 300 });
       } else {
         // --- 2xTRY IS NOT ACTIVE ---
         playIncorrectSound(); // ✅ ADDED
@@ -112,6 +202,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
     consume2xTry,
     playCorrectSound, // ✅ ADDED
     playIncorrectSound, // ✅ ADDED
+    hasCheckedAnim,
   ]);
 
   // Initialize video player
@@ -148,6 +239,48 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
     }
   }, [speed, player]);
 
+  // ✅ --- ANIMATED STYLES FOR BUTTONS ---
+  const checkButtonAnimStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [1, 0],
+      Extrapolation.CLAMP
+    );
+    const scale = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [1, 0.8],
+      Extrapolation.CLAMP
+    );
+    return {
+      opacity,
+      transform: [{ scale }],
+    };
+  });
+
+  const nextButtonAnimStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [0, 1],
+      Extrapolation.CLAMP
+    );
+    const scale = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [0.8, 1],
+      Extrapolation.CLAMP
+    );
+    return {
+      opacity,
+      transform: [{ scale }],
+      // Position absolute to animate in place
+      position: "absolute",
+      width: "100%",
+    };
+  });
+
   if (loading) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
@@ -160,10 +293,9 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
 
   return (
     <View className="flex-1 relative items-center bg-white">
-      {/* Prompts */}
-      <Text className="font-PoppinsBold text-2xl md:text-3xl w-11/12">{enPrompt}</Text>
-      <Text className="font-PoppinsLightItallic text-xl md:text-3xl w-11/12">
-        {filPrompt}
+      {/* ✅ --- NEW STATIC TITLE (from image) --- */}
+      <Text className="font-PoppinsBold text-3xl text-orange-500 text-center my-2">
+        Fill in the Gap!
       </Text>
 
       {/* Video */}
@@ -182,10 +314,13 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
         </View>
       </View>
 
-      {/* Question */}
-      <View className="w-11/12 rounded-md border border-[#F7D674] p-4 items-center">
+      {/* ✅ --- QUESTION BOX (Updated layout from image) --- */}
+      <View className="w-11/12 rounded-md border border-[#F7D674] p-4 items-center mt-2">
         <Text className="text-center font-PoppinsSemiBold text-lg md:text-xl">
           {enPrompt}
+        </Text>
+        <Text className="text-center font-PoppinsLightItallic text-base md:text-lg">
+          {filPrompt}
         </Text>
 
         {hasChecked ? (
@@ -194,7 +329,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 0.8 }}
             style={{
-              width: "20%",
+              width: "50%", // Increased width to better fit answers
               borderRadius: 6,
               backgroundColor: "transparent",
               elevation: 5,
@@ -204,47 +339,42 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
               zIndex: 50,
             }}
           >
-            <View className="rounded-full w-full p-2">
+            <View className="rounded-md w-full p-2">
               <Text className="text-sm md:text-lg font-PoppinsBold text-white text-center">
                 {options.find((opt) => opt.id === choice)?.labelEn || ""}
               </Text>
             </View>
           </LinearGradient>
         ) : (
-          <View className="w-16 h-10 bg-gray-400" />
+          <View className="w-16 h-10 bg-gray-400 rounded-md mt-2" />
         )}
       </View>
 
-      {/* Options */}
-      <View className="w-11/12 flex-row flex-wrap justify-between mt-4">
-        {options.map((option) => (
-          <View key={option.id} className="w-[48%] mb-3 relative items-center">
+      {/* ✅ --- OPTIONS (now 2 options) --- */}
+      <View className="w-11/1View 1/12 flex-row flex-wrap justify-between mt-4">
+        {limitedOptions.map((option) => (
+          <View key={option.id} className="w-[45%] mb-3 relative items-center mx-1">
             <View
               className={`${
                 hasChecked && choice === option.id ? "opacity-0" : "opacity-100"
               } w-full`}
             >
-              <MCBTN
-                EnglishText={option.labelEn}
-                FilipinoText={option.labelFil}
-                rounded={6}
-                hasChecked={hasChecked}
-                isCorrect={option.id === correctOption?.id}
+              <AnimatedMCButton
+                option={option}
                 isSelected={choice === option.id}
+                isCorrect={option.id === correctOption?.id}
+                hasChecked={hasChecked}
                 onPress={() => {
                   if (!hasChecked) setChoice(option.id);
                 }}
-                clicked={hasChecked}
               />
             </View>
-            <View className="absolute w-24 h-8 bg-[#E6E6E6] rounded-md top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0" />
+            
           </View>
         ))}
       </View>
 
-    
-
-     <View
+      <View
         className={`w-full p-4 mx-auto absolute bottom-20 z-50 opacity-${opacity}`}
       >
         <Inventory
@@ -252,7 +382,7 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
           isPressed={isClicked}
           onClose={() => setIsClicked(false)}
         />
-      </View> 
+      </View>
 
       {/* Feedback Section */}
       <View className="absolute bottom-6 w-96 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
@@ -280,17 +410,22 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
           </Text>
         )}
 
-        {choice && !hasChecked ? (
-          <View className="w-2/3 mx-auto">
-            <LevelContentBtn text="Check" onPress={handleCheck} />
-          </View>
-        ) : (
-          hasChecked && (
-            <View className="w-2/3 mx-auto">
+        {/* ✅ --- REANIMATED BUTTON CONTAINER --- */}
+        <View className="w-2/3 mx-auto h-[58px] items-center justify-center">
+          {/* "Next" button (animated in) */}
+          {hasChecked && (
+            <Animated.View style={nextButtonAnimStyle}>
               <LevelContentBtn text="Next" onPress={onPress} />
-            </View>
-          )
-        )}
+            </Animated.View>
+          )}
+
+          {/* "Check" button (animated out) */}
+          {choice && (
+            <Animated.View style={checkButtonAnimStyle}>
+              <LevelContentBtn text="Check" onPress={handleCheck} />
+            </Animated.View>
+          )}
+        </View>
       </View>
 
       {/* Backgrounds */}

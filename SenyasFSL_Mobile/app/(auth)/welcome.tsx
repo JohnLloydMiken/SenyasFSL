@@ -1,17 +1,16 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-  StatusBar,
-} from "react-native";
-import React from "react";
-import Authbutton from "@/components/authentication/button";
-import { router } from "expo-router";
 import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
+import Authbutton from "@/components/authentication/button";
 import { fslIconSize } from "@/utils/sizes";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
+import { router } from "expo-router";
+import React from "react";
+import {
+  StatusBar,
+  StyleSheet,
+  Text,
+  View
+} from "react-native";
 export default function welcome() {
   const { user, loading: authLoading } = useAuthStore();
   const { userData, loading: userLoading } = useUserStore();

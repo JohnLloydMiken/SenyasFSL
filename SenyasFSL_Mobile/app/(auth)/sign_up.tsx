@@ -1,14 +1,14 @@
-import { StyleSheet, Text, View, TouchableOpacity, Alert } from "react-native";
-import React, { useState } from "react";
-import { router } from "expo-router";
-import Authbutton from "@/components/authentication/button";
-import UserInput from "@/components/authentication/userInput";
-import Modal_Terms from "@/components/authentication/Modal_Terms";
-import Modal_Privacy from "@/components/authentication/Modal_Privacy";
 import Informtaion from "@/assets/svgs/information.svg";
+import Authbutton from "@/components/authentication/button";
+import Modal_Privacy from "@/components/authentication/Modal_Privacy";
+import Modal_Terms from "@/components/authentication/Modal_Terms";
+import UserInput from "@/components/authentication/userInput";
+import { mapAuthError, registerUser } from "@/services/AuthService"; // Import registerUser and mapAuthError
 import { IconSize } from "@/utils/sizes";
-import { registerUser, mapAuthError } from "@/services/authService"; // Import registerUser and mapAuthError
 import { userReason } from "@/utils/store/useUserStore"; // Import the store to get the reason
+import { router } from "expo-router";
+import React, { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function SignUp() {
   const [isTermsPressed, setIsTermsPressed] = useState(false);

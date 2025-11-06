@@ -1,15 +1,15 @@
-import { Text, View, TextInput, TouchableOpacity, Alert } from "react-native";
-import React, { useState } from "react";
-import "@/global.css";
 import Authbutton from "@/components/authentication/button";
-import { loginUser, mapAuthError } from "@/services/authService"; // Already imported
+import { auth, db } from "@/firebaseConfig"; // 👈 2. ADDED db
+import "@/global.css";
+import { loginUser, mapAuthError } from "@/services/AuthService"; // Already imported
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { Feather } from "@expo/vector-icons";
-import { sendPasswordResetEmail, signOut } from "firebase/auth"; // 👈 1. ADDED signOut
-import { auth, db } from "@/firebaseConfig"; // 👈 2. ADDED db
-import Toast from "react-native-toast-message";
 import { router } from "expo-router";
+import { sendPasswordResetEmail, signOut } from "firebase/auth"; // 👈 1. ADDED signOut
 import { doc, getDoc } from "firebase/firestore"; // 👈 3. ADDED doc and getDoc
+import React, { useState } from "react";
+import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 
 export default function Login() {
   // Local UI state
