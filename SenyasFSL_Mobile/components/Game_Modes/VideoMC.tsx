@@ -19,6 +19,16 @@ import Toast from "react-native-toast-message";
 // ✅ --- IMPORT SOUND HOOK ---
 import { useAnswerSounds } from "@/hooks/useAnswerSounds";
 
+// ✅ --- REANIMATED IMPORTS ---
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+  Extrapolation,
+} from "react-native-reanimated";
+
 // --- Interfaces ---
 export interface VideoQuestionOption {
   id: string;
@@ -34,6 +44,58 @@ interface ViewMCProps {
   options: VideoQuestionOption[];
   onPress: () => void;
 }
+
+// ✅ --- SHUFFLE HELPER ---
+const shuffleArray = (array: any[]) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
+// ✅ --- REANIMATED BUTTON WRAPPER ---
+// This component wraps VideoMCBTN to give it a "pop" on selection
+const AnimatedVideoMCButton: React.FC<{
+  option: VideoQuestionOption;
+  isSelected: boolean;
+  hasChecked: boolean;
+  isCorrect: boolean;
+  videoSource: string;
+  onPress: () => void;
+}> = ({ option, isSelected, hasChecked, isCorrect, videoSource, onPress }) => {
+  const scale = useSharedValue(1);
+
+  // Animate scale based on selection
+  useEffect(() => {
+    scale.value = withSpring(isSelected ? 1.03 : 1, {
+      damping: 15,
+      stiffness: 300,
+    });
+  }, [isSelected, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <VideoMCBTN
+        key={option.id}
+        labeFil={option.labelFil}
+        labelEn={option.labelEn}
+        isCorrect={isCorrect}
+        hasChecked={hasChecked}
+        clicked={hasChecked}
+        isSelected={isSelected}
+        onPress={onPress}
+        videoSource={videoSource}
+      />
+    </Animated.View>
+  );
+};
 
 const ViewMC: React.FC<ViewMCProps> = ({
   enPrompt,
@@ -53,6 +115,10 @@ const ViewMC: React.FC<ViewMCProps> = ({
   const [loading, setLoading] = useState(true);
   const speed = videoSpeed((state) => state.playingSpeed);
 
+  // ✅ --- REANIMATED SHARED VALUE ---
+  // 0 = "Check" visible, 1 = "Next" visible
+  const hasCheckedAnim = useSharedValue(0);
+
   // ✅ --- GAME STORE STATE (RETRY) ---
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
@@ -66,6 +132,31 @@ const ViewMC: React.FC<ViewMCProps> = ({
     return correctOption ? correctOption.labelEn : "";
   }, [options]);
 
+  // ✅ --- 2-OPTION LOGIC ---
+  const limitedOptions = useMemo(() => {
+    const correctOption = options.find((opt) => opt.isCorrect);
+    const incorrectOptions = options.filter((opt) => !opt.isCorrect);
+
+    if (!correctOption) {
+      // Fallback in case data is malformed
+      return options.slice(0, 2);
+    }
+    if (incorrectOptions.length === 0) {
+      // Fallback if only one option is provided
+      return [correctOption];
+    }
+
+    // Get one random incorrect option
+    const randomIncorrectOption =
+      incorrectOptions[Math.floor(Math.random() * incorrectOptions.length)];
+
+    // Create and shuffle the new 2-item array
+    return shuffleArray([
+      correctOption,
+      randomIncorrectOption,
+    ]) as VideoQuestionOption[];
+  }, [options]); // This recalculates only when the options prop changes
+
   // Fetch video URLs
   useEffect(() => {
     const fetchVideoUrls = async () => {
@@ -73,7 +164,8 @@ const ViewMC: React.FC<ViewMCProps> = ({
         setLoading(true);
         const results: Record<string, string> = {};
 
-        for (const option of options) {
+        // ✅ --- ONLY FETCH VIDEOS FOR THE 2 OPTIONS ---
+        for (const option of limitedOptions) {
           let finalUrl = option.videoSrc;
 
           if (option.videoSrc.startsWith("gs://")) {
@@ -90,7 +182,8 @@ const ViewMC: React.FC<ViewMCProps> = ({
           results[option.id] = finalUrl;
         }
         setResolvedVideos(results);
-      } catch (err) {
+      } catch (err)
+        {
         console.error("❌ Error fetching video URLs:", err);
       } finally {
         setLoading(false);
@@ -98,11 +191,14 @@ const ViewMC: React.FC<ViewMCProps> = ({
     };
 
     fetchVideoUrls();
-  }, [options]);
+  }, [limitedOptions]); // ✅ --- DEPENDS ON limitedOptions ---
 
-  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY AND ANIMATION) ---
   const handleBG = useCallback(() => {
     if (!choice) return;
+
+    // ✅ --- TRIGGER REANIMATED ANIMATION ---
+    hasCheckedAnim.value = withTiming(1, { duration: 300 });
 
     const isAnswerCorrect = choice === correctAnswer;
 
@@ -124,6 +220,8 @@ const ViewMC: React.FC<ViewMCProps> = ({
           text2: "That was incorrect, try again!",
         });
         setChoice(null); // Reset choice
+        // ✅ --- REVERSE ANIMATION ON RETRY ---
+        hasCheckedAnim.value = withTiming(0, { duration: 300 });
       } else {
         // --- 2xTRY IS NOT ACTIVE ---
         playIncorrectSound(); // ✅ ADDED
@@ -140,26 +238,74 @@ const ViewMC: React.FC<ViewMCProps> = ({
     consume2xTry,
     playCorrectSound, // ✅ ADDED
     playIncorrectSound, // ✅ ADDED
+    hasCheckedAnim,
   ]);
 
-  // Render options (No changes needed for Bomb)
+  // ✅ --- RENDER OPTIONS (NOW USES 2 OPTIONS + ANIMATED WRAPPER) ---
   const renderOptions = useMemo(() => {
-    return options.map((option) => (
-      <VideoMCBTN
+    return limitedOptions.map((option) => (
+      <AnimatedVideoMCButton
         key={option.id}
-        labeFil={option.labelFil}
-        labelEn={option.labelEn}
-        isCorrect={option.labelEn === correctAnswer}
-        hasChecked={hasChecked}
-        clicked={hasChecked}
+        option={option}
         isSelected={choice === option.labelEn}
+        hasChecked={hasChecked}
+        isCorrect={option.labelEn === correctAnswer}
+        videoSource={resolvedVideos[option.id] || option.videoSrc}
         onPress={() => {
           if (!hasChecked) setChoice(option.labelEn);
         }}
-        videoSource={resolvedVideos[option.id] || option.videoSrc}
       />
     ));
-  }, [options, choice, hasChecked, loading, resolvedVideos, correctAnswer]);
+  }, [
+    limitedOptions,
+    choice,
+    hasChecked,
+    loading,
+    resolvedVideos,
+    correctAnswer,
+  ]);
+
+  // ✅ --- ANIMATED STYLES FOR BUTTONS ---
+  const checkButtonAnimStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [1, 0],
+      Extrapolation.CLAMP
+    );
+    const scale = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [1, 0.8],
+      Extrapolation.CLAMP
+    );
+    return {
+      opacity,
+      transform: [{ scale }],
+    };
+  });
+
+  const nextButtonAnimStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [0, 1],
+      Extrapolation.CLAMP
+    );
+    const scale = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [0.8, 1],
+      Extrapolation.CLAMP
+    );
+    return {
+      opacity,
+      transform: [{ scale }],
+      // Position absolute to animate in place
+      position: "absolute",
+      width: "100%",
+    };
+  });
 
   if (loading) {
     return (
@@ -174,11 +320,12 @@ const ViewMC: React.FC<ViewMCProps> = ({
   return (
     <View className="flex-1 relative items-center bg-white">
       {/* PROMPTS */}
+      <Text className="text-3xl font-PoppinsBold text-[#FB990F] text-center my-2">Choose the Sign!</Text>
       <Text className="text-center font-PoppinsBold my-2 text-xl md:text-3xl">
         {enPrompt}
       </Text>
-      <Text className="text-center font-PoppinsLightItalic my-2 text-lg md:text-3xl">
-        {filPrompt}
+      <Text className="text-center font-PoppinsLightItalic my-1 text-lg md:text-3xl">
+        "{filPrompt}"
       </Text>
 
       {/* VIDEO CHOICES */}
@@ -214,11 +361,22 @@ const ViewMC: React.FC<ViewMCProps> = ({
           </View>
         )}
 
-        {choice && !hasChecked ? (
-          <LevelContentBtn text="Check" onPress={handleBG} />
-        ) : (
-          hasChecked && <LevelContentBtn text="Next" onPress={onPress} />
-        )}
+        {/* ✅ --- REANIMATED BUTTON CONTAINER --- */}
+        <View className="w-full h-[58px] items-center justify-center">
+          {/* "Next" button (animated in) */}
+          {hasChecked && (
+            <Animated.View style={nextButtonAnimStyle}>
+              <LevelContentBtn text="Next" onPress={onPress} />
+            </Animated.View>
+          )}
+
+          {/* "Check" button (animated out) */}
+          {choice && (
+            <Animated.View style={checkButtonAnimStyle}>
+              <LevelContentBtn text="Check" onPress={handleBG} />
+            </Animated.View>
+          )}
+        </View>
       </View>
 
       {/* BACKGROUND */}

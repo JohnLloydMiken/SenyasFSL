@@ -20,6 +20,16 @@ import Toast from "react-native-toast-message";
 // ✅ --- IMPORT SOUND HOOK ---
 import { useAnswerSounds } from "@/hooks/useAnswerSounds";
 
+// ✅ --- REANIMATED IMPORTS ---
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+  Extrapolation,
+} from "react-native-reanimated";
+
 // --- Interfaces ---
 export interface TrueFalseOption {
   id: string;
@@ -35,6 +45,47 @@ interface TrueOrFalseProps {
   options: readonly TrueFalseOption[];
   onPress: () => void;
 }
+
+// ✅ --- REANIMATED BUTTON WRAPPER ---
+// This component wraps MCBTN to give it a "pop" on selection
+const AnimatedMCButton: React.FC<{
+  option: TrueFalseOption;
+  isSelected: boolean;
+  hasChecked: boolean;
+  onPress: () => void;
+}> = ({ option, isSelected, hasChecked, onPress }) => {
+  const scale = useSharedValue(1);
+
+  // Animate scale based on selection
+  useEffect(() => {
+    scale.value = withSpring(isSelected ? 1.03 : 1, {
+      damping: 15,
+      stiffness: 300,
+    });
+  }, [isSelected, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <MCBTN
+        key={option.id}
+        EnglishText={option.labelEn}
+        FilipinoText={`"${option.labelFil}"`}
+        onPress={onPress}
+        clicked={hasChecked}
+        isCorrect={!option.isCorrect} // Original inverted logic
+        isSelected={isSelected}
+        hasChecked={hasChecked}
+        rounded={50}
+      />
+    </Animated.View>
+  );
+};
 
 const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
   enQuestion,
@@ -52,6 +103,10 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
   const [loading, setLoading] = useState(true);
   const speed = videoSpeed((state) => state.playingSpeed);
   const incrementScore = useUserPoints((state) => state.incrementScore);
+
+  // ✅ --- REANIMATED SHARED VALUE ---
+  // 0 = "Check" visible, 1 = "Next" visible
+  const hasCheckedAnim = useSharedValue(0);
 
   // ✅ --- GAME STORE STATE (RETRY) ---
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
@@ -98,9 +153,12 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
     }
   }, [speed, player]);
 
-  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY AND ANIMATION) ---
   const handleCheck = useCallback(() => {
     if (!selectedChoice) return;
+
+    // ✅ --- TRIGGER REANIMATED ANIMATION ---
+    hasCheckedAnim.value = withTiming(1, { duration: 300 });
 
     const selectedOption = options.find((opt) => opt.id === selectedChoice);
     // Note: Original logic for TF is inverted
@@ -124,6 +182,8 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
           text2: "That was incorrect, try again!",
         });
         setSelectedChoice(null); // Reset choice
+        // ✅ --- REVERSE ANIMATION ON RETRY ---
+        hasCheckedAnim.value = withTiming(0, { duration: 300 });
       } else {
         // --- 2xTRY IS NOT ACTIVE ---
         playIncorrectSound(); // ✅ ADDED
@@ -140,7 +200,50 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
     consume2xTry,
     playCorrectSound, // ✅ ADDED
     playIncorrectSound, // ✅ ADDED
+    hasCheckedAnim,
   ]);
+
+  // ✅ --- ANIMATED STYLES FOR BUTTONS ---
+  const checkButtonAnimStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [1, 0],
+      Extrapolation.CLAMP
+    );
+    const scale = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [1, 0.8],
+      Extrapolation.CLAMP
+    );
+    return {
+      opacity,
+      transform: [{ scale }],
+    };
+  });
+
+  const nextButtonAnimStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [0, 1],
+      Extrapolation.CLAMP
+    );
+    const scale = interpolate(
+      hasCheckedAnim.value,
+      [0, 1],
+      [0.8, 1],
+      Extrapolation.CLAMP
+    );
+    return {
+      opacity,
+      transform: [{ scale }],
+      // Position absolute to animate in place
+      position: "absolute",
+      width: "100%",
+    };
+  });
 
   if (loading) {
     return (
@@ -154,15 +257,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
 
   return (
     <View className="flex-1 relative items-center bg-white">
-      <View className="w-10/12">
-        <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">
-          {filQuestion}
-        </Text>
-        <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">
-          {enQuestion}
-        </Text>
-      </View>
-
+      <Text className="text-[#FB990F] text-3xl font-PoppinsBold text-center my-2">True or False!</Text>
       <View className="w-full h-56 flex-row items-center justify-center">
         <View className="w-full h-full">
           <VideoView
@@ -175,23 +270,29 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
         </View>
       </View>
 
+      <View className="w-10/12 my-3">
+        <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">
+          {filQuestion}
+        </Text>
+        <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">
+          {enQuestion}
+        </Text>
+      </View>
+
       <View className="w-11/12 mx-auto">
+        {/* ✅ --- RENDER OPTIONS (NOW ANIMATED) --- */}
         {options.map((option) => (
-          <MCBTN
+          <AnimatedMCButton
             key={option.id}
-            EnglishText={option.labelEn}
-            FilipinoText={`"${option.labelFil}"`}
-            onPress={() => !hasChecked && setSelectedChoice(option.id)}
-            clicked={hasChecked}
-            isCorrect={!option.isCorrect} // Original inverted logic
+            option={option}
             isSelected={selectedChoice === option.id}
             hasChecked={hasChecked}
-            rounded={50}
+            onPress={() => !hasChecked && setSelectedChoice(option.id)}
           />
         ))}
       </View>
 
-       <View
+      <View
         style={{ opacity }}
         className="w-full p-4 mx-auto absolute bottom-28 z-50"
       >
@@ -200,7 +301,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
           isPressed={isClicked}
           onClose={() => setIsClicked(false)}
         />
-      </View> 
+      </View>
 
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
         {isCorrect !== null && (
@@ -212,11 +313,22 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
           </View>
         )}
 
-        {selectedChoice && !hasChecked ? (
-          <LevelContentBtn text="Check" onPress={handleCheck} />
-        ) : hasChecked ? (
-          <LevelContentBtn text="Next" onPress={onPress} />
-        ) : null}
+        {/* ✅ --- REANIMATED BUTTON CONTAINER --- */}
+        <View className="w-full h-[58px] items-center justify-center">
+          {/* "Next" button (animated in) */}
+          {hasChecked && (
+            <Animated.View style={nextButtonAnimStyle}>
+              <LevelContentBtn text="Next" onPress={onPress} />
+            </Animated.View>
+          )}
+
+          {/* "Check" button (animated out) */}
+          {selectedChoice && (
+            <Animated.View style={checkButtonAnimStyle}>
+              <LevelContentBtn text="Check" onPress={handleCheck} />
+            </Animated.View>
+          )}
+        </View>
       </View>
 
       <View className="absolute w-full bottom-0 z-10">

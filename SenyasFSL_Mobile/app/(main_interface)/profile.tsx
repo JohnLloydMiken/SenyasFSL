@@ -1,17 +1,17 @@
-import React, { useState } from "react";
-import { ScrollView, View, TouchableOpacity, Text, Alert, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router"; // Import the router
-import UserStreak from "@/components/main_interface/userStreak";
-import User_info from "@/components/main_interface/profile/user_info";
-import { useBottomSheet } from "@/modules/contextProvider";
 import AccountSection from "@/components/main_interface/profile/AccountSection";
+import FooterLinks from "@/components/main_interface/profile/FooterLinks";
 import LearningSection from "@/components/main_interface/profile/LearningSection";
 import SupportSection from "@/components/main_interface/profile/SupportSection";
-import FooterLinks from "@/components/main_interface/profile/FooterLinks";
+import User_info from "@/components/main_interface/profile/user_info";
+import UserStreak from "@/components/main_interface/userStreak";
+import { useBottomSheet } from "@/modules/contextProvider";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
+import { useRouter } from "expo-router"; // Import the router
+import React, { useState } from "react";
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 // Import logoutUser and the new sendPasswordResetIfExists
-import { logoutUser, sendPasswordResetIfExists } from "@/services/authService";
+import { logoutUser, sendPasswordResetIfExists } from "@/services/AuthService";
 
 export default function Profile() {
   // This state is no longer used for the password button, but could be used for the editPass sheet

@@ -1,9 +1,9 @@
+import { useAuthStore } from "@/utils/store/useAuthStore";
+import { useUserStore } from "@/utils/store/useUserStore";
 import { useFonts } from "expo-font";
 import { Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { useAuthStore } from "@/utils/store/useAuthStore";
-import { useUserStore } from "@/utils/store/useUserStore";
 import Toast from 'react-native-toast-message';
 SplashScreen.preventAutoHideAsync();
 

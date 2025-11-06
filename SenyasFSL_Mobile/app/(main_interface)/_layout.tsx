@@ -24,27 +24,25 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 // 🚫 import { useUserStore } from "@/utils/store/useUserStore"; // No longer needed
 import { BottomSheetProvider, useBottomSheet } from "@/modules/contextProvider";
-import { updateUserProfile } from "@/services/authService"; //
+import { updateUserProfile } from "@/services/AuthService"; //
 
-// ✅ 1. Import TanStack Query
 import {
   QueryClient,
   QueryClientProvider,
   useQuery,
-  useQueryClient,
+  useQueryClient, // 👈 Import useQueryClient
 } from "@tanstack/react-query";
 
-// ✅ 2. Import your user profile fetcher
+// ✅ 3. Import your user profile fetcher
 import { fetchUserProfile } from "@/services/userService"; //
 
-// ✅ 3. Create the client (do this once)
+// ✅ 4. Create the client (do this once, outside the component)
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   return (
-    // ✅ 4. Wrap your entire app in GestureHandlerRootView
+    // ✅ 5. Wrap everything in the QueryClientProvider
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* ✅ 5. Wrap everything in the QueryClientProvider */}
       <QueryClientProvider client={queryClient}>
         <BottomSheetProvider>
           <TabsWithBottomSheet />

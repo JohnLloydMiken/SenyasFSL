@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import type { User as AuthUser } from "firebase/auth";
 import { doc, onSnapshot, Timestamp } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { UserProfileData } from "shared/types/user"; // 👈 1. IMPORT THE TYPE
 import { db } from "../firebaseConfig";
 import { useAuth } from "../services/auth/AuthProvider";
-import type { User as AuthUser } from "firebase/auth";
-import { UserProfileData } from "shared/types/user"; // 👈 1. IMPORT THE TYPE
 
 // 2. The local UserProfileData interface has been REMOVED from this file.
 
