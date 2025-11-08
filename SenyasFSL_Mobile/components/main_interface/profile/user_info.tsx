@@ -17,7 +17,7 @@ const User_info: React.FC<User_InfoProps> = ({xp, username, email}) => {
           </Text>
           <MaskedView
             maskElement={
-              <Text className="text-3xl md:text-4xl font-PoppinsBold text-center">
+              <Text className="text-3xl md:text-4xl font-PoppinsBold text-center uppercase">
                 {username}
               </Text>
             }

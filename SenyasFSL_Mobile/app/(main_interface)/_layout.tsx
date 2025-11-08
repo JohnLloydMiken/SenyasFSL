@@ -1,4 +1,6 @@
 // app/(main_interface)/_layout.tsx
+// --- MODIFIED FILE ---
+
 import Authbutton from "@/components/authentication/button";
 import HeaderRightBtn from "@/components/authentication/headerRightBtn";
 import UserInput from "@/components/authentication/userInput";
@@ -10,45 +12,52 @@ import TreasureIcon from "@/components/main_interface/treasure/treasureIcon";
 import UserStreak from "@/components/main_interface/userStreak";
 import { shareStreak } from "@/utils/shareUtils";
 import { useAuthStore } from "@/utils/store/useAuthStore";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, {
+  BottomSheetView,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
 import { Tabs, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
+import AboutModal from "@/components/main_interface/profile/AboutModal";
+import HelpModal from "@/components/main_interface/profile/HelpModal";
+import EditPersonalData from "@/components/main_interface/profile/EditPersonalData";
 import {
   Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
   useWindowDimensions,
-  View
+  View,
+  Image,
+  ScrollView,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-// 🚫 import { useUserStore } from "@/utils/store/useUserStore"; // No longer needed
 import { BottomSheetProvider, useBottomSheet } from "@/modules/contextProvider";
 import { updateUserProfile } from "@/services/AuthService"; //
+import ChangePasswordSheet from "@/components/main_interface/profile/ChangePasswordSheet";
 
+// ✅ 1. Import *only* the hooks, not the Client/Provider
 import {
-  QueryClient,
-  QueryClientProvider,
   useQuery,
-  useQueryClient, // 👈 Import useQueryClient
+  useQueryClient,
 } from "@tanstack/react-query";
 
-// ✅ 3. Import your user profile fetcher
+// ✅ 2. Import your user profile fetcher
 import { fetchUserProfile } from "@/services/userService"; //
 
-// ✅ 4. Create the client (do this once, outside the component)
-const queryClient = new QueryClient();
+// 🚫 3. DELETE THE REDUNDANT CLIENT
+// const queryClient = new QueryClient();
 
 export default function RootLayout() {
   return (
-    // ✅ 5. Wrap everything in the QueryClientProvider
+    // 🚫 4. DELETE THE REDUNDANT PROVIDER
+    // <QueryClientProvider client={queryClient}>
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <BottomSheetProvider>
-          <TabsWithBottomSheet />
-        </BottomSheetProvider>
-      </QueryClientProvider>
+      <BottomSheetProvider>
+        <TabsWithBottomSheet />
+      </BottomSheetProvider>
     </GestureHandlerRootView>
+    // </QueryClientProvider>
   );
 }
 
@@ -60,10 +69,10 @@ function TabsWithBottomSheet() {
   const { width } = useWindowDimensions();
   const titleSize = width < 768 ? 12 : 18;
 
-  // ✅ 6. Get the query client instance
+  // ✅ 5. This hook now finds the *root* client (from app/_layout.tsx)
   const queryClient = useQueryClient();
 
-  // ✅ 7. Fetch user data using useQuery (replaces useUserStore)
+  // ✅ 6. This query now uses the *root* client
   const { data: userData, isLoading: userLoading } = useQuery({
     queryKey: ["user", user?.uid],
     queryFn: () => fetchUserProfile(user!.uid), //
@@ -75,6 +84,7 @@ function TabsWithBottomSheet() {
       case "streak":
         return ["50%"];
       case "editData":
+        return ["50%"];
       case "editPass":
         return ["60%"];
       default:
@@ -111,8 +121,7 @@ function TabsWithBottomSheet() {
       Alert.alert("Success", "Profile updated successfully!");
       bottomSheetRef.current?.close();
 
-      // ✅ 8. CRITICAL: Invalidate the user query on success
-      // This tells TanStack Query to refetch the user data
+      // ✅ 7. This invalidates the *root* cache
       queryClient.invalidateQueries({ queryKey: ["user", user?.uid] });
     } catch (error: any) {
       Alert.alert(
@@ -122,7 +131,11 @@ function TabsWithBottomSheet() {
     }
   };
 
-  // ✅ 9. This loading check now uses the 'isLoading' from useQuery
+  // ✅ 8. This loading check now works perfectly.
+  // It will show 'Loading...' if auth is loading,
+  // OR if the root cache is being fetched for the first time.
+  // It will *not* show 'Loading...' if the cache was
+  // already filled by welcome.tsx.
   if (authLoading || userLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
@@ -131,7 +144,7 @@ function TabsWithBottomSheet() {
     );
   }
 
-  // ✅ 10. This check is still valid. If useQuery finishes and data is null.
+  // ✅ 9. This check is still valid.
   if (!userData) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
@@ -147,6 +160,8 @@ function TabsWithBottomSheet() {
         screenOptions={{
           headerTitle: "",
           tabBarStyle: isSheetOpen ? { display: "none" } : {},
+          // ✅ 10. This now reads from the *root* cache and will
+          // update instantly when 'treasure.tsx' invalidates.
           headerLeft: () => <Curency number={userData?.senyasCoins} />,
           headerRight: () => (
             <HeaderRightBtn
@@ -168,7 +183,7 @@ function TabsWithBottomSheet() {
           tabBarInactiveTintColor: "#8B8B8B",
         }}
       >
-        {/* ...Tabs.Screen definitions... */}
+
         <Tabs.Screen
           name="index"
           options={{
@@ -249,46 +264,25 @@ function TabsWithBottomSheet() {
 
           {sheet === "editData" && (
             <>
-              <View className="flex-1 flex-col justify-center items-center">
-                <UserInput
-                  title="Edit personal data"
-                  usernameTitle="Username"
-                  userEmailTitle="Email"
-                  userPasswordTitle="Current password"
-                  passwordTitleDescription="Type in your password to update your email"
-                  usernameValue={username}
-                  onUsernameChange={setUsername}
-                  emailValue={email}
-                  onEmailChange={setEmail}
-                  passwordValue={password}
-                  onPasswordChange={setPassword}
-                />
-                <View className="w-11/12 absolute bottom-1">
-                  <Authbutton
-                    content="Save changes"
-                    onPress={handleUpdateProfile}
-                  />
-                </View>
-              </View>
+              <EditPersonalData />
             </>
           )}
 
           {sheet === "editPass" && (
             <>
-              <UserInput
-                title="Edit personal data"
-                usernameTitle="Username"
-                userEmailTitle="Email"
-                userPasswordTitle="Current password"
-                passwordTitleDescription="Type in your password to update your email"
+              <ChangePasswordSheet
+                onClose={() => bottomSheetRef.current?.close()}
               />
-              <View className="w-11/11 absolute bottom-1">
-                <Authbutton
-                  content="Update password"
-                  onPress={() => bottomSheetRef.current?.close()}
-                />
-              </View>
             </>
+          )}
+
+          {/* --- START: Added new modal views --- */}
+          {sheet === "help" && (
+            <HelpModal onPress={() => bottomSheetRef.current?.close()} />
+          )}
+
+          {sheet === "about" && (
+            <AboutModal onPress={() => bottomSheetRef.current?.close()} />
           )}
         </BottomSheetView>
       </BottomSheet>
@@ -299,7 +293,7 @@ function TabsWithBottomSheet() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    // justifyContent: "center",
     position: "relative",
     width: "100%",
     height: "100%",

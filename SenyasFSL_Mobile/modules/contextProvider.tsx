@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useRef, useState } from 'react';
 import BottomSheet from '@gorhom/bottom-sheet';
 
-type SheetType = 'streak' | 'editData' | 'editPass'| null;
+// --- START: Updated SheetType ---
+type SheetType = 'streak' | 'editData' | 'editPass' | 'help' | 'about' | 'terms' | 'privacy' | null;
+// --- END: Updated SheetType ---
 
 type BottomSheetContextType = {
   bottomSheetRef: React.RefObject<BottomSheet | null> ;
@@ -56,9 +58,9 @@ export const BottomSheetProvider = ({ children }: { children: React.ReactNode })
   );
 };
 
-export const useBottomSheet = (): BottomSheetContextType => {
+export const useBottomSheet = () => {
   const context = useContext(BottomSheetContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useBottomSheet must be used within a BottomSheetProvider');
   }
   return context;

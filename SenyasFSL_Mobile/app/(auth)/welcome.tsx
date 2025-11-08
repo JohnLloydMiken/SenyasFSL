@@ -1,21 +1,32 @@
+// app/(auth)/welcome.tsx
+// --- MODIFIED FILE ---
+
 import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
 import Authbutton from "@/components/authentication/button";
 import { fslIconSize } from "@/utils/sizes";
 import { useAuthStore } from "@/utils/store/useAuthStore";
-import { useUserStore } from "@/utils/store/useUserStore";
+// 🚫 import { useUserStore } from "@/utils/store/useUserStore"; // No longer needed
 import { router } from "expo-router";
 import React from "react";
-import {
-  StatusBar,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
-export default function welcome() {
-  const { user, loading: authLoading } = useAuthStore();
-  const { userData, loading: userLoading } = useUserStore();
+import { StatusBar, StyleSheet, Text, View } from "react-native";
 
-  if (userLoading) {
+// ✅ 1. Import TanStack Query and the fetcher
+import { useQuery } from "@tanstack/react-query";
+import { fetchUserProfile } from "@/services/userService"; // (Assuming this path based on your other files)
+
+export default function Welcome() {
+  const { user, loading: authLoading } = useAuthStore();
+  // 🚫 const { userData, loading: userLoading } = useUserStore(); // No longer needed
+
+  // ✅ 2. Fetch user data using useQuery
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["user", user?.uid], // The same key used in other files
+    queryFn: () => fetchUserProfile(user!.uid), // The fetch function
+    enabled: !!user, // Only run if the user is logged in
+  });
+
+  // ✅ 3. The loading check now uses authLoading and useQuery's isLoading
+  if (userLoading || authLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
         <Text>Loading...</Text>
@@ -23,6 +34,7 @@ export default function welcome() {
     );
   }
 
+  // ✅ 4. This check is still valid. If useQuery finishes and data is null.
   if (!userData) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
@@ -30,6 +42,7 @@ export default function welcome() {
       </View>
     );
   }
+
   return (
     <View
       className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8"
