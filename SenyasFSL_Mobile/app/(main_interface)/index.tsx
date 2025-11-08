@@ -22,6 +22,7 @@ import SignOfTheDayModal from "@/components/main_interface/SignOfTheDayModal";
 import { useAudioStore } from "@/hooks/useAudioStore";
 import { useQuery } from "@tanstack/react-query";
 import { fetchUserProfile } from "@/services/userService";
+import SignOfTheDayIcon from "@/assets/svgs/SingOfTheDay.svg"
 // --- END NEW IMPORTS ---
 
 const audioSource = require("@/assets/audio/bg_music.mp3");
@@ -137,13 +138,13 @@ export default function Index() {
         {hasShownSignModal ? (
           <TouchableOpacity
             onPress={() => setShowSignOfTheDay(true)}
-            style={styles.signOfTheDayButton}
+           
           >
-            <Text style={styles.signOfTheDayButtonText}>🌟</Text>
+             <SignOfTheDayIcon />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity onPress={() => setTutorialPressed((prev) => !prev)}>
-            <TutorialSVG />
+            <SignOfTheDayIcon />
           </TouchableOpacity>
         )}
         {/* --- END MODIFIED LOGIC --- */}

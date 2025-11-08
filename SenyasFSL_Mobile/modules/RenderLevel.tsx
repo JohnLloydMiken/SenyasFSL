@@ -12,15 +12,25 @@ import {
   Text,
 } from "react-native";
 import { router } from "expo-router";
-import { Level, LevelSection } from "../modules/types/interface";
+// 🚫 REMOVE (This is the old interface)
+// import { Level, LevelSection } from "../modules/types/interface"; 
+// ✅ ADD (This is the one from your other files)
+import { Level, LevelSection } from "@/modules/types/interface";
 import LevelItem from "../modules/LevelItem";
 import BtnUp from "@/assets/svgs/BtnUp.svg";
 import BtnDown from "@/assets/svgs/BtnDown.svg";
 import LevelHeader from "@/components/LevelContent/levelHeader";
 import FSL_Hi from "@/assets/svgs/FSL_hello.svg";
-import { useUserStore } from "@/utils/store/useUserStore";
+// 🚫 REMOVE (This is the old store)
+// import { useUserStore } from "@/utils/store/useUserStore";
 import { Section } from "@/shared/types"; //
 import { useSectionStore } from "@/utils/store/useSectionStore";
+
+// ✅ --- START: ADD THESE IMPORTS ---
+import { useQuery } from "@tanstack/react-query";
+import { fetchUserProfile } from "@/services/userService"; // Using service from other files
+import { useAuthStore } from "@/utils/store/useAuthStore";
+// ✅ --- END: ADD THESE IMPORTS ---
 
 const MemoFSLHi = React.memo(FSL_Hi);
 const MemoBtnUp = React.memo(BtnUp);
@@ -31,7 +41,20 @@ interface RenderLevelProps {
 }
 
 const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
-  const { userData, loading: userLoading } = useUserStore(); 
+  // 🚫 REMOVE (This is the old hook causing the problem)
+  // const { userData, loading: userLoading } = useUserStore();
+
+  // ✅ --- START: ADD THESE HOOKS ---
+  // Get the authenticated user
+  const { user } = useAuthStore(); 
+  // Fetch user data using React Query, just like in your other components
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["user", user?.uid],
+    queryFn: () => fetchUserProfile(user!.uid),
+    enabled: !!user, // Only run the query if the user is logged in
+  });
+  // ✅ --- END: ADD THESE HOOKS ---
+
   const { width } = useWindowDimensions();
   const FSLHiSize = width < 768 ? 160 : 300;
   const BtnSize = width < 768 ? 40 : 80;
@@ -90,7 +113,7 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
         };
       });
 
-      return {  
+      return {
         title: section.name, //
         index: section.order,
         currentLevel: levelData[0]?.id || 1,
@@ -145,6 +168,7 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
   if (!sectionsData || sectionsData.length === 0) {
     return (
       <View className="flex-1 justify-center items-center">
+        {/* ✅ This will show if user data is loaded but sections aren't, or vice-versa */}
         <Text>Loading Map...</Text>
       </View>
     );
@@ -162,7 +186,7 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
   }, [sectionsData.length]);
 
   const handleScrollUp = useCallback(() => {
-    setCurrentSection((prev) => Math.max(0, prev - 1));
+    setCurrentSection((prev) => Math.max(0, prev + 1));
   }, []);
 
   const handleLevelPress = useCallback((level: Level): void => {

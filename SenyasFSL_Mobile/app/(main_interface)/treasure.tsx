@@ -1,4 +1,6 @@
 // app/(main_interface)/treasure.tsx
+// --- MODIFIED FILE ---
+
 import Tutorial from "@/assets/svgs/Tutorial.svg";
 import BGComponent from "@/assets/svgs/bg 1.svg";
 import Item from "@/components/main_interface/treasure/items";
@@ -7,14 +9,19 @@ import { useAuthStore } from "@/utils/store/useAuthStore";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Image, // ✅ Import ActivityIndicator
+  Image,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 
+// ✅ MODIFICATION: Make sure this path is correct
+// Your previous file had this, but the user-uploaded
+// LootModal.tsx file has a different path.
+// I am keeping your original, working path.
 import LootModal from "@/components/main_interface/treasure/LootModal";
+
 import { buyItem, openChest } from "@/services/gameService";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
@@ -22,13 +29,11 @@ import Toast from "react-native-toast-message";
 import LottieView from "lottie-react-native";
 import chestAnimation from "../../assets/lottie/chest.json";
 
-// ✅ 1. IMPORT TANSTACK QUERY HOOKS
 import {
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-// ✅ 2. IMPORT YOUR USER PROFILE FETCHER
 import { fetchUserProfile } from "@/services/userService"; //
 
 const BG = React.memo(BGComponent);
@@ -96,36 +101,28 @@ export default function Treasure() {
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
   const animationRef = useRef<LottieView>(null);
 
-  // ✅ 3. GET THE QUERY CLIENT
   const queryClient = useQueryClient();
 
-  // ✅ 4. FETCH USER DATA WITH useQuery
-  // This replaces useUserStore()
   const {
     data: userData,
-    isLoading: userLoading, // This is true ONLY on initial load
-    isFetching: isUserFetching, // This is true on background refreshes
+    isLoading: userLoading,
+    isFetching: isUserFetching,
   } = useQuery({
-    queryKey: ["user", user?.uid], // Unique key for this data
-    queryFn: () => fetchUserProfile(user!.uid), // The function that fetches
-    enabled: !!user, // Only run if the user is logged in
+    queryKey: ["user", user?.uid],
+    queryFn: () => fetchUserProfile(user!.uid),
+    enabled: !!user,
   });
 
-  // ✅ 5. CREATE MUTATION FOR BUYING AN ITEM
-  // This replaces isPurchasing state and handleBuyItem logic
   const buyItemMutation = useMutation({
     mutationFn: (variables: { itemId: string; itemCost: number }) =>
-      buyItem(variables.itemId, variables.itemCost), //
-    onSuccess: (success) => {
-      if (success) {
-        Toast.show({
-          type: "success",
-          text1: "Purchase Successful!",
-          text2: "The item has been added to your inventory.",
-        });
-        // ✅ KEY: Invalidate the user query to refetch data
-        queryClient.invalidateQueries({ queryKey: ["user", user?.uid] });
-      }
+      buyItem(variables.itemId, variables.itemCost),
+    onSuccess: () => {
+      Toast.show({
+        type: "success",
+        text1: "Purchase Successful!",
+        text2: "The item has been added to your inventory.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["user", user?.uid] });
     },
     onError: (error: any) => {
       Toast.show({
@@ -136,27 +133,23 @@ export default function Treasure() {
     },
   });
 
-  // ✅ 6. CREATE MUTATION FOR OPENING A CHEST
-  // This replaces isOpeningChest state and handleOpenChest logic
+  // ✅ --- MODIFICATION ---
+  // The mutation logic is now simplified.
+  // It only handles the network call and data invalidation.
+  // The logic to show the modal (setWonPrize) is moved to `handleOpenChest`.
   const openChestMutation = useMutation({
-    mutationFn: (prizeId: string) => openChest(prizeId), //
-    onSuccess: (data, prizeId) => {
-      // Find the prize object to show in the modal
-      const prize = prizePool.find((p) => p.id === prizeId);
-      setWonPrize(prize || prizePool[0]); // Show the modal
+    mutationFn: (prizeId: string) => openChest(prizeId),
+    onSuccess: () => {
+      // SUCCESS! Invalidate the query *immediately*.
+      // This updates the coins/inventory in the background
+      // *while* the animation is still playing.
+      queryClient.invalidateQueries({ queryKey: ["user", user?.uid] });
     },
-    onError: (error: any) => {
-      Toast.show({
-        type: "error",
-        text1: "An Error Occurred",
-        text2: error.message || "Could not open chest.",
-      });
-      animationRef.current?.reset(); // Reset animation on fail
-    },
+    // We will handle the error in the `handleOpenChest` function's
+    // try/catch block, so `onError` here is not strictly needed
+    // unless you want a fallback.
   });
 
-  // ✅ 7. THIS IS THE NEW LOADING CHECK
-  // It only shows "Loading..." on the *initial* load, not on re-fetches.
   if (authLoading || userLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
@@ -167,9 +160,7 @@ export default function Treasure() {
 
   const hasChest = (userData?.chestCount ?? 0) > 0;
 
-  // ✅ 8. SIMPLIFIED handleBuyItem
   const handleBuyItem = (itemId: string, itemCost: number) => {
-    // Check if any mutation is already running
     if (buyItemMutation.isPending || openChestMutation.isPending || !user) return;
 
     if ((userData?.senyasCoins ?? 0) < itemCost) {
@@ -180,42 +171,58 @@ export default function Treasure() {
       });
       return;
     }
-    // Just call mutate!
     buyItemMutation.mutate({ itemId, itemCost });
   };
 
-  // ✅ 9. SIMPLIFIED handleOpenChest
-  const handleOpenChest = () => {
+  // ✅ --- MODIFICATION ---
+  // This function is now async and uses Promise.all
+  const handleOpenChest = async () => {
     if (openChestMutation.isPending || buyItemMutation.isPending || !user) return;
 
-    animationRef.current?.play(); // Play the animation
+    // 1. Determine the prize *immediately*
+    const prize = prizePool[Math.floor(Math.random() * prizePool.length)];
 
-    // Wait for animation
-    setTimeout(() => {
-      const prize = prizePool[Math.floor(Math.random() * prizePool.length)];
-      // Just call mutate!
-      openChestMutation.mutate(prize.id);
-    }, 3000); // 3 seconds for your animation
+    // 2. Start the animation *immediately*
+    animationRef.current?.play();
+
+    // 3. Create a promise that resolves after the animation duration (3000ms)
+    const animationPromise = new Promise((resolve) => setTimeout(resolve, 3000));
+
+    try {
+      // 4. Wait for BOTH the network request AND the animation to finish
+      await Promise.all([
+        openChestMutation.mutateAsync(prize.id), // The network request
+        animationPromise, // The 3-second timer
+      ]);
+
+      // 5. Once BOTH are done, show the modal.
+      setWonPrize(prize);
+    } catch (error: any) {
+      // 6. If anything fails (network request), show an error
+      Toast.show({
+        type: "error",
+        text1: "An Error Occurred",
+        text2: error.message || "Could not open chest.",
+      });
+      animationRef.current?.reset(); // Reset animation on fail
+    }
   };
 
-  // ✅ 10. CRITICAL: handleCloseLootModal now invalidates data
   const handleCloseLootModal = () => {
     setWonPrize(null);
     animationRef.current?.reset();
-    // NOW we refetch the user data, after the modal is closed
-    // This will happen silently in the background.
-    queryClient.invalidateQueries({ queryKey: ["user", user?.uid] });
+    // No need to invalidate queries here, it was already done
+    // in openChestMutation.onSuccess
   };
 
   const handleMainButtonPress = () => {
     if (hasChest) {
       handleOpenChest();
     } else {
-      router.push("./index");
+      router.push("/(main_interface)");
     }
   };
 
-  // Check if *any* action is happening
   const isBusy =
     buyItemMutation.isPending ||
     openChestMutation.isPending ||
@@ -228,7 +235,6 @@ export default function Treasure() {
         <BG width={"100%"} height={"100%"} scaleX={1.2} scaleY={1.2} />
       </View>
 
-      {/* ✅ OPTIONAL: Show a subtle loading spinner during background fetch */}
       {isUserFetching && !userLoading && (
         <View className="absolute top-4 right-4 z-50">
           <ActivityIndicator size="small" color="#0000ff" />
@@ -240,9 +246,10 @@ export default function Treasure() {
         {hasChest ? (
           <>
             <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
-              You have {userData?.chestCount}. Open it to receive random item
+              You have {userData?.chestCount} right now. Get 8 questions in a
+              row to open 1!
             </Text>
-            <View className="w-full h-36 md:h-72">
+            <View className="w-full h-44 md:h-72 ">
               <LottieView
                 ref={animationRef}
                 source={chestAnimation} //
@@ -266,7 +273,6 @@ export default function Treasure() {
           </>
         )}
 
-        {/* ✅ 11. Main button disabled state updated */}
         <TouchableOpacity
           className="w-2/3 p-4 bg-[#27D700] rounded-xl mt-4"
           onPress={handleMainButtonPress}
@@ -280,7 +286,6 @@ export default function Treasure() {
 
       {/* Items */}
       <View className="w-11/12 flex-col justify-center items-center md:mt-8 ">
-        {/* ✅ 12. All items disabled state updated */}
         <View className="flex-row justify-center gap-24 mb-4 w-2/3">
           <Item
             itemName="XP Multiply"

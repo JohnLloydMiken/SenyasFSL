@@ -20,6 +20,7 @@ import {
   sendEmailVerification as firebaseSendEmailVerification,
   updatePassword,
   User,
+  getAuth,
 } from "firebase/auth";
 
 export function mapAuthError(error: any): string {
@@ -170,18 +171,28 @@ export async function logoutUser() {
   }
 }
 
-export async function reauthenticateUser(password: string): Promise<void> {
-  try {
-    const user = auth.currentUser;
-    if (!user || !user.email) {
-      throw new Error("Authentication required. Please log in again.");
-    }
-    const credential = EmailAuthProvider.credential(user.email, password);
-    await reauthenticateWithCredential(user, credential);
-  } catch (error) {
-    throw new Error(mapAuthError(error));
+export const reauthenticateUser = async (password: string) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user || !user.email) {
+    throw new Error("No user is currently signed in.");
   }
-}
+
+  const credential = EmailAuthProvider.credential(user.email, password);
+
+  try {
+    await reauthenticateWithCredential(user, credential);
+    console.log("User re-authenticated successfully.");
+  } catch (error: any) {
+    console.error("Re-authentication failed:", error);
+    // Map Firebase error codes to user-friendly messages
+    if (error.code === "auth/wrong-password") {
+      throw new Error("The password you entered is incorrect.");
+    }
+    throw new Error("Re-authentication failed. Please try again.");
+  }
+};
 
 export async function updateUserProfile(
   data: UpdateUserProfileData
