@@ -30,7 +30,7 @@ const AwardSection: React.FC<Props> = ({
         <GradientText text={`Awards (${unlockedCount})`} />
       </View>
 
-      <View className="w-full flex flex-row flex-wrap items-center justify-center gap-y-4 mt-4 px-4">
+      <View className="w-full flex flex-row flex-wrap items-center justify-center  px-4">
         {awards.map((a) => (
           <AwardItem
             key={a.id}

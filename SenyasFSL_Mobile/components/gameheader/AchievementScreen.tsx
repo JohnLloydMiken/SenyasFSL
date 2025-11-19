@@ -6,9 +6,9 @@ import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 
 // --- Imports for dynamic data ---
-import { useAchievementStore } from "@/hooks/useAchievementStore"; // New store
+import { useAchievementStore } from "@/hooks/useAchievementStore";
 import { useUserStore } from "@/utils/store/useUserStore";
-import { ContentAchievement } from "@/shared/types"; // Shared type
+import { ContentAchievement } from "@/shared/types";
 
 // --- Component Imports ---
 import AwardSection from "@/components/gameheader/AwardSection";
@@ -21,8 +21,10 @@ import Fact_locked from "@/assets/svgs/fact_lock.svg";
 
 import type { SvgProps } from "@/components/gameheader";
 
-// This new type combines the DB data with the user's unlock status
 export type ProcessedAchievement = ContentAchievement & { unlocked: boolean };
+
+// FIXED: Create a stable empty array outside the component
+const EMPTY_ACHIEVEMENTS: string[] = [];
 
 const AchievementScreen: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<ProcessedAchievement | null>(null);
@@ -37,16 +39,24 @@ const AchievementScreen: React.FC = () => {
   const { allAchievements, isLoading: isLoadingAchievements, fetchAchievements } =
     useAchievementStore();
 
-  // 2. Trigger the fetch on component mount (it will only run once)
+  // 2. Trigger the fetch on component mount
   useEffect(() => {
     fetchAchievements();
   }, [fetchAchievements]);
 
-  // 3. Get user's unlocked achievement IDs from Zustand store
-  const userAchievementIds = useUserStore((state) => state.userData?.achievements || []);
+  // 3. FIXED: Get user's unlocked achievement IDs with stable fallback
+  const userAchievementIds = useUserStore(
+    useCallback(
+      (state) => state.userData?.achievements ?? EMPTY_ACHIEVEMENTS,
+      []
+    )
+  );
 
   // Use a Set for efficient O(1) lookups
-  const userAchievementIdSet = useMemo(() => new Set(userAchievementIds), [userAchievementIds]);
+  const userAchievementIdSet = useMemo(
+    () => new Set(userAchievementIds),
+    [userAchievementIds]
+  );
 
   // 4. Combine master list with user's unlocked status
   const processedAchievements = useMemo<ProcessedAchievement[]>(() => {
@@ -68,7 +78,7 @@ const AchievementScreen: React.FC = () => {
     [processedAchievements]
   );
 
-  // 6. Update handlers to use the new type
+  // 6. Update handlers
   const handleItemPress = useCallback((item: ProcessedAchievement) => {
     setSelectedItem(item);
     bottomSheetRef.current?.snapToIndex(0);
@@ -80,7 +90,7 @@ const AchievementScreen: React.FC = () => {
     }
   }, []);
 
-  // 7. Update counts based on the new dynamic data
+  // 7. Update counts
   const unlockedAwardsCount = useMemo(
     () => awardsData.filter((a) => a.unlocked).length,
     [awardsData]
@@ -91,7 +101,7 @@ const AchievementScreen: React.FC = () => {
     [factsData]
   );
 
-  // Show a loading spinner while fetching the master list
+  // Show a loading spinner while fetching
   if (isLoadingAchievements) {
     return (
       <GestureHandlerRootView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -101,14 +111,14 @@ const AchievementScreen: React.FC = () => {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ScrollView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 , paddingVertical:16}}>
+      <ScrollView style={{ flex: 1, }}>
         <View>
           <AwardSection
             awards={awardsData}
             unlockedCount={unlockedAwardsCount}
             svgSize={svgSize}
-            lockedIcon={Awards_lock} // Pass the locked icon component directly
+            lockedIcon={Awards_lock}
             onItemPress={handleItemPress}
           />
         </View>
@@ -118,7 +128,7 @@ const AchievementScreen: React.FC = () => {
             facts={factsData}
             unlockedCount={unlockedFactsCount}
             svgSize={svgSize}
-            lockedIcon={Fact_locked} // Pass the locked icon component directly
+            lockedIcon={Fact_locked}
             onItemPress={handleItemPress}
           />
         </View>
@@ -135,7 +145,6 @@ const AchievementScreen: React.FC = () => {
       >
         <BottomSheetView style={{ flex: 1 }}>
           <ScrollView showsVerticalScrollIndicator={false}>
-            {/* BottomSheetContent now only needs the item */}
             <BottomSheetContent item={selectedItem} />
           </ScrollView>
         </BottomSheetView>

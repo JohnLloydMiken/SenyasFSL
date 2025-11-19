@@ -30,7 +30,7 @@ const FactSection: React.FC<Props> = ({
         <GradientText text={`Facts (${unlockedCount})`} />
       </View>
 
-      <View className="w-full flex flex-row flex-wrap items-center justify-center gap-y-4 mt-4 px-4">
+      <View className="w-full flex flex-row flex-wrap items-center justify-center  px-4">
         {facts.map((f) => (
           <FactItem
             key={f.id}

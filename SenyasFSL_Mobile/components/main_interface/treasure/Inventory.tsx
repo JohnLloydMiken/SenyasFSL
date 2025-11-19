@@ -30,8 +30,14 @@ const Inventory: React.FC<InventoryProps> = React.memo(
     const svgSize = useMemo(() => (width < 768 ? 40 : 60), [width]);
 
     const { user } = useAuthStore();
-    const { userData, loading: userLoading } = useUserStore();
-    
+    const { userData, loading: userLoading, fetchUserData } = useUserStore();
+    useEffect(() => {
+      // If we have an authenticated user, but no user data in the store yet, fetch it.
+      if (user && !userData) {
+        fetchUserData(user);
+      }
+    }, [user, userData, fetchUserData]);
+
     // ✅ Get the item functions from the game store
     const useItem = useGameStore((state) => state.useItem);
     const isUsingItem = useGameStore((state) => state.isUsingItem);
@@ -113,7 +119,8 @@ const Inventory: React.FC<InventoryProps> = React.memo(
 
     // ✅ This function calls the game store to use the item
     const handleItemPress = useCallback(
-      (itemId: ItemId, itemCost: number) => { // Receives both
+      (itemId: ItemId) => {
+        // Receives both
         if (userLoading || !userData?.inventory) return;
 
         // Calls the 'useItem' function from useGameStore
@@ -130,9 +137,25 @@ const Inventory: React.FC<InventoryProps> = React.memo(
 
     if (userLoading) {
       return (
-        <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-          <Text>Loading...</Text>
-        </View>
+        <TouchableOpacity
+          onPress={handlePress}
+          disabled={true}
+          className={`absolute bottom-0 my-3 w-14 h-14 rounded-xl ${
+            isPressed ? "opacity-0" : "opacity-100"
+          }`}
+        >
+          <View
+            className={`w-full h-[93%] rounded-xl flex justify-center items-center ${
+              isPressed ? "bg-[#E6E2E2]" : "bg-[#FB990F]"
+            }`}
+          >
+            <Bag
+              width={svgSize}
+              height={svgSize}
+              color={isPressed ? "gray" : "white"}
+            />
+          </View>
+        </TouchableOpacity>
       );
     }
 
@@ -202,7 +225,7 @@ const Inventory: React.FC<InventoryProps> = React.memo(
                     <View key={item.id} className="gap-2 items-center">
                       <ItemInGame
                         itemName={item.name}
-                        itemCost={item.cost}
+                       
                         itemIcon={item.icon}
                         itemId={item.id} // ✅ This was missing
                         onPress={handleItemPress} // ✅ This was missing
