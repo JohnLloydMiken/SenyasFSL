@@ -44,10 +44,12 @@ const AwardItem: React.FC<Props> = ({ award, svgSize, lockedIcon: LockedIcon, on
       onPress={() => onPress(award)}
       className="w-1/3 mb-4 flex flex-col items-center"
       accessible
-      accessibilityLabel={`Award: ${award.title}`} // Use new prop 'title'
-      accessibilityHint="Tap to view award details"
-      // You can optionally disable tapping on locked items
-      // disabled={!award.unlocked}
+      accessibilityLabel={`Award: ${award.title}`}
+      accessibilityHint={award.unlocked ? "Tap to view award details" : "This award is locked"}
+      accessibilityState={{ disabled: !award.unlocked }}
+      // FIXED: Disable the button when locked
+      disabled={!award.unlocked}
+      activeOpacity={award.unlocked ? 0.7 : 1} // No visual feedback when locked
     >
       {/* This View ensures consistent sizing for both SVG and Image */}
       <View style={{ width: svgSize, height: svgSize }} className="items-center justify-center">
@@ -57,10 +59,10 @@ const AwardItem: React.FC<Props> = ({ award, svgSize, lockedIcon: LockedIcon, on
       <Text 
         className="text-center mt-2 text-sm font-medium" 
         numberOfLines={2}
-        // Optionally make locked items' text greyed out
+        // Grey out locked items' text
         style={{ opacity: award.unlocked ? 1 : 0.5 }}
       >
-        {award.title} {/* Use new prop 'title' */}
+        {award.title}
       </Text>
     </TouchableOpacity>
   );

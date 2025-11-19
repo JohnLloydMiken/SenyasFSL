@@ -38,8 +38,12 @@ const FactItem: React.FC<Props> = ({ fact, svgSize, lockedIcon: LockedIcon, onPr
       onPress={() => onPress(fact)}
       className="w-1/3 mb-4 flex flex-col items-center"
       accessible
-      accessibilityLabel={`Fact: ${fact.title}`} // Use new prop 'title'
-      accessibilityHint="Tap to view fact details"
+      accessibilityLabel={`Fact: ${fact.title}`}
+      accessibilityHint={fact.unlocked ? "Tap to view fact details" : "This fact is locked"}
+      accessibilityState={{ disabled: !fact.unlocked }}
+      // FIXED: Disable the button when locked
+      disabled={!fact.unlocked}
+      activeOpacity={fact.unlocked ? 0.7 : 1} // No visual feedback when locked
     >
       <View style={{ width: svgSize, height: svgSize }} className="items-center justify-center">
         {renderIcon()}
@@ -50,7 +54,7 @@ const FactItem: React.FC<Props> = ({ fact, svgSize, lockedIcon: LockedIcon, onPr
         numberOfLines={2}
         style={{ opacity: fact.unlocked ? 1 : 0.5 }} // Grey out locked items
       >
-        {fact.title} {/* Use new prop 'title' */}
+        {fact.title}
       </Text>
     </TouchableOpacity>
   );

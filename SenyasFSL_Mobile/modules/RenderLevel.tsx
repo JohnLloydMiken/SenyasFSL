@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 // 🚫 REMOVE (This is the old interface)
-// import { Level, LevelSection } from "../modules/types/interface"; 
+// import { Level, LevelSection } from "../modules/types/interface";
 // ✅ ADD (This is the one from your other files)
 import { Level, LevelSection } from "@/modules/types/interface";
 import LevelItem from "../modules/LevelItem";
@@ -46,7 +46,7 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
 
   // ✅ --- START: ADD THESE HOOKS ---
   // Get the authenticated user
-  const { user } = useAuthStore(); 
+  const { user } = useAuthStore();
   // Fetch user data using React Query, just like in your other components
   const { data: userData, isLoading: userLoading } = useQuery({
     queryKey: ["user", user?.uid],
@@ -63,64 +63,63 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
   // We will now calculate progress inside `sectionsData`.
 
   const sectionsData = useMemo(() => {
-    // Wait for all data to be ready
-    if (!sections || sections.length === 0 || !userData) return [];
+  // Wait for all data to be ready
+  if (!sections || sections.length === 0 || !userData) return [];
 
-    // Get the user's progress object, e.g., { 'section-1': 1, 'section-2': 0 }
-    const progressMap = userData.progress || {};
+  // Get the user's progress object, e.g., { 'section-1': 1, 'section-2': 0 }
+  const progressMap = userData.progress || {};
 
-    // Sort sections by order just to be safe
-    const sortedSections = [...sections].sort((a, b) => a.order - b.order);
+  // Sort sections by order just to be safe
+  const sortedSections = [...sections].sort((a, b) => a.order - b.order);
 
-    return sortedSections.map((section, sectionIndex) => {
-      // --- This logic is now copied from your web/home/Home.tsx ---
+  return sortedSections.map((section, sectionIndex) => {
+    // 1. Get progress for *this specific section*
+    const highestLevelCompleted = progressMap[section.id] || 0;
 
-      // 1. Get progress for *this specific section*
-      const highestLevelCompleted = progressMap[section.id] || 0;
+    // 2. Check if the *previous* section is fully completed
+    const prevSection = sortedSections[sectionIndex - 1];
+    let prevSectionCompleted = true; // Section 1 is always unlocked
 
-      // 2. Check if the *previous* section is fully completed
-      const prevSection = sortedSections[sectionIndex - 1];
-      let prevSectionCompleted = true; // Section 1 is always unlocked
+    if (prevSection) {
+      const prevSectionProgress = progressMap[prevSection.id] || 0;
+      prevSectionCompleted = prevSectionProgress >= prevSection.levels.length;
+    }
 
-      if (prevSection) {
-        const prevSectionProgress = progressMap[prevSection.id] || 0;
-        prevSectionCompleted = prevSectionProgress >= prevSection.levels.length;
-      }
+    // 3. Determine if this section is unlocked
+    const isSectionUnlocked = sectionIndex === 0 || prevSectionCompleted;
 
-      // 3. Determine if this section is unlocked
-      const isSectionUnlocked = sectionIndex === 0 || prevSectionCompleted;
+    // 4. Find the highest level ID the user can *access* in this section
+    const highestAccessibleLevelId = isSectionUnlocked
+      ? Math.min(highestLevelCompleted + 1, section.levels.length)
+      : 0;
 
-      // 4. Find the highest level ID the user can *access* in this section
-      // This is the corrected logic
-      const highestAccessibleLevelId = isSectionUnlocked
-        ? Math.min(highestLevelCompleted + 1, section.levels.length)
-        : 0; // If section is locked, no levels are accessible
+    // ✅ 5. Calculate the CURRENT level to display in the header
+    // This should be the level the user is currently on (last completed + 1)
+    // But capped at the total number of levels in the section
+    const currentLevelToDisplay = isSectionUnlocked
+      ? Math.min(highestLevelCompleted + 1, section.levels.length)
+      : 1; // Show level 1 if section is locked
 
-      // --- End of web logic ---
-
-      // Map the levels for the SectionList
-      const levelData: Level[] = section.levels.map((levelId, levelIndex) => {
-        const isLastLevelInSection = levelIndex === section.levels.length - 1;
-        return {
-          id: levelId,
-          section: section.order, //
-          isBoss: isLastLevelInSection,
-          // ✅ NEW UNLOCK LOGIC:
-          // A level is unlocked if its ID is less than or equal to
-          // the highest *accessible* level for *this section*.
-          isUnlocked: levelId <= highestAccessibleLevelId,
-          position: section.positions[levelIndex], //
-        };
-      });
-
+    // Map the levels for the SectionList
+    const levelData: Level[] = section.levels.map((levelId, levelIndex) => {
+      const isLastLevelInSection = levelIndex === section.levels.length - 1;
       return {
-        title: section.name, //
-        index: section.order,
-        currentLevel: levelData[0]?.id || 1,
-        data: levelData,
+        id: levelId,
+        section: section.order,
+        isBoss: isLastLevelInSection,
+        isUnlocked: levelId <= highestAccessibleLevelId,
+        position: section.positions[levelIndex],
       };
     });
-  }, [sections, userData]); // ✅ Now depends on both sections and userData
+
+    return {
+      title: section.name,
+      index: section.order,
+      currentLevel: currentLevelToDisplay, // ✅ FIXED: Now uses actual progress
+      data: levelData,
+    };
+  });
+}, [sections, userData]);// ✅ Now depends on both sections and userData
 
   // ✅ Compute initial section to display based on user progress
   const initialSectionIndex = useMemo(() => {
@@ -186,20 +185,23 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
   }, [sectionsData.length]);
 
   const handleScrollUp = useCallback(() => {
-    setCurrentSection((prev) => Math.max(0, prev + 1));
+    setCurrentSection((prev) => Math.max(0, prev - 1));
   }, []);
 
-  const handleLevelPress = useCallback((level: Level): void => {
-  if (level.isUnlocked) {
-    // Find the section this level belongs to
-    const section = sections.find((s) => s.order === level.section);
-    if (section) {
-      setSectionOrder(section.order); // ✅ store the current section ID
-    }
+  const handleLevelPress = useCallback(
+    (level: Level): void => {
+      if (level.isUnlocked) {
+        // Find the section this level belongs to
+        const section = sections.find((s) => s.order === level.section);
+        if (section) {
+          setSectionOrder(section.order); // ✅ store the current section ID
+        }
 
-    router.push(`/LevelSplashScreen?nextRoute=level&levelId=${level.id}`);
-  }
-}, [sections]);
+        router.push(`/LevelSplashScreen?nextRoute=level&levelId=${level.id}`);
+      }
+    },
+    [sections]
+  );
 
   // Renderers
   const renderLevelItem: SectionListRenderItem<Level, LevelSection> =
@@ -215,7 +217,7 @@ const RenderLevel: React.FC<RenderLevelProps> = ({ sections }) => {
       <LevelHeader
         title={section.title}
         section={section.index}
-        level={section.currentLevel + 1}
+        level={section.currentLevel}
       />
     ),
     []

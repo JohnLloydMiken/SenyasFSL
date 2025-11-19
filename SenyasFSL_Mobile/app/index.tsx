@@ -1,4 +1,6 @@
 // app/index.tsx
+// --- MODIFIED FILE ---
+
 import { useEffect, useRef, useState } from "react";
 import { View, StyleSheet, Animated } from "react-native";
 import Splash1 from "../components/authentication/splash1";
@@ -6,16 +8,23 @@ import Splash2 from "../components/authentication/splashScreen";
 import GetStarted from "@/app/(auth)/index";
 import { initDatabase } from "@/services/db/database";
 import { syncData } from "@/services/syncService";
-import DownloadingScreen from "../components/main_interface/DownloadingScreen"; // 👈 Import new screen
+import DownloadingScreen from "../components/main_interface/DownloadingScreen";
+
+// --- MODIFICATION: Import router and auth store ---
+import { router } from "expo-router";
+import { useAuthStore } from "@/utils/store/useAuthStore";
+// --- END MODIFICATION ---
 
 export default function Splash() {
-  // 1. Updated state to include "downloading"
   const [screen, setScreen] = useState<
     "splash1" | "splash2" | "downloading" | "main"
   >("splash1");
   
-  // 2. New state to track sync
   const [isSyncComplete, setIsSyncComplete] = useState(false);
+  
+  // --- MODIFICATION: Get auth state ---
+  const { user, loading: authLoading } = useAuthStore();
+  // --- END MODIFICATION ---
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(500)).current; // Off-screen right
@@ -38,39 +47,31 @@ export default function Splash() {
     }).start();
   };
 
-  // 3. This effect runs once on app start
+  // This effect runs once on app start (no changes here)
   useEffect(() => {
-    // This function will run your setup and sync
     const initializeApp = async () => {
-      // 1. Create the local tables
       initDatabase();
       console.log("APP START: Database initialized.");
 
-      // 2. Start the sync process
       try {
         console.log("APP START: Kicking off data sync...");
         await syncData();
         console.log("APP START: Sync completed.");
       } catch (error) {
         console.error("APP START: Sync failed.", error);
-        // You could add logic here to show a "Retry" button
       } finally {
-        // 3. Mark sync as complete, whether it succeeded or failed
         setIsSyncComplete(true);
       }
     };
 
-    // Start the app initialization
     initializeApp();
 
-    // Start the splash screen timers
     fadeIn();
     const timer1 = setTimeout(() => {
       setScreen("splash2");
     }, 1000);
 
     const timer2 = setTimeout(() => {
-      // 4. After 3 seconds, move to the "downloading" step
       setScreen("downloading");
     }, 3000);
 
@@ -78,17 +79,30 @@ export default function Splash() {
       clearTimeout(timer1);
       clearTimeout(timer2);
     };
-  }, []); // Empty array ensures this runs only once
+  }, []);
 
-  // 5. This new effect watches for the sync to complete
+  // --- MODIFICATION: This effect now handles the routing logic ---
   useEffect(() => {
-    // If we are on the 'downloading' screen AND the sync is finished...
-    if (screen === "downloading" && isSyncComplete) {
-      // ...then, and only then, move to the main app (login)
-      setScreen("main");
-      slideIn();
+    // We wait until 3 things are true:
+    // 1. We are on the 'downloading' screen step
+    // 2. The data sync is finished
+    // 3. The auth listener has finished checking for a user
+    if (screen === "downloading" && isSyncComplete && !authLoading) {
+      
+      // Now, we check if a user was found
+      if (user) {
+        // USER IS LOGGED IN: Go directly to the main app
+        // We use 'replace' to clear the navigation stack
+        router.replace("./(main_interface)/");
+      } else {
+        // NO USER: Show the login/register screen
+        setScreen("main");
+        slideIn();
+      }
     }
-  }, [screen, isSyncComplete]); // Runs when 'screen' or 'isSyncComplete' changes
+  // We must add all the variables we check to the dependency array
+  }, [screen, isSyncComplete, authLoading, user, router]); 
+  // --- END MODIFICATION ---
 
   return (
     <View style={styles.container}>
@@ -103,9 +117,9 @@ export default function Splash() {
         </Animated.View>
       )}
 
-      {/* 6. New render logic:
-        Show the DownloadingScreen if we are in the 'downloading' state
-        AND the sync is NOT yet complete.
+      {/* This logic is still correct. It will show the downloading screen
+        while 'isSyncComplete' is false. Once it becomes true, the
+        useEffect above will trigger and either redirect or set screen to 'main'.
       */}
       {screen === "downloading" && !isSyncComplete && (
         <Animated.View style={[styles.fullscreen, { opacity: fadeAnim }]}>
@@ -113,8 +127,8 @@ export default function Splash() {
         </Animated.View>
       )}
 
-      {/* This will only render if screen === "main", which can only
-        happen after the 'downloading' step is finished.
+      {/* This will now ONLY render if the useEffect decides there is
+        no user and sets screen to 'main'.
       */}
       {screen === "main" && (
         <Animated.View

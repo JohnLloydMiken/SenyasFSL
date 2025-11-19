@@ -27,6 +27,15 @@ interface itemCardProps {
   disabled?: boolean;
 }
 
+interface itemInGameProps {
+  itemName: string;
+  itemIcon: string;
+  inGame?: boolean;
+  itemId: ItemId; // ✅ Use the ItemId type
+  onPress: (itemId: ItemId) => void; // ✅ Use the ItemId type
+  disabled?: boolean;
+}
+
 const svgMap: { [key: string]: any } = {
   Protection,
   Potion,
@@ -126,9 +135,9 @@ const Item: React.FC<itemCardProps> = ({
 };
 
 // This is the smaller in-game version
-export const ItemInGame: React.FC<itemCardProps> = ({
+export const ItemInGame: React.FC<itemInGameProps> = ({
   itemName,
-  itemCost,
+  
   itemIcon,
   itemId,
   onPress,
@@ -136,7 +145,7 @@ export const ItemInGame: React.FC<itemCardProps> = ({
 }) => {
   const SvgIcon = svgMap[itemIcon];
   const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 20 : 50;
+  const svgSize = width < 768 ? 40 : 50;
   const svgStar = width < 768 ? 15 : 30;
   const containerWidth = width < 768 ? 100 : 120;
   const containerHeight = width < 768 ? 100 : 120;
@@ -152,7 +161,7 @@ export const ItemInGame: React.FC<itemCardProps> = ({
       }}
     >
       <TouchableOpacity
-        onPress={() => onPress(itemId, itemCost)}
+        onPress={() => onPress(itemId)}
         disabled={disabled}
         className="w-full h-full bg-[#FAF3E0] rounded-2xl p-4 flex justify-center items-center flex-col mx-auto my-0 gap-1"
       >
@@ -177,30 +186,6 @@ export const ItemInGame: React.FC<itemCardProps> = ({
             </Text>
           </LinearGradient>
         </MaskedView>
-
-        <View className="w-full flex justify-evenly items-center flex-row md:justify-center md:gap-2">
-          <Star width={svgStar} height={svgStar} />
-          <MaskedView
-            maskElement={
-              <View className="w-full bg-transparent items-center">
-                <Text className="font-PoppinsBold text-lg md:text-2xl">
-                  {itemCost}
-                </Text>
-              </View>
-            }
-          >
-            <LinearGradient
-              colors={costGradient}
-              start={{ x: 0, y: -0.1 }}
-              end={{ x: 0, y: 0.8 }}
-              className="w-full items-center"
-            >
-              <Text className="font-PoppinsBold text-lg opacity-0 md:text-2xl">
-                {itemCost}
-              </Text>
-            </LinearGradient>
-          </MaskedView>
-        </View>
       </TouchableOpacity>
     </LinearGradient>
   );

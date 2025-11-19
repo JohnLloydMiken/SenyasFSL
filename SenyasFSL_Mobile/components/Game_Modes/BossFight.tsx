@@ -164,7 +164,7 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
     }
 
     const commonProps = {
-      key: step.id,
+      
       enPrompt: step.enPrompt,
       filPrompt: step.filPrompt,
       options: step.options,
@@ -176,13 +176,13 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
 
     switch (step.type?.toLowerCase()) {
       case "fill_in_the_gap":
-        return <BossFillTheGap {...commonProps} message="Alright!" />;
+        return <BossFillTheGap {...commonProps} key= {step.id}  />;
       case "multiple_choice":
-        return <BossMC {...commonProps} />;
+        return <BossMC {...commonProps} key= {step.id} />;
       case "true_or_false":
-        return <BossTrueOrFalse {...commonProps} />;
+        return <BossTrueOrFalse {...commonProps} key= {step.id} />;
       case "multiple_choice_video":
-        return <BossVMC {...commonProps} />;
+        return <BossVMC {...commonProps} key= {step.id} />;
       default:
         return (
           <View style={styles.center}>

@@ -37,7 +37,7 @@ interface FillTheGapProps {
   filPrompt: string;
   videoURL: string;
   options: readonly QuestionOption[];
-  message: string;
+ 
   onPress: () => void;
   onAnswer: (isCorrect: boolean) => void;
   hearts: number;
@@ -49,7 +49,6 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
   filPrompt,
   videoURL,
   options,
-  message,
   onPress,
   onAnswer,
   hearts,
@@ -239,8 +238,8 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
         )}
       </View>
       {/* Prompts */}
-      <Text className="font-PoppinsBold text-2xl md:text-3xl">{enPrompt}</Text>
-      <Text className="font-PoppinsLightItallic text-xl md:text-3xl">
+      <Text className="font-PoppinsBold text-2xl md:text-3xl text-center w-11/12">{enPrompt}</Text>
+      <Text className="font-PoppinsLightItallic text-xl md:text-3xl text-center w-11/12">
         {filPrompt}
       </Text>
 
@@ -325,11 +324,7 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
           </View>
         )}
 
-        {hasChecked && (
-          <Text className="text-center text-white font-NunitoBold text-sm">
-            {message}
-          </Text>
-        )}
+        
 
         {choice && !hasChecked ? (
           <View className="w-2/3 mx-auto">

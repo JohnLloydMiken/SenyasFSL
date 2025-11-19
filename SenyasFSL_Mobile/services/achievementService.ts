@@ -42,22 +42,31 @@ export const getAllAchievements = async (): Promise<ContentAchievement[]> => {
 };
 
 /**
- * Calls the secure backend function to check for and grant any new achievements.
+ * Calls the cloud function 'checkAndGrantAchievements' to see if the
+ * current user has unlocked any new achievements.
+ *
+ * @returns A promise that resolves with the result from the cloud function,
+ * which includes an array of newly unlocked achievements.
  */
-export const checkAchievements = async (): Promise<CheckAchievementsResult> => {
-  try {
-    const checkAchievementsFunction = httpsCallable<
-      CheckAchievementsData,
-      CheckAchievementsResult
-    >(functions, "checkAndGrantAchievements");
+export const checkAchievements =
+  async (): Promise<CheckAchievementsResult> => {
+    try {
+      // Get a reference to the cloud function
+      const checkAchievementsFunction = httpsCallable<
+        CheckAchievementsData,
+        CheckAchievementsResult
+      >(functions, "checkAndGrantAchievements");
 
-    const result = await checkAchievementsFunction({});
-    return result.data;
-  } catch (error) {
-    console.error("Error checking for new achievements:", error);
-    throw new Error("Failed to check for achievements.");
-  }
-};
+      // Call the function with empty data ({})
+      const result = await checkAchievementsFunction({});
+
+      // Return the 'data' part of the result
+      return result.data;
+    } catch (error) {
+      console.error("Error checking for new achievements:", error);
+      throw new Error("Failed to check for achievements.");
+    }
+  };
 
 // =====================================================================
 // ADMIN-FACING SERVICE (For your admin dashboard)

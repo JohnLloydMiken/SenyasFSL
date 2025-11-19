@@ -139,7 +139,7 @@ function TabsWithBottomSheet() {
   if (authLoading || userLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Loading...</Text>
+        <Text>Loading User Progress...</Text>
       </View>
     );
   }
