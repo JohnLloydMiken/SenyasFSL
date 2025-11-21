@@ -1,3 +1,4 @@
+// components/ResetProgressModal.tsx
 import React, { useState, useEffect } from "react";
 import {
   Modal,
@@ -6,16 +7,12 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  Alert,
   ActivityIndicator,
   Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useResetProgress } from "@/hooks/useResetProgress"; // Import our new hook
-import FSL_Wait from "@/assets/svgs/Wait.svg"
-// Make sure to add this image to your assets
-
+import { useResetProgress } from "@/hooks/useResetProgress";
+import FSL_Wait from "@/assets/svgs/Wait.svg";
 
 type ResetProgressModalProps = {
   visible: boolean;
@@ -30,15 +27,10 @@ const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    mutate: resetProgress,
-    isPending: loading,
-    error,
-  } = useResetProgress();
+  const { mutate: resetProgress, isPending: loading, error } = useResetProgress();
 
   const isValid = securityInput === "RESET" && password.length > 0;
 
-  // Reset fields when modal is opened
   useEffect(() => {
     if (visible) {
       setSecurityInput("");
@@ -52,25 +44,20 @@ const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
 
     resetProgress(password, {
       onSuccess: () => {
-        onClose(); // Close modal on success
+        onClose(); // Close modal only, navigation handled by the hook
       },
     });
   };
 
   return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <Modal animationType="fade" transparent visible={visible}>
       <Pressable
         style={styles.backdrop}
         onPress={onClose}
         className="flex-1 justify-center items-center p-4 bg-black/50"
       >
         <Pressable
-          onPress={(e) => e.stopPropagation()} // Prevent closing modal when pressing inside
+          onPress={(e) => e.stopPropagation()}
           className="w-full max-w-md bg-[#FAF3E0] rounded-2xl p-6"
         >
           <TouchableOpacity
@@ -87,24 +74,22 @@ const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
           <Text className="text-center text-xl font-PoppinsBold mb-2 text-gray-900">
             Are you sure?
           </Text>
+
           <Text className="text-center text-sm text-gray-800 mb-6 px-2 font-PoppinsMedium">
-            This action resets your progress and is irreversible. Please type{" "}
-            <Text className="font-PoppinsBold text-red-600">“RESET”</Text> into
-            the field below and enter your password.
+            This action resets your progress and is irreversible. Type{" "}
+            <Text className="font-PoppinsBold text-red-600">“RESET”</Text> and enter password.
           </Text>
 
           {error && (
             <Text className="text-center text-sm text-red-600 mb-4 font-PoppinsMedium">
-              {(error as Error).message || "An unknown error occurred."}
+              {(error as Error).message}
             </Text>
           )}
 
           <View className="mb-4">
-            <Text className="mb-1 font-PoppinsBold text-gray-800">
-              Security field
-            </Text>
+            <Text className="mb-1 font-PoppinsBold text-gray-800">Security field</Text>
             <TextInput
-              placeholder="Type here..."
+              placeholder="RESET"
               value={securityInput}
               onChangeText={setSecurityInput}
               autoCapitalize="characters"
@@ -113,9 +98,7 @@ const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
           </View>
 
           <View className="mb-6">
-            <Text className="mb-1 font-PoppinsBold text-gray-800">
-              Current Password
-            </Text>
+            <Text className="mb-1 font-PoppinsBold text-gray-800">Current Password</Text>
             <View className="relative">
               <TextInput
                 placeholder="••••••••"
@@ -150,9 +133,7 @@ const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
             disabled={!isValid || loading}
             onPress={handleSubmit}
             className={`w-full py-3 rounded-xl border-[5px] ${
-              isValid
-                ? "border-red-600"
-                : "border-gray-400 opacity-50"
+              isValid ? "border-red-600" : "border-gray-400 opacity-50"
             }`}
           >
             {loading ? (
@@ -173,11 +154,8 @@ const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
   );
 };
 
-// You can use StyleSheet for the backdrop if you're not using nativewind for it
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-  },
+  backdrop: { flex: 1 },
 });
 
 export default ResetProgressModal;

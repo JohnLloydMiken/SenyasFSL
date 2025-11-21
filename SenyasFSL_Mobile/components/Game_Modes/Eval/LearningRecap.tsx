@@ -169,6 +169,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingVertical: 20,
     paddingTop: 40,
     backgroundColor: "white",
   },
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
   },
   bottomBtnContainer: {
     position: "absolute",
-    bottom: 30,
+    bottom: 40,
     alignSelf: "center",
     width: "90%",
     zIndex: 1,

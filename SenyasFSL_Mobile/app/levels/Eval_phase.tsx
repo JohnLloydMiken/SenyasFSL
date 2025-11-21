@@ -6,9 +6,10 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import CurrentStreak from "@/components/Game_Modes/Eval/CurrentStreak";
 import ReminderNotif from "@/components/Game_Modes/Eval/ReminderNotif";
 import LearningRecap from "@/components/Game_Modes/Eval/LearningRecap";
-
-import { recordActivity } from "@/services/userService"; 
-import { CompleteLevelData } from "@/shared/types"; 
+import Toast from "react-native-toast-message";
+import { checkAchievements } from "@/services/achievementService";
+import { recordActivity } from "@/services/userService";
+import { CompleteLevelData } from "@/shared/types";
 import { useSaveProgress } from "@/utils/store/useSaveProgress";
 import { useSectionStore } from "@/utils/store/useSectionStore";
 
@@ -38,7 +39,7 @@ const Eval_phase = () => {
 
   const calculateRewards = () => {
     const xpPerQuestion = 10;
-    const coinsPerQuestion = 10; 
+    const coinsPerQuestion = 10;
     const xpGained = point * xpPerQuestion;
     const senyasCoinsGained = point * coinsPerQuestion;
     const chestsEarned = point === totalQuestions && totalQuestions > 0 ? 1 : 0;
@@ -48,22 +49,20 @@ const Eval_phase = () => {
 
   // ✅ Unified Handler: Records Streak -> Calculates Rewards -> Saves Level -> Exits
   const handleSaveAndExit = async () => {
-    // 1. Start the local loading state
     setIsProcessing(true);
 
-    // 2. Record Activity (Streak) First
+    // 1. Record Activity (Streak) First
     try {
       await recordActivity();
       console.log("Streak activity recorded successfully.");
     } catch (error) {
       console.error("Failed to record streak activity:", error);
-      // We continue even if streak fails, so the user doesn't lose level progress
     }
 
-    // 3. Prepare Data
+    // 2. Prepare Data
     const { xpGained, senyasCoinsGained, chestsEarned } = calculateRewards();
     const normalizedLevelID = `s${currentSectionOrder}_lvl_${levelId}`;
-    
+
     const data: CompleteLevelData = {
       levelId: normalizedLevelID as string,
       xpGained,
@@ -71,15 +70,47 @@ const Eval_phase = () => {
       chestsEarned,
     };
 
-    // 4. Call the 'mutate' function from the hook
+    // 3. Call the 'mutate' function from the hook
     saveProgress(data, {
-      onSuccess: () => {
+      onSuccess: async () => {
+        console.log("Level progress saved successfully.");
+
+        // ✅ 4. CHECK FOR ACHIEVEMENTS AFTER SUCCESSFUL SAVE
+        try {
+          const achievementResult = await checkAchievements();
+
+          if (
+            achievementResult?.newlyUnlocked &&
+            achievementResult.newlyUnlocked.length > 0
+          ) {
+            // Show toast for each newly unlocked achievement
+            achievementResult.newlyUnlocked.forEach((achievement, index) => {
+              setTimeout(() => {
+                Toast.show({
+                  type: "success",
+                  text1: "🏆 Achievement Unlocked!",
+                  text2: achievement.title,
+                  visibilityTime: 4000,
+                  position: "top",
+                });
+              }, index * 500); // Stagger toasts by 500ms if multiple achievements
+            });
+
+            console.log(
+              "Newly unlocked achievements:",
+              achievementResult.newlyUnlocked
+            );
+          }
+        } catch (achErr) {
+          console.error("Failed to check achievements:", achErr);
+          // Don't block the user flow if achievement check fails
+        }
+
+        // 5. Continue with normal flow
         resetScore();
         router.push("/(main_interface)");
-        // Note: We don't set setIsProcessing(false) here to prevent UI flicker during nav
       },
       onError: () => {
-        // Only turn off loading if it fails, so they can try again
         setIsProcessing(false);
       },
     });
@@ -92,9 +123,7 @@ const Eval_phase = () => {
         <Stack.Screen options={{ headerShown: false, gestureEnabled: false }} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FB990F" />
-          <Text style={styles.loadingText}>
-            Saving your progress...
-          </Text>
+          <Text style={styles.loadingText}>Saving your progress...</Text>
         </View>
       </>
     );
@@ -114,7 +143,7 @@ const Eval_phase = () => {
               });
             }}
             // ✅ Just move to next step, do not save yet
-            onContinue={() => setStep("streak")} 
+            onContinue={() => setStep("streak")}
           />
         );
 

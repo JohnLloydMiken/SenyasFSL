@@ -1,33 +1,50 @@
+// hooks/useResetProgress.ts
 import { useMutation } from "@tanstack/react-query";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { Alert } from "react-native";
-import { reauthenticateUser } from "@/services/AuthService"; // Import from your service
-import { useUserStore } from "@/utils/store/useUserStore"; // Import your user store
+import { reauthenticateUser, logoutUser } from "@/services/AuthService";
+import { useUserStore } from "@/utils/store/useUserStore";
+import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Initialize Firebase Functions
 const functions = getFunctions();
 const resetProgressFn = httpsCallable(functions, "resetUserProgress");
 
 export const useResetProgress = () => {
-  const { clearUserData } = useUserStore(); // Get the clear function
+  const { clearUserData } = useUserStore();
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: async (password: string) => {
-      // 1. Re-authenticate first
+      // 1. Re-authenticate
       await reauthenticateUser(password);
-      
-      // 2. If successful, call the cloud function
-      return await resetProgressFn();
+
+      // 2. Call cloud function
+      await resetProgressFn();
+
+      return true;
     },
 
-    onSuccess: () => {
+    onSuccess: async () => {
       Alert.alert("Success", "Your progress has been reset!");
-      // Clear local user data from Zustand store to force a refresh
+
+      // 3. Clear Zustand user data
       clearUserData();
+
+      // 4. Clear TanStack Query cache
+      queryClient.clear();
+
+      // 5. Logout the user
+      await logoutUser();
+
+      // 6. Redirect to login page
+      router.replace("./(auth)/");
     },
 
     onError: (err: any) => {
-      const message = err.message || "An unknown error occurred.";
+      const message = err?.message || "An unknown error occurred.";
       Alert.alert("Error", message);
       console.error("Progress reset failed:", err);
     },
