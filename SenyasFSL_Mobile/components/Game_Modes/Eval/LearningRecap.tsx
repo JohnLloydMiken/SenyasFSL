@@ -101,22 +101,26 @@ function Content({ lessons, onContinue }: RecapProps) {
         Review the signs from this lesson to enhance your retention.
       </Text>
       {lessons?.length ? (
-        <FlatList
-          data={lessons}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => {
-                handlePresentModalPress(item.videoUrl)
-                setIsSheetOpen(true)
-              }}
-              style={styles.lessonItem}
-            >
-              <Text style={styles.lessonTitle}>{item.enTitle}</Text>
-              <Text style={styles.lessonSubtitle}>{item.filTitle}</Text>
-            </TouchableOpacity>
-          )}
-        />
+        <>
+          <FlatList
+            data={lessons}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => {
+                  handlePresentModalPress(item.videoUrl);
+                  setIsSheetOpen(true);
+                }}
+                style={styles.lessonItem}
+              >
+                <Text style={styles.lessonTitle}>{item.enTitle}</Text>
+                <Text style={styles.lessonSubtitle}>{item.filTitle}</Text>
+              </TouchableOpacity>
+            )}
+          />
+
+        
+        </>
       ) : (
         <View style={styles.emptyState}>
           <Text>No lessons found for this level.</Text>
@@ -142,10 +146,12 @@ function Content({ lessons, onContinue }: RecapProps) {
                 nativeControls={false}
               />
             )}
-            <TouchableOpacity onPress={()=>{
-              handleClose(),
-              setIsSheetOpen(false)
-            }} style={styles.backButton}>
+            <TouchableOpacity
+              onPress={() => {
+                (handleClose(), setIsSheetOpen(false));
+              }}
+              style={styles.backButton}
+            >
               <Text style={styles.backText}>Close Video</Text>
             </TouchableOpacity>
           </View>
@@ -153,13 +159,13 @@ function Content({ lessons, onContinue }: RecapProps) {
       </BottomSheet>
 
       {/* Continue Button (No changes here) */}
-     {!isSheetOpen&&(
-       <View style={styles.bottomBtnContainer}>
-        <TouchableOpacity style={styles.noThanksBtn} onPress={onContinue}>
-          <Text style={styles.noThanksText}>Continue</Text>
-        </TouchableOpacity>
-      </View>
-     )}
+        {!isSheetOpen && (
+            <View style={styles.bottomBtnContainer}>
+              <TouchableOpacity style={styles.noThanksBtn} onPress={onContinue}>
+                <Text style={styles.noThanksText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+          )}
     </View>
   );
 }
@@ -235,8 +241,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   bottomBtnContainer: {
-    position: "absolute",
-    bottom: 40,
+    
+   
     alignSelf: "center",
     width: "90%",
     zIndex: 1,

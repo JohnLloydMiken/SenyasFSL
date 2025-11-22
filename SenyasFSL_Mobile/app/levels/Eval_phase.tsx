@@ -1,6 +1,7 @@
 import { View, ActivityIndicator, Text, StyleSheet } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Evaluation from "@/components/Game_Modes/Eval/Evaluation";
+import FailedLevel from "@/components/Game_Modes/Eval/FailedLevel";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import CurrentStreak from "@/components/Game_Modes/Eval/CurrentStreak";
@@ -12,15 +13,20 @@ import { recordActivity } from "@/services/userService";
 import { CompleteLevelData } from "@/shared/types";
 import { useSaveProgress } from "@/utils/store/useSaveProgress";
 import { useSectionStore } from "@/utils/store/useSectionStore";
+import { useUserStore } from "@/utils/store/useUserStore"; // ✅ Import user store
+import { shareStreak } from "@/utils/shareUtils";
 
 const Eval_phase = () => {
-  const { levelId, lessons, questions } = useLocalSearchParams();
+  const { levelId, lessons, questions, levelType } = useLocalSearchParams();
   const parsedLessons = lessons ? JSON.parse(lessons as string) : [];
   const router = useRouter();
   const { currentSectionOrder } = useSectionStore();
   const point = useUserPoints((state) => state.score ?? 0);
   const resetScore = useUserPoints((state) => state.resetScore);
   const totalQuestions = Number(questions) || 0;
+
+  // ✅ Get user data to check if level is already completed
+  const { userData } = useUserStore();
 
   // Hook for saving level progress
   const { mutate: saveProgress, isLoading: isSavingLevel } = useSaveProgress();
@@ -29,7 +35,7 @@ const Eval_phase = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [step, setStep] = useState<
-    "evaluation" | "streak" | "reminder" | "recap"
+    "evaluation" | "failed" | "streak" | "reminder" | "recap"
   >("evaluation");
 
   const calcEvalpoint = () => {
@@ -37,9 +43,37 @@ const Eval_phase = () => {
     return Math.round((point / totalQuestions) * 100);
   };
 
+  // ✅ Check if this level was already completed
+  const isLevelAlreadyCompleted = useMemo(() => {
+    if (!userData?.progress || !currentSectionOrder || !levelId) {
+      return false;
+    }
+
+    const sectionKey = `s${currentSectionOrder}`;
+    const levelIndex = Number(levelId);
+    const completedLevels = userData.progress[sectionKey];
+
+    if (!Array.isArray(completedLevels)) {
+      return false;
+    }
+
+    return completedLevels.includes(levelIndex);
+  }, [userData?.progress, currentSectionOrder, levelId]);
+
   const calculateRewards = () => {
     const xpPerQuestion = 10;
     const coinsPerQuestion = 10;
+
+    // ✅ If level was already completed, return 0 rewards
+    if (isLevelAlreadyCompleted) {
+      return {
+        xpGained: 0,
+        senyasCoinsGained: 0,
+        chestsEarned: 0,
+      };
+    }
+
+    // Normal reward calculation
     const xpGained = point * xpPerQuestion;
     const senyasCoinsGained = point * coinsPerQuestion;
     const chestsEarned = point === totalQuestions && totalQuestions > 0 ? 1 : 0;
@@ -47,16 +81,25 @@ const Eval_phase = () => {
     return { xpGained, senyasCoinsGained, chestsEarned };
   };
 
+  // ✅ Check if user failed (below 70% AND level type is lesson_and_minigame)
+  const scorePercent = calcEvalpoint();
+  const isLessonAndMinigame = levelType === "lesson_and_minigame";
+  const hasFailed = isLessonAndMinigame && scorePercent < 70;
+
   // ✅ Unified Handler: Records Streak -> Calculates Rewards -> Saves Level -> Exits
   const handleSaveAndExit = async () => {
     setIsProcessing(true);
 
-    // 1. Record Activity (Streak) First
-    try {
-      await recordActivity();
-      console.log("Streak activity recorded successfully.");
-    } catch (error) {
-      console.error("Failed to record streak activity:", error);
+    // ✅ 1. Record Activity (Streak) - ONLY if level wasn't already completed
+    if (!isLevelAlreadyCompleted) {
+      try {
+        await recordActivity();
+        console.log("Streak activity recorded successfully.");
+      } catch (error) {
+        console.error("Failed to record streak activity:", error);
+      }
+    } else {
+      console.log("Level already completed - skipping streak recording.");
     }
 
     // 2. Prepare Data
@@ -75,35 +118,38 @@ const Eval_phase = () => {
       onSuccess: async () => {
         console.log("Level progress saved successfully.");
 
-        // ✅ 4. CHECK FOR ACHIEVEMENTS AFTER SUCCESSFUL SAVE
-        try {
-          const achievementResult = await checkAchievements();
+        // ✅ 4. CHECK FOR ACHIEVEMENTS - ONLY if level wasn't already completed
+        if (!isLevelAlreadyCompleted) {
+          try {
+            const achievementResult = await checkAchievements();
 
-          if (
-            achievementResult?.newlyUnlocked &&
-            achievementResult.newlyUnlocked.length > 0
-          ) {
-            // Show toast for each newly unlocked achievement
-            achievementResult.newlyUnlocked.forEach((achievement, index) => {
-              setTimeout(() => {
-                Toast.show({
-                  type: "success",
-                  text1: "🏆 Achievement Unlocked!",
-                  text2: achievement.title,
-                  visibilityTime: 4000,
-                  position: "top",
-                });
-              }, index * 500); // Stagger toasts by 500ms if multiple achievements
-            });
+            if (
+              achievementResult?.newlyUnlocked &&
+              achievementResult.newlyUnlocked.length > 0
+            ) {
+              // Show toast for each newly unlocked achievement
+              achievementResult.newlyUnlocked.forEach((achievement, index) => {
+                setTimeout(() => {
+                  Toast.show({
+                    type: "success",
+                    text1: "🏆 Achievement Unlocked!",
+                    text2: achievement.title,
+                    visibilityTime: 4000,
+                    position: "top",
+                  });
+                }, index * 500);
+              });
 
-            console.log(
-              "Newly unlocked achievements:",
-              achievementResult.newlyUnlocked
-            );
+              console.log(
+                "Newly unlocked achievements:",
+                achievementResult.newlyUnlocked
+              );
+            }
+          } catch (achErr) {
+            console.error("Failed to check achievements:", achErr);
           }
-        } catch (achErr) {
-          console.error("Failed to check achievements:", achErr);
-          // Don't block the user flow if achievement check fails
+        } else {
+          console.log("Level already completed - skipping achievement check.");
         }
 
         // 5. Continue with normal flow
@@ -116,6 +162,15 @@ const Eval_phase = () => {
     });
   };
 
+  // ✅ Handler for retaking the level (no save, just reset and restart)
+  const handleRetake = () => {
+    resetScore();
+    router.replace({
+      pathname: "./[levelId]",
+      params: { levelId },
+    });
+  };
+
   // ✅ Combined Loading State
   if (isSavingLevel || isProcessing) {
     return (
@@ -123,35 +178,44 @@ const Eval_phase = () => {
         <Stack.Screen options={{ headerShown: false, gestureEnabled: false }} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FB990F" />
-          <Text style={styles.loadingText}>Saving your progress...</Text>
+          <Text style={styles.loadingText}>
+            {isLevelAlreadyCompleted
+              ? "Completing replay..."
+              : "Saving your progress..."}
+          </Text>
         </View>
       </>
     );
   }
 
+  const { xpGained, senyasCoinsGained } = calculateRewards();
+
   const renderContent = () => {
     switch (step) {
       case "evaluation":
+        // ✅ If user failed, show FailedLevel instead
+        if (hasFailed) {
+          return (
+            <FailedLevel
+              onNext={() =>
+                router.replace({
+                  pathname: "./[levelId]",
+                  params: { levelId },
+                })
+              }
+              onRetake={handleRetake}
+            />
+          );
+        }
+
+        // ✅ Show normal Evaluation (will display 0 XP/coins if already completed)
         return (
           <Evaluation
-            percent={calcEvalpoint()}
-            onRetake={() => {
-              resetScore();
-              router.replace({
-                pathname: "./[levelId]",
-                params: { levelId },
-              });
-            }}
-            // ✅ Just move to next step, do not save yet
+            percent={scorePercent}
+            xp={xpGained}
+            coins={senyasCoinsGained}
+            onRetake={handleRetake}
             onContinue={() => setStep("streak")}
-          />
-        );
-
-      case "streak":
-        return (
-          <CurrentStreak
-            onContinue={() => setStep("reminder")}
-            onShare={() => ""}
           />
         );
 
@@ -167,10 +231,12 @@ const Eval_phase = () => {
         return (
           <LearningRecap
             lessons={parsedLessons}
-            // ✅ This now triggers the unified save sequence
             onContinue={handleSaveAndExit}
           />
         );
+
+      case "streak":
+        return <CurrentStreak onContinue={() => setStep("reminder")} />;
 
       default:
         return null;

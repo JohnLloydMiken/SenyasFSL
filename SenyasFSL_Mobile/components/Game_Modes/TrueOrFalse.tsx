@@ -162,7 +162,7 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
 
     const selectedOption = options.find((opt) => opt.id === selectedChoice);
     // Note: Original logic for TF is inverted
-    const isAnswerCorrect = selectedOption ? !selectedOption.isCorrect : false;
+    const isAnswerCorrect = selectedOption ? selectedOption.isCorrect : false;
 
     if (isAnswerCorrect) {
       // --- CORRECT ANSWER ---
