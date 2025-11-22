@@ -9,7 +9,6 @@ import {
   getQuestionsFromPool,
 } from "@/services/gameService";
 
-// ✅ Import your NEW wrapper component
 import SignPracticeFlow from "@/components/Game_Modes/GesturePracticeFlow"; 
 import FlowRenderer from "@/components/Game_Modes/FlowRenderer";
 import BossFight from "@/components/Game_Modes/BossFight";
@@ -51,7 +50,6 @@ export default function LevelContent() {
         ) {
           contentMap = await getQuestionsFromPool(level.questionPool);
         } else if (
-          // ✅ FIX: Add "sign_practice" to your data fetching logic
           (level.type === "lesson_and_minigame" || level.type === "sign_practice") && 
           level.flow &&
           level.flow.length > 0
@@ -99,7 +97,6 @@ export default function LevelContent() {
         }
         return <FlowRenderer levelData={levelData} flowContent={flowContent} />;
 
-      // ✅ FIX: This 'case' now matches your database type
       case "sign_practice": 
         if (!flowContent) { 
           return (
@@ -108,16 +105,16 @@ export default function LevelContent() {
             </View>
           );
         }
-        // ✅ Render the new wrapper, passing the DB data
         return (
           <SignPracticeFlow
             levelData={levelData} 
             flowContent={flowContent} 
-            onPress={() => { // This is the navigation handler
+            onPress={() => {
               router.push({
                 pathname: "./Eval_phase",
                 params: {
                   levelId,
+                  levelType: levelData.type, // ✅ Pass level type
                   questions: 0, 
                   lessons: JSON.stringify(
                     levelData.flow
@@ -148,7 +145,6 @@ export default function LevelContent() {
         }
         return <BossFight levelData={levelData} flowContent={flowContent} />;
 
-      // This is what is currently happening
       default:
         return (
           <View style={styles.center}>

@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import Toast from "react-native-toast-message";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import { useUserStore } from "@/utils/store/useUserStore";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -23,10 +24,16 @@ export default function RootLayout() {
     "Poppins-LightItalic": require("../assets/fonts/Poppins-LightItalic.ttf"),
   });
   const queryClient = new QueryClient();
+   const authUser = useAuthStore((s) => s.user);
+  const fetchUserData = useUserStore((s) => s.fetchUserData);
   const initAuthListener = useAuthStore((s) => s.initAuthListener);
   // 🚫 const user = useAuthStore((s) => s.user); // No longer needed here
   // 🚫 const { fetchUserData, clearUserData } = useUserStore(); // No longer needed
 
+    useEffect(() => {
+    console.log("Auth User changed → Fetching Firestore Data");
+    fetchUserData(authUser);  // <-- 🔥 this is the missing piece!
+  }, [authUser]);
   useEffect(() => {
     const unsubscribeAuth = initAuthListener();
 

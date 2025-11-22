@@ -165,7 +165,7 @@ function TabsWithBottomSheet() {
           headerLeft: () => <Curency number={userData?.senyasCoins} />,
           headerRight: () => (
             <HeaderRightBtn
-              achievementCount={0}
+              achievementCount={userData.achievements.length}
               streakCount={userData.currentStreak}
               onPressAchievement={() => router.push("./headeroptions/")}
               onPressLeaderboards={() =>

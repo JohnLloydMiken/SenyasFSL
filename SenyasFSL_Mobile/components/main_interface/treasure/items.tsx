@@ -137,11 +137,65 @@ const Item: React.FC<itemCardProps> = ({
 // This is the smaller in-game version
 export const ItemInGame: React.FC<itemInGameProps> = ({
   itemName,
-  
   itemIcon,
   itemId,
   onPress,
   disabled = false,
+}) => {
+  const SvgIcon = svgMap[itemIcon];
+  const { width } = useWindowDimensions();
+  const svgSize = width < 768 ? 40 : 50;
+  const svgStar = width < 768 ? 15 : 30;
+  const containerWidth = width < 768 ? 100 : 120;
+  const containerHeight = width < 768 ? 100 : 120;
+
+  return (
+    <LinearGradient
+      colors={borderGradient}
+      style={{
+        borderRadius: 16,
+        padding: 2,
+        width: containerWidth,
+        height: containerHeight,
+      }}
+    >
+      <TouchableOpacity
+        onPress={() => onPress(itemId)}
+        disabled={disabled}
+        className="w-full h-full bg-[#FAF3E0] rounded-2xl p-4 flex justify-center items-center flex-col mx-auto my-0 gap-1"
+      >
+        {SvgIcon && <SvgIcon width={svgSize} height={svgSize} />}
+        <MaskedView
+          maskElement={
+            <View className="w-full bg-transparent items-center">
+              <Text className="font-PoppinsBold text-sm md:text-xl text-center">
+                {itemName}
+              </Text>
+            </View>
+          }
+        >
+          <LinearGradient
+            colors={textGradient}
+            start={{ x: 0, y: -0.1 }}
+            end={{ x: 0, y: 0.8 }}
+            className="w-full items-center"
+          >
+            <Text className="font-PoppinsBold text-sm md:text-xl opacity-0">
+              {itemName}
+            </Text>
+          </LinearGradient>
+        </MaskedView>
+      </TouchableOpacity>
+    </LinearGradient>
+  );
+};
+
+export const TreasurePreview: React.FC<itemInGameProps> = ({
+  itemName,
+  itemIcon,
+  itemId,
+  onPress,
+  disabled = true,
 }) => {
   const SvgIcon = svgMap[itemIcon];
   const { width } = useWindowDimensions();

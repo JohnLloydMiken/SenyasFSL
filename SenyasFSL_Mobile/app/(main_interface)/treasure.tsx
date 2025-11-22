@@ -1,6 +1,6 @@
 // app/(main_interface)/treasure.tsx
 // --- MODIFIED FILE ---
-
+import { TreasurePreview } from "@/components/main_interface/treasure/items";
 import Tutorial from "@/assets/svgs/Tutorial.svg";
 import BGComponent from "@/assets/svgs/bg 1.svg";
 import Item from "@/components/main_interface/treasure/items";
@@ -336,6 +336,8 @@ export default function Treasure() {
       </View>
 
       {/* Tutorial Button */}
+      
+     
       <TouchableOpacity
         className="absolute bottom-4 left-4"
         onPress={() => setIsShown(true)}

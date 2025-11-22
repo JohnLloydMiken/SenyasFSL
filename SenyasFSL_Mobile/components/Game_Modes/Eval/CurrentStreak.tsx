@@ -6,19 +6,19 @@ import { useUserStore } from "@/utils/store/useUserStore";
 import { shareStreak } from "@/utils/shareUtils"; // (adjust path if needed)
 interface CurrentStreakProps {
   onContinue: () => void;
-  onShare: () => void;
 }
 
-const CurrentStreak: React.FC<CurrentStreakProps> = ({
-  onContinue,
-  onShare,
-}) => {
+const CurrentStreak: React.FC<CurrentStreakProps> = ({ onContinue }) => {
   const { user, loading: authLoading } = useAuthStore();
   const { userData, loading: userLoading } = useUserStore();
+  console.log("Auth user:", user);
+  console.log("User loading:", userLoading);
+  console.log("User data:", userData);
+
   if (userLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Loading...</Text>
+        <Text>Loading Here...</Text>
       </View>
     );
   }
@@ -32,14 +32,14 @@ const CurrentStreak: React.FC<CurrentStreakProps> = ({
   }
   return (
     <View className="bg-white flex-1 justify-center items-center">
-       <UserStreak 
-                  streakFreezes={userData.streakFreezes} 
-                  currentStreak={userData.currentStreak} 
-                  activityDays={userData.activityDays} 
-                />
+      <UserStreak
+        streakFreezes={userData.streakFreezes}
+        currentStreak={userData.currentStreak}
+        activityDays={userData.activityDays}
+      />
       <Text className="font-PoppinsSemiBold text-sm md:text-lg text-center w-11/12 mt-4">
-        Congratulation on your daily streak! Practice every day so it
-        won’t reset!
+        Congratulation on your daily streak! Practice every day so it won’t
+        reset!
       </Text>
       <View className="w-11/12 gap-2 absolute bottom-8">
         <TouchableOpacity
@@ -52,7 +52,7 @@ const CurrentStreak: React.FC<CurrentStreakProps> = ({
         </TouchableOpacity>
         <TouchableOpacity
           className="w-full border-4 p-4 rounded-lg border-[#FB990F]"
-           onPress={() => shareStreak(userData.currentStreak)}
+          onPress={() => shareStreak(userData.currentStreak)}
         >
           <Text className="text-center font-PoppinsBold text-2xl md:text-3xl text-[#FB990F]">
             Share your streak

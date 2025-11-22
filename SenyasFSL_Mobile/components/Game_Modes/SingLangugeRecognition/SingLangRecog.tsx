@@ -1,11 +1,14 @@
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import SignLangRecogWebView from "./SignLangRecogWebView";
 import LevelContentBtn from "../GameBtns/LevelContentBtn";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import { usePredictionStore } from "@/utils/store/store";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { getVideoUrl } from "@/services/gameService";
+import { LevelData } from "@/utils/store/levelData";
+import { useGameStore } from "@/hooks/useGameStore";
+import { useGameProgressStore } from "@/hooks/useGameProgressStore";
 
 interface SingLangRecogProps {
   levelData: any;
@@ -20,12 +23,23 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
 }) => {
   // --- State ---
   const [count, setCount] = useState(0);
+  const setTotalSteps = LevelData((state) => state.setTotalSteps);
+  const setLevelStep = LevelData((state) => state.setLevelStep);
   const prediction = usePredictionStore(
     (state: { prediction: any }) => state.prediction
   );
   const setPrediction = usePredictionStore(
     (state: { setPrediction: (value: string) => void }) => state.setPrediction
   );
+
+  // Accessors for values we will save/restore
+  const isXpDoubledFromStore = useGameStore((s) => s.isXpDoubled);
+  const is2xTryActiveFromStore = useGameStore((s) => s.is2xTryActive);
+  const visibleChoicesFromStore = useGameStore((s) => s.visibleChoices);
+  const phaseFromStore = useGameStore((s) => s.phase);
+
+  const progress = useGameProgressStore();
+  const fullLevelId = levelData?.id;
 
   const signsToPractice = useMemo(() => {
     return Array.from(flowContent.values());
@@ -51,6 +65,69 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
     player.loop = true;
     player.muted = true;
   });
+
+  // --- Load saved progress on mount ---
+  useEffect(() => {
+    let mounted = true;
+    async function loadProgress() {
+      if (!fullLevelId) return;
+
+      try {
+        const saved = await progress.load(fullLevelId);
+        if (!mounted) return;
+
+        if (saved) {
+          console.log("[SignLangRecog] Loaded saved progress:", saved);
+
+          // Restore count (currentStep)
+          const restoredStep =
+            typeof saved.currentStep === "number" ? saved.currentStep : 0;
+          setCount(restoredStep);
+          setLevelStep(restoredStep);
+
+          // Restore visible choices (if included)
+          if (saved.visibleChoices !== undefined) {
+            useGameStore.setState({ visibleChoices: saved.visibleChoices });
+          }
+
+          // Restore phase (if included)
+          if (saved.phase !== undefined) {
+            useGameStore.setState({ phase: saved.phase });
+          }
+
+          // Restore xp/item effects if included
+          const toRestore: Partial<any> = {};
+          if (saved.isXpDoubled !== undefined)
+            toRestore.isXpDoubled = saved.isXpDoubled;
+          if (saved.is2xTryActive !== undefined)
+            toRestore.is2xTryActive = saved.is2xTryActive;
+          if (Object.keys(toRestore).length > 0) {
+            (useGameStore as any).setState(toRestore);
+          }
+        } else {
+          // No saved state – ensure starting defaults
+          setCount(0);
+          setLevelStep(0);
+        }
+      } catch (err) {
+        console.warn("[SignLangRecog] Failed to load progress:", err);
+      }
+    }
+
+    loadProgress();
+
+    return () => {
+      mounted = false;
+    };
+  }, [fullLevelId, progress, setLevelStep]);
+
+  useEffect(() => {
+    setTotalSteps(signsToPractice.length);
+  }, [signsToPractice.length, setTotalSteps]);
+
+  useEffect(() => {
+    setLevelStep(count);
+  }, [count, setLevelStep]);
 
   useEffect(() => {
     const loadVideo = async () => {
@@ -90,25 +167,92 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
     }
   }, [prediction, correctSignLetter, setPrediction]);
 
+  // --- Auto-save whenever count changes ---
+  useEffect(() => {
+    if (!fullLevelId) return;
+
+    const stateToSave = {
+      currentStep: count,
+      visibleChoices: visibleChoicesFromStore ?? null,
+      phase: phaseFromStore ?? "playing",
+      isXpDoubled: isXpDoubledFromStore ?? false,
+      is2xTryActive: is2xTryActiveFromStore ?? false,
+      lives: 0,
+      tempScore: { xp: 0, senyasCoins: 0 },
+    };
+
+    try {
+      progress.save(fullLevelId, stateToSave);
+    } catch (err) {
+      console.warn("[SignLangRecog] progress.save failed:", err);
+    }
+  }, [
+    fullLevelId,
+    count,
+    visibleChoicesFromStore,
+    phaseFromStore,
+    isXpDoubledFromStore,
+    is2xTryActiveFromStore,
+    progress,
+  ]);
+
+  // Cancel pending saves when unmounting
+  useEffect(() => {
+    return () => {
+      progress.cancelPendingSaves?.();
+    };
+  }, [progress]);
+
+  // Enhanced onPress handler to flush and remove saved state on completion
+  const handleContinue = useCallback(async () => {
+    if (fullLevelId) {
+      try {
+        const stateToSave = {
+          currentStep: count,
+          visibleChoices: visibleChoicesFromStore ?? null,
+          phase: "completed",
+          isXpDoubled: isXpDoubledFromStore ?? false,
+          is2xTryActive: is2xTryActiveFromStore ?? false,
+          lives: 0,
+          tempScore: { xp: 0, senyasCoins: 0 },
+        };
+        await progress.flushSave(fullLevelId, stateToSave);
+        await progress.remove(fullLevelId);
+      } catch (err) {
+        console.warn(
+          "[SignLangRecog] Error flushing/removing save on finish:",
+          err
+        );
+      }
+    }
+    onPress();
+  }, [
+    fullLevelId,
+    count,
+    visibleChoicesFromStore,
+    isXpDoubledFromStore,
+    is2xTryActiveFromStore,
+    progress,
+    onPress,
+  ]);
+
   // --- Render ---
   return (
     <View style={styles.container}>
-      <Text className="font-PoppinsBold text-[1.75rem] md:text-4xl text-center">
-        Sign To Practice
+      <Text className="font-PoppinsBold text-[1.75rem] md:text-4xl text-center text-orange-500">
+        Practice Signing:
       </Text>
-
+      <Text className="font-PoppinsSemiBold text-3xl md:text-3xl text-center text-orange-400">
+        {enTitle}
+      </Text>
+      <Text className="font-PoppinsLightItalic text-lg md:text-3xl text-center mb-2 text-orange-400">
+        "{filTitle}"
+      </Text>
       {/* Content Area */}
       {count < signsToPractice.length && currentSign ? (
         <View style={styles.contentArea}>
           {/* === Video Area === */}
           <View style={styles.videoContainer}>
-            <Text className="font-PoppinsSemiBold text-2xl md:text-3xl text-center">
-              {enTitle}
-            </Text>
-            <Text className="font-PoppinsLightItalic text-xl md:text-3xl text-center mb-2">
-              “{filTitle}”
-            </Text>
-
             <View style={styles.videoPlayerWrapper}>
               {loading || !resolvedUrl ? (
                 <View style={styles.loadingIndicator}>
@@ -128,10 +272,7 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
 
           {/* === WebView Area === */}
           <View style={styles.webviewContainer}>
-            <SignLangRecogWebView
-              modelName={modelName}
-              handMode={handMode}
-            />
+            <SignLangRecogWebView modelName={modelName} handMode={handMode} />
           </View>
 
           <Text className="text-center text-gray-500 text-xl mt-1">
@@ -155,7 +296,7 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
             onPress={() => setCount((prev) => prev + 1)}
           />
         ) : (
-          <LevelContentBtn text="Continue" onPress={onPress} />
+          <LevelContentBtn text="Continue" onPress={handleContinue} />
         )}
       </View>
 
@@ -176,35 +317,35 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-start",
     alignItems: "center",
-    paddingBottom: 100, // Make space for button/background
-    zIndex: 20, // ✅ FIX: Place content *above* background
+    paddingBottom: 100,
+    zIndex: 20,
   },
   videoContainer: {
-    height: "45%", // 45% of the content area
+    height: "45%",
     width: "90%",
     justifyContent: "center",
-    marginTop: 10, // ✅ IMPROVEMENT: Add space from title
+    marginTop: 10,
   },
   videoPlayerWrapper: {
     flex: 1,
     width: "100%",
     borderRadius: 12,
     overflow: "hidden",
-    backgroundColor: "#000", // ✅ IMPROVEMENT: Black BG for video
+    backgroundColor: "#000",
   },
   loadingIndicator: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#000", // ✅ IMPROVEMENT: Match wrapper
+    backgroundColor: "#000",
   },
   videoPlayer: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#000", // ✅ IMPROVEMENT: Match wrapper
+    backgroundColor: "#000",
   },
   webviewContainer: {
-    height: "45%", // 45% of the content area
+    height: "45%",
     width: "90%",
     marginTop: 10,
     borderRadius: 12,
@@ -215,16 +356,16 @@ const styles = StyleSheet.create({
   buttonContainer: {
     position: "absolute",
     bottom: 24,
-    width: 224, // w-56
+    width: 224,
     left: "50%",
-    marginLeft: -112, // -translate-x-1/2
-    zIndex: 50, // On top of everything
+    marginLeft: -112,
+    zIndex: 50,
   },
   backgroundContainer: {
     position: "absolute",
     width: "100%",
     bottom: 0,
-    zIndex: 10, // Behind content, in front of main bg
+    zIndex: 10,
   },
 });
 

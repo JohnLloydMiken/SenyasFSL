@@ -20,7 +20,7 @@ import MyIcon from "@/components/main_interface/MyIcon";
 import ReportBottomSheetContent from "@/components/main_interface/ReportBottomSheetContent";
 import { videoSpeed } from "@/utils/store/videoSpeed";
 import { LevelData } from "@/utils/store/levelData";
-
+import LevelProgressBar from "@/components/gameheader/LevelProgressBar";
 export default function Layout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -101,9 +101,7 @@ const MainLayout = () => {
               </TouchableOpacity>
             </View>
           ),
-          headerTitle: () => (
-            <View className="w-11/12 h-6 rounded-full bg-[#FFEEB9] mx-auto" />
-          ),
+          headerTitle: () => <LevelProgressBar />,
           headerShadowVisible: false,
         }}
       />
@@ -126,8 +124,7 @@ const MainLayout = () => {
                   Wait, don’t go!
                 </Text>
                 <Text className="font-NunitoBold text-sm text-center md:text-lg">
-                  You’re doing well! If you quit now, you’ll lose your progress
-                  for this lesson.
+                  You’re doing well! If you quit now, you’ll lose your used items for this lesson.
                 </Text>
               </View>
 
