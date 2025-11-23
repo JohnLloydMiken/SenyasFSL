@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/firebaseConfig";
 import type { User as AuthUser } from "firebase/auth";
-import { UserProfileData } from "shared/types/user";
+import { UserProfileData, Inventory, UserPreferences } from "shared/types/user";
 import { useAuthStore } from "./useAuthStore";
 import { markFirestoreVerified } from "@/services/userService";
 
@@ -13,7 +13,6 @@ interface UserStoreState {
   unsubscribe: (() => void) | null;
   fetchUserData: (authUser: AuthUser | null) => void;
   clearUserData: () => void;
-  // ✅ 1. Add the new function to the interface
   updateUserData: (newData: Partial<UserProfileData>) => void;
 }
 
@@ -27,6 +26,18 @@ export const userReason = create<UserReason>((set) => ({
   setReason: (value: string) => set({ reason: value }),
 }));
 
+const defaultInventory: Inventory = {
+  xpMultiply: 0,
+  bomb: 0,
+  skip: 0,
+  twotry: 0,
+  streakProtect: 0,
+};
+
+const defaultPreferences: UserPreferences = {
+  emailNotifications: true,
+};
+
 const parseUserData = (data: any, authUser: AuthUser): UserProfileData => {
   const defaults = {
     username: "New User",
@@ -36,18 +47,13 @@ const parseUserData = (data: any, authUser: AuthUser): UserProfileData => {
     senyasCoins: 0,
     activityDays: [],
     progress: {},
-    inventory: {
-      xpMultiply: 0,
-      bomb: 0,
-      skip: 0,
-      twotry: 0,
-      streakProtect: 0,
-    },
+    inventory: defaultInventory,
     chestCount: 0,
     achievements: [],
     lastUpdated: Timestamp.now(),
     verified: false,
     verifiedAt: null,
+    preferences: defaultPreferences,
   };
 
   return {
@@ -62,6 +68,11 @@ const parseUserData = (data: any, authUser: AuthUser): UserProfileData => {
     id: authUser.uid,
     uid: authUser.uid,
     email: authUser.email || "",
+    // Merge preferences with defaults
+    preferences: {
+      ...defaultPreferences,
+      ...(data.preferences || {}),
+    },
   };
 };
 
@@ -119,7 +130,6 @@ export const useUserStore = create<UserStoreState>((set, get) => ({
     set({ userData: null, loading: false, unsubscribe: null });
   },
 
-  // ✅ 2. Add the implementation for the new function
   // This function allows any component to manually update the user's state.
   updateUserData: (newData: Partial<UserProfileData>) => {
     set((state) => ({

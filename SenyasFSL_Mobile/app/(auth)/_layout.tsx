@@ -233,6 +233,12 @@ export default function GetStarted(){
           animation: "fade",
         }}
       />
+      <Stack.Screen 
+  name="suspended" 
+  options={{ 
+    headerShown: false 
+  }} 
+/>
     </Stack>
   );
 }

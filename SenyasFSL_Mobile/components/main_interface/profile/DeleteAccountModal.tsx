@@ -6,11 +6,12 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  Image,
   ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons"; // Using Expo for icons
-import FSL_Wait from "@/assets/svgs/Wait.svg"
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import FSL_Wait from "@/assets/svgs/Wait.svg";
+
 type DeleteAccountModalProps = {
   visible: boolean;
   onClose: () => void;
@@ -48,7 +49,8 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
     setIsLoading(true);
     try {
       await onConfirm(password);
-      // If onConfirm is successful, the parent will close the modal
+      // If onConfirm is successful, redirect to auth index
+      router.replace("./(auth)/");
     } catch (err: any) {
       setError(err.message || "An unknown error occurred.");
     } finally {
@@ -66,11 +68,11 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         <TouchableOpacity
           className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl"
           activeOpacity={1}
-          onPress={(e) => e.stopPropagation()} // Prevent closing modal when pressing content
+          onPress={(e) => e.stopPropagation()}
         >
-        <View className="w-full flex- justify-center items-center">
-              <FSL_Wait width={150} height={150}/>
-        </View>
+          <View className="w-full flex- justify-center items-center">
+            <FSL_Wait width={150} height={150} />
+          </View>
 
           <Text className="font-PoppinsBold text-2xl text-center text-gray-900 mb-2">
             Wait, don't go!
@@ -140,9 +142,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
             onPress={handleSubmit}
             disabled={!isValid || isLoading}
             className={`w-full p-4 border-4 rounded-xl ${
-              isValid
-                ? "border-red-600"
-                : "border-gray-400 opacity-50"
+              isValid ? "border-red-600" : "border-gray-400 opacity-50"
             }`}
           >
             {isLoading ? (

@@ -1,39 +1,44 @@
 // hooks/useUpdateProfile.ts
 import { useState } from 'react';
 import { reauthenticateUser, updateUserProfile } from '@/services/AuthService';
-import { UpdateUserProfileData } from '@/shared/types/auth'; // Make sure this path is correct
-import { useAuthStore } from '@/utils/store/useAuthStore'; // Or however you get the auth user
+import { UpdateUserProfileData } from '@/shared/types/auth';
+import { useAuthStore } from '@/utils/store/useAuthStore';
 
 export const useUpdateProfile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<Error | null>(null);
-  const { user } = useAuthStore(); // Get the Firebase user object
+  const { user } = useAuthStore();
 
   const updateProfile = async (
     newUsername: string,
     defaultUsername: string,
-    currentPassword: string
+    currentPassword: string,
+    emailNotifications?: boolean
   ) => {
     setIsSaving(true);
     setSaveError(null);
 
     try {
       // 1. Re-authenticate the user
-      // This is critical for security
       await reauthenticateUser(currentPassword);
 
-      // 2. Check if username actually changed
+      // 2. Build the data object with changes
       const dataToUpdate: UpdateUserProfileData = {};
+      
       if (newUsername !== defaultUsername) {
         dataToUpdate.newUsername = newUsername;
+      }
+
+      // Add email notifications if provided
+      if (emailNotifications !== undefined) {
+        dataToUpdate.emailNotifications = emailNotifications;
       }
 
       // 3. If there are changes, call the update function
       if (Object.keys(dataToUpdate).length > 0) {
         await updateUserProfile(dataToUpdate);
         
-        // 4. Refresh the user's token to get new claims (like new username)
-        // This logic is from the web hook and is important
+        // 4. Refresh the user's token to get new claims
         if (user) {
           await user.getIdToken(true);
         }
@@ -42,12 +47,12 @@ export const useUpdateProfile = () => {
       }
 
       setIsSaving(false);
-      return true; // Success
+      return true;
     } catch (error) {
       console.error("Profile update failed:", error);
       setIsSaving(false);
       setSaveError(error as Error);
-      throw error; // Re-throw for the component to catch
+      throw error;
     }
   };
 

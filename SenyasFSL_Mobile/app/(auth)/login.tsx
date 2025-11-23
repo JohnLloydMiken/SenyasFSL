@@ -1,12 +1,12 @@
 import Authbutton from "@/components/authentication/button";
-import { auth, db } from "@/firebaseConfig"; // 👈 2. ADDED db
+import { auth, db } from "@/firebaseConfig";
 import "@/global.css";
-import { loginUser, mapAuthError } from "@/services/AuthService"; // Already imported
+import { loginUser, mapAuthError } from "@/services/AuthService";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { sendPasswordResetEmail, signOut } from "firebase/auth"; // 👈 1. ADDED signOut
-import { doc, getDoc } from "firebase/firestore"; // 👈 3. ADDED doc and getDoc
+import { sendPasswordResetEmail, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
@@ -32,10 +32,8 @@ export default function Login() {
 
     setIsLoading(true);
     try {
-      // ✅ 1. Use your custom loginUser service.
+      // 1. Use your custom loginUser service.
       await loginUser(email, password);
-
-      // --- START: NEW ADMIN CHECK LOGIC ---
 
       // 2. Get the newly authenticated user
       const currentUser = auth.currentUser;
@@ -43,7 +41,7 @@ export default function Login() {
         throw new Error("Failed to get user after login.");
       }
 
-      // 3. Fetch their Firestore document to check their role
+      // 3. Fetch their Firestore document to check their role and status
       const userDocRef = doc(db, "users", currentUser.uid);
       const userDoc = await getDoc(userDocRef);
 
@@ -54,19 +52,32 @@ export default function Login() {
         throw new Error("User profile not found. Please contact support.");
       }
 
-      // 4. CHECK THE ROLE
-      const userRole = userDoc.data()?.role;
+      const userData = userDoc.data();
+      const userRole = userData?.role;
+      const userStatus = userData?.status;
 
+      // 4. CHECK FOR SUSPENDED STATUS FIRST
+      if (userStatus === "suspended") {
+        // Log them out and route to suspended screen
+        await signOut(auth);
+        router.push({
+          pathname: "/(auth)/suspended",
+          params: { email: currentUser.email || email }
+        });
+        return; // Stop execution here
+      }
+
+      // 5. CHECK THE ROLE
       if (userRole === "admin") {
-        // 5. IF ADMIN: Show message, log out, and stop.
-        await signOut(auth); // Log them out of the mobile app
+        // IF ADMIN: Show message, log out, and stop.
+        await signOut(auth);
         Toast.show({
           type: "error",
           text1: "Admin Account",
           text2:
             "Please use the web dashboard at https://iron-gizmo-471110-d0.web.app",
           position: "bottom",
-          visibilityTime: 8000, // Show for 8 seconds
+          visibilityTime: 8000,
         });
         setEmail("");
         setPassword("");
@@ -74,14 +85,13 @@ export default function Login() {
         // 6. IF USER: Proceed to the welcome screen as normal
         router.push("/(auth)/welcome");
       }
-      // --- END: NEW ADMIN CHECK LOGIC ---
 
     } catch (err: any) {
-      // This will now also catch the errors from the admin check
+      // This will now also catch the errors from the admin check and suspended check
       Toast.show({
         type: "error",
         text1: "Login Failed",
-        text2: mapAuthError(err), // Use the error mapper
+        text2: mapAuthError(err),
         position: "bottom",
       });
       setEmail("");
@@ -120,7 +130,7 @@ export default function Login() {
         position: "bottom",
       });
     } finally {
-      setIsLoading(false); // Stop loading
+      setIsLoading(false);
     }
   };
 
@@ -133,7 +143,7 @@ export default function Login() {
             Welcome back!
           </Text>
           <Text className="font-light text-2xl md:text-3xl text-center">
-            It’s good to see you again.
+            It's good to see you again.
           </Text>
         </View>
 
@@ -233,7 +243,7 @@ export default function Login() {
 
             <TouchableOpacity
               onPress={handleSendResetEmail}
-              disabled={isLoading} // Disable button while sending
+              disabled={isLoading}
               className="w-full bg-[#FB990F] rounded-2xl mt-2 p-4"
             >
               <Text className="font-PoppinsBold text-center text-xl md:text-2xl text-white">

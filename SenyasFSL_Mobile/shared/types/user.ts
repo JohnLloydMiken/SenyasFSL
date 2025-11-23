@@ -9,7 +9,9 @@ export interface Inventory {
 
 // 2. Creates a specific type that can only be one of the keys from the Inventory
 export type ItemId = keyof Inventory;
-
+export interface UserPreferences {
+  emailNotifications: boolean;
+}
 // 3. This is the main, single source of truth for the user's profile data
 export interface UserProfileData {
   id: string;
@@ -26,13 +28,14 @@ export interface UserProfileData {
   inventory: Inventory;
   chestCount: number;
   achievements: string[];
+  role: "user" | "admin";
+  verified: boolean;
+  verifiedAt?: number | null;
+  status?: "active" | "suspended" | "pending_verification";
   createdAt: number | null;
   lastActivityDate: number | null;
   lastUpdated: number | null;
-
-  // --- ADD THESE TWO LINES ---
-  verified: boolean; // This field comes from your database
-  verifiedAt: number | null; // This field also comes from your database
+  preferences?: UserPreferences;
 }
 
 // --- Existing Interfaces ---
