@@ -18,23 +18,39 @@ export default function SignLangRecogWebView({
   handMode,
 }: SignLangRecogWebViewProps): JSX.Element {
   const prediction = usePredictionStore((state: { prediction: string }) => state.prediction);
-  const setPrediction = usePredictionStore((state: { setPrediction: (value: string) => void }) => state.setPrediction);
-
-  const handleMessage = (event: WebViewMessageEvent) => {
-    const message = event.nativeEvent.data;
-    console.log(prediction)
-    try {
-      const data: PredictionResponse = JSON.parse(message);
-      if (data && typeof data.prediction === "string") {
-        setPrediction(data.prediction);
-      } else {
-        setPrediction(message);
-      }
-    } catch {
-      // if not JSON, just set raw message
+ 
+const setPrediction = usePredictionStore((state) => state.setPrediction);
+const setCameraStatus = usePredictionStore((state) => state.setCameraStatus); // ✅ Add this
+ const handleMessage = (event: WebViewMessageEvent) => {
+  const message = event.nativeEvent.data;
+  console.log("Raw message:", message);
+  
+  try {
+    const data: PredictionResponse = JSON.parse(message);
+    
+    // ✅ If it's a valid prediction response with confidence
+    if (data && typeof data.prediction === "string" && typeof data.confidence === "number") {
+      console.log("Parsed prediction:", data);
+      setPrediction(data.prediction, data.confidence);
+      setCameraStatus("Processing...");
+    } else {
+      // Handle other JSON that doesn't match our structure
       setPrediction(message);
     }
-  };
+  } catch {
+    // ✅ Not JSON - treat as status message
+    if (message.includes("Camera ready")) {
+      setCameraStatus("Show Hand");
+    } else if (message.includes("Using model")) {
+      setCameraStatus("Initializing...");
+    } else if (message.includes("error")) {
+      setCameraStatus("Error");
+    } else {
+      // Fallback: set as camera status
+      setCameraStatus(message);
+    }
+  }
+};
 
   // Construct your URL dynamically with props
   const webviewUrl = `https://johnlloydmiken.github.io/SenyasFSL_Webview/?model=${modelName}&hand=${handMode}`;

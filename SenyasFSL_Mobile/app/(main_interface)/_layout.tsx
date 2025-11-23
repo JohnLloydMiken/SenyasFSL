@@ -84,9 +84,8 @@ function TabsWithBottomSheet() {
       case "streak":
         return ["50%"];
       case "editData":
-        return ["50%"];
       case "editPass":
-        return ["60%"];
+        return ["70%"];
       default:
         return ["1"];
     }
@@ -139,7 +138,7 @@ function TabsWithBottomSheet() {
   if (authLoading || userLoading) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Loading User Progress...</Text>
+        <Text className="text-3xl font-PoppinsBold text-orange-500">Preparing the Game ...</Text>
       </View>
     );
   }

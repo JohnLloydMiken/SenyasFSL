@@ -1,8 +1,7 @@
 // (main_interface)/index.tsx
-// --- MODIFIED FILE ---
-
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, TouchableOpacity, Text } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import BGComponent from "@/assets/svgs/bg 1.svg";
 import TutorialSVG from "@/assets/svgs/Tutorial.svg";
 import Settings from "@/components/main_interface/Settings";
@@ -14,26 +13,26 @@ import { Section } from "@/shared/types";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 import { useUserStore } from "@/utils/store/useUserStore";
 import { useAudioPlayer } from "expo-audio";
-
-// --- NEW IMPORTS ---
 import { useSignOfTheDay } from "@/hooks/useSignOfTheDay";
 import SignOfTheDayModal from "@/components/main_interface/SignOfTheDayModal";
-// --- IMPORT AUDIO STORE ---
 import { useAudioStore } from "@/hooks/useAudioStore";
 import { useQuery } from "@tanstack/react-query";
 import { fetchUserProfile } from "@/services/userService";
-import SignOfTheDayIcon from "@/assets/svgs/SingOfTheDay.svg"
-// --- END NEW IMPORTS ---
+import SignOfTheDayIcon from "@/assets/svgs/SingOfTheDay.svg";
 
 const audioSource = require("@/assets/audio/bg_music.mp3");
 
-// ✅ Memoized components
 const BG = React.memo(BGComponent);
 const RenderLevel = React.memo(RenderLevelBase);
 
+// Helper function to get today's date string
+const getTodayString = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+};
+
 export default function Index() {
   const player = useAudioPlayer(audioSource);
-  // --- GET VOLUME FROM STORE ---
   const { musicVolume } = useAudioStore();
 
   const sectionRefs = useRef<React.RefObject<HTMLElement | null>[]>([]);
@@ -45,17 +44,14 @@ export default function Index() {
 
   const { data: userData, isLoading: userLoading } = useQuery({
     queryKey: ["user", user?.uid],
-    queryFn: () => fetchUserProfile(user!.uid), // Needs a queryFn, but won't run if cached
+    queryFn: () => fetchUserProfile(user!.uid),
     enabled: !!user,
   });
 
-  // --- NEW STATE FOR SIGN OF THE DAY ---
   const [showSignOfTheDay, setShowSignOfTheDay] = useState(false);
-  const [hasShownSignModal, setHasShownSignModal] = useState(false);
   const { signOfTheDay, isLoading: isSignLoading } = useSignOfTheDay();
-  // --- END NEW STATE ---
 
-  // ✅ Fetch sections
+  // Fetch sections
   useEffect(() => {
     const fetchMapData = async () => {
       try {
@@ -71,53 +67,51 @@ export default function Index() {
     fetchMapData();
   }, []);
 
-  // --- NEW EFFECT to show modal on load ---
+  // Check if we should show Sign of the Day on mount
   useEffect(() => {
-    if (
-      !isMapLoading &&
-      !userLoading &&
-      !isSignLoading &&
-      signOfTheDay &&
-      !hasShownSignModal
-    ) {
-      setShowSignOfTheDay(true);
-      setHasShownSignModal(true);
-    }
-  }, [
-    isMapLoading,
-    userLoading,
-    isSignLoading,
-    signOfTheDay,
-    hasShownSignModal,
-  ]);
-  // --- END NEW EFFECT ---
+    const checkAndShowSignOfTheDay = async () => {
+      if (isMapLoading || userLoading || isSignLoading || !signOfTheDay) {
+        return;
+      }
 
-  // --- NEW EFFECT TO PLAY AND CONTROL MUSIC ---
+      try {
+        const lastShownDate = await AsyncStorage.getItem("lastSignOfTheDayShown");
+        const todayString = getTodayString();
+
+        // Only show if we haven't shown it today
+        if (lastShownDate !== todayString) {
+          setShowSignOfTheDay(true);
+          // Mark as shown for today
+          await AsyncStorage.setItem("lastSignOfTheDayShown", todayString);
+        }
+      } catch (error) {
+        console.error("Error checking Sign of the Day status:", error);
+      }
+    };
+
+    checkAndShowSignOfTheDay();
+  }, [isMapLoading, userLoading, isSignLoading, signOfTheDay]);
+
+  // Music effects
   useEffect(() => {
     if (player) {
       player.play();
       player.loop = true;
     }
-    // Cleanup function to stop music when component unmounts
   }, [player]);
 
-  // This effect updates the volume whenever it changes in the store
   useEffect(() => {
     if (player) {
       player.volume = musicVolume;
     }
   }, [player, musicVolume]);
-  // --- END MUSIC EFFECTS ---
 
- if (
-    isMapLoading ||
-    userLoading ||
-    authLoading || // 👈 Good to check authLoading too
-    (isSignLoading && !hasShownSignModal)
-  ) {
+  if (isMapLoading || userLoading || authLoading || isSignLoading) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
-        <Text>Loading...</Text>
+        <Text className="text-2xl text-orange-500 font-PoppinsBold">
+          Loading Learning Map...
+        </Text>
       </View>
     );
   }
@@ -134,20 +128,12 @@ export default function Index() {
 
       {/* Floating Buttons */}
       <View className="flex-col justify-center items-center absolute bottom-2 left-2 gap-2 z-50">
-        {/* --- MODIFIED BUTTON LOGIC --- */}
-        {hasShownSignModal ? (
-          <TouchableOpacity
-            onPress={() => setShowSignOfTheDay(true)}
-           
-          >
-             <SignOfTheDayIcon />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity onPress={() => setTutorialPressed((prev) => !prev)}>
-            <SignOfTheDayIcon />
-          </TouchableOpacity>
-        )}
-        {/* --- END MODIFIED LOGIC --- */}
+        {/* Manual button to show Sign of the Day */}
+        <TouchableOpacity onPress={() => setShowSignOfTheDay(true)}>
+          <SignOfTheDayIcon />
+        </TouchableOpacity>
+
+      
 
         <Settings onPress={() => setIsPressed((prev) => !prev)} />
       </View>
@@ -158,20 +144,16 @@ export default function Index() {
       )}
 
       {/* Modals */}
-      {/* SoundSettings now needs no props for volume */}
       {isPressed && <SoundSettings onPress={() => setIsPressed(false)} />}
-      {tutorialPressed && (
-        <Tutorial onPress={() => setTutorialPressed(false)} />
-      )}
+    
 
-      {/* --- RENDER SIGN OF THE DAY MODAL --- */}
+      {/* Sign of the Day Modal */}
       {showSignOfTheDay && signOfTheDay && (
         <SignOfTheDayModal
           sign={signOfTheDay}
           onClose={() => setShowSignOfTheDay(false)}
         />
       )}
-      {/* --- END SOTD MODAL --- */}
     </View>
   );
 }
@@ -195,10 +177,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -15,
   },
-  // --- NEW STYLES FOR SOTD BUTTON ---
   signOfTheDayButton: {
-    width: 50, // Adjust size to match your TutorialSVG
-    height: 50, // Adjust size to match your TutorialSVG
+    width: 50,
+    height: 50,
     borderRadius: 999,
     backgroundColor: "white",
     justifyContent: "center",
@@ -212,5 +193,4 @@ const styles = StyleSheet.create({
   signOfTheDayButtonText: {
     fontSize: 24,
   },
-  // --- END NEW STYLES ---
 });

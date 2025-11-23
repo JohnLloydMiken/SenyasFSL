@@ -1,5 +1,5 @@
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import SignLangRecogWebView from "./SignLangRecogWebView";
 import LevelContentBtn from "../GameBtns/LevelContentBtn";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
@@ -9,53 +9,67 @@ import { getVideoUrl } from "@/services/gameService";
 import { LevelData } from "@/utils/store/levelData";
 import { useGameStore } from "@/hooks/useGameStore";
 import { useGameProgressStore } from "@/hooks/useGameProgressStore";
+import { useAnswerSounds } from "@/hooks/useAnswerSounds";
+import Toast from "react-native-toast-message";
+import LottieView from "lottie-react-native";
 
-interface SingLangRecogProps {
+const PREDICTION_THRESHOLD = 0.5;
+const ADVANCEMENT_DELAY = 1500;
+const SKIP_COOLDOWN = 1000;
+
+interface SignLangRecogProps {
   levelData: any;
   flowContent: Map<string, any>;
   onPress: () => void;
+  modelName: string;
+  hands: 1 | 2;
 }
 
-const SingLangRecog: React.FC<SingLangRecogProps> = ({
+const SignLangRecog: React.FC<SignLangRecogProps> = ({
   levelData,
   flowContent,
   onPress,
+  modelName,
+  hands,
 }) => {
   // --- State ---
   const [count, setCount] = useState(0);
+  const [isCorrectlySigned, setIsCorrectlySigned] = useState(false);
+  const [isSkipping, setIsSkipping] = useState(false);
+  const [currentPrediction, setCurrentPrediction] = useState<string | null>(null);
+  
   const setTotalSteps = LevelData((state) => state.setTotalSteps);
   const setLevelStep = LevelData((state) => state.setLevelStep);
-  const prediction = usePredictionStore(
-    (state: { prediction: any }) => state.prediction
-  );
-  const setPrediction = usePredictionStore(
-    (state: { setPrediction: (value: string) => void }) => state.setPrediction
-  );
+  
+  // Prediction store
+  const prediction = usePredictionStore((state) => state.prediction);
+  const confidence = usePredictionStore((state) => state.confidence);
+  const cameraStatus = usePredictionStore((state) => state.cameraStatus);
+  const resetPrediction = usePredictionStore((state) => state.reset);
 
-  // Accessors for values we will save/restore
-  const isXpDoubledFromStore = useGameStore((s) => s.isXpDoubled);
-  const is2xTryActiveFromStore = useGameStore((s) => s.is2xTryActive);
-  const visibleChoicesFromStore = useGameStore((s) => s.visibleChoices);
   const phaseFromStore = useGameStore((s) => s.phase);
-
   const progress = useGameProgressStore();
   const fullLevelId = levelData?.id;
+
+  // Audio
+  const { playCorrectSound, playSkippedSound } = useAnswerSounds();
+
+  // Refs for timeout management
+  const advancementTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const skipCooldownRef = useRef<NodeJS.Timeout | null>(null);
 
   const signsToPractice = useMemo(() => {
     return Array.from(flowContent.values());
   }, [flowContent]);
 
   // --- Dynamic Content ---
-  const currentSign =
-    signsToPractice.length > count ? signsToPractice[count] : null;
-  const correctSignLetter = (
-    currentSign?.enTitle.split(" ").pop() || ""
-  ).toUpperCase();
+  const currentSign = signsToPractice.length > count ? signsToPractice[count] : null;
+  const correctSignLetter = (currentSign?.enTitle.split(" ").pop() || "").toUpperCase();
   const enTitle = currentSign?.enTitle;
   const filTitle = currentSign?.filTitle;
 
-  const modelName = levelData.modelName || "letters";
-  const handMode = levelData.handMode || "one";
+  const model = modelName || "letters";
+  const handMode = hands === 1 ? "one" : "two";
 
   // --- Video Player Logic ---
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
@@ -78,34 +92,10 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
 
         if (saved) {
           console.log("[SignLangRecog] Loaded saved progress:", saved);
-
-          // Restore count (currentStep)
-          const restoredStep =
-            typeof saved.currentStep === "number" ? saved.currentStep : 0;
+          const restoredStep = typeof saved.currentStep === "number" ? saved.currentStep : 0;
           setCount(restoredStep);
           setLevelStep(restoredStep);
-
-          // Restore visible choices (if included)
-          if (saved.visibleChoices !== undefined) {
-            useGameStore.setState({ visibleChoices: saved.visibleChoices });
-          }
-
-          // Restore phase (if included)
-          if (saved.phase !== undefined) {
-            useGameStore.setState({ phase: saved.phase });
-          }
-
-          // Restore xp/item effects if included
-          const toRestore: Partial<any> = {};
-          if (saved.isXpDoubled !== undefined)
-            toRestore.isXpDoubled = saved.isXpDoubled;
-          if (saved.is2xTryActive !== undefined)
-            toRestore.is2xTryActive = saved.is2xTryActive;
-          if (Object.keys(toRestore).length > 0) {
-            (useGameStore as any).setState(toRestore);
-          }
         } else {
-          // No saved state – ensure starting defaults
           setCount(0);
           setLevelStep(0);
         }
@@ -115,7 +105,6 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
     }
 
     loadProgress();
-
     return () => {
       mounted = false;
     };
@@ -129,6 +118,7 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
     setLevelStep(count);
   }, [count, setLevelStep]);
 
+  // --- Video Loading ---
   useEffect(() => {
     const loadVideo = async () => {
       if (!currentSign?.videoUrl) {
@@ -155,17 +145,105 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
     loadVideo();
   }, [currentSign, player]);
 
-  // --- Prediction Logic ---
+  // --- Reset state when sign changes ---
   useEffect(() => {
-    if (
-      prediction &&
-      correctSignLetter &&
-      prediction.toUpperCase() === correctSignLetter
-    ) {
-      setPrediction("");
-      setCount((prev) => prev + 1);
+    console.log("[SignLangRecog] Sign changed, resetting state");
+    setIsCorrectlySigned(false);
+    setCurrentPrediction(null);
+    resetPrediction();
+    
+    if (advancementTimeoutRef.current) {
+      clearTimeout(advancementTimeoutRef.current);
+      advancementTimeoutRef.current = null;
     }
-  }, [prediction, correctSignLetter, setPrediction]);
+  }, [count, resetPrediction]);
+
+  // --- Update current prediction based on confidence threshold ---
+  useEffect(() => {
+    if (isCorrectlySigned) {
+      return;
+    }
+
+    if (confidence >= PREDICTION_THRESHOLD) {
+      setCurrentPrediction(prediction);
+    } else {
+      setCurrentPrediction(null);
+    }
+  }, [prediction, confidence, isCorrectlySigned]);
+
+  // --- Advance to next sign ---
+  const advanceSign = useCallback((skipped = false) => {
+    if (advancementTimeoutRef.current) {
+      console.log(`[SignLangRecog] ${skipped ? "Skip:" : "Auto-advance:"} Clearing pending timeout.`);
+      clearTimeout(advancementTimeoutRef.current);
+      advancementTimeoutRef.current = null;
+    }
+
+    console.log(`[SignLangRecog] ${skipped ? "Skip:" : "Correct:"} Advancing from step ${count}`);
+    setCount((prev) => prev + 1);
+    setIsCorrectlySigned(false);
+    setCurrentPrediction(null);
+    resetPrediction();
+  }, [count, resetPrediction]);
+
+  // --- Check for correct sign ---
+  useEffect(() => {
+    // Only check predictions if not already marked as correct
+    if (isCorrectlySigned) {
+      return;
+    }
+
+    if (currentPrediction && correctSignLetter) {
+      const predictionMatches = currentPrediction.toUpperCase() === correctSignLetter;
+      
+      if (predictionMatches) {
+        playCorrectSound();
+        console.log(`[SignLangRecog] Correct sign DETECTED: ${correctSignLetter}`);
+        setIsCorrectlySigned(true);
+        
+        if (advancementTimeoutRef.current) {
+          clearTimeout(advancementTimeoutRef.current);
+        }
+        
+        console.log(`[SignLangRecog] Auto-advancing in ${ADVANCEMENT_DELAY}ms...`);
+        advancementTimeoutRef.current = setTimeout(() => {
+          console.log("[SignLangRecog] >>> Auto-advancement timeout FIRED! <<<");
+          advancementTimeoutRef.current = null;
+          advanceSign(false);
+        }, ADVANCEMENT_DELAY);
+      }
+    }
+  }, [currentPrediction, correctSignLetter, isCorrectlySigned, advanceSign, playCorrectSound]);
+
+  // --- Handle Skip ---
+  const handleSkip = useCallback(() => {
+    if (isSkipping || isCorrectlySigned) {
+      console.log("[SignLangRecog] Skip blocked: Currently in transition.");
+      return;
+    }
+
+    setIsSkipping(true);
+    console.log("[SignLangRecog] Skip button clicked.");
+    playSkippedSound();
+    
+    Toast.show({
+      type: "info",
+      text1: "Skipped!",
+      position: "top",
+      visibilityTime: 1000,
+    });
+
+    advanceSign(true);
+
+    if (skipCooldownRef.current) {
+      clearTimeout(skipCooldownRef.current);
+    }
+    
+    skipCooldownRef.current = setTimeout(() => {
+      setIsSkipping(false);
+      skipCooldownRef.current = null;
+    }, SKIP_COOLDOWN);
+  }, [isCorrectlySigned, isSkipping, playSkippedSound, advanceSign]);
 
   // --- Auto-save whenever count changes ---
   useEffect(() => {
@@ -173,10 +251,10 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
 
     const stateToSave = {
       currentStep: count,
-      visibleChoices: visibleChoicesFromStore ?? null,
+      visibleChoices: null,
       phase: phaseFromStore ?? "playing",
-      isXpDoubled: isXpDoubledFromStore ?? false,
-      is2xTryActive: is2xTryActiveFromStore ?? false,
+      isXpDoubled: false,
+      is2xTryActive: false,
       lives: 0,
       tempScore: { xp: 0, senyasCoins: 0 },
     };
@@ -186,55 +264,60 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
     } catch (err) {
       console.warn("[SignLangRecog] progress.save failed:", err);
     }
-  }, [
-    fullLevelId,
-    count,
-    visibleChoicesFromStore,
-    phaseFromStore,
-    isXpDoubledFromStore,
-    is2xTryActiveFromStore,
-    progress,
-  ]);
+  }, [fullLevelId, count, phaseFromStore, progress]);
 
-  // Cancel pending saves when unmounting
+  // --- Cleanup on unmount ---
   useEffect(() => {
     return () => {
+      console.log("[SignLangRecog] Component unmounting. Final cleanup.");
+      if (advancementTimeoutRef.current) {
+        clearTimeout(advancementTimeoutRef.current);
+        advancementTimeoutRef.current = null;
+      }
+      if (skipCooldownRef.current) {
+        clearTimeout(skipCooldownRef.current);
+        skipCooldownRef.current = null;
+      }
       progress.cancelPendingSaves?.();
+      resetPrediction();
     };
-  }, [progress]);
+  }, [progress, resetPrediction]);
 
-  // Enhanced onPress handler to flush and remove saved state on completion
+  // --- Enhanced onPress handler ---
   const handleContinue = useCallback(async () => {
     if (fullLevelId) {
       try {
         const stateToSave = {
           currentStep: count,
-          visibleChoices: visibleChoicesFromStore ?? null,
+          visibleChoices: null,
           phase: "completed",
-          isXpDoubled: isXpDoubledFromStore ?? false,
-          is2xTryActive: is2xTryActiveFromStore ?? false,
+          isXpDoubled: false,
+          is2xTryActive: false,
           lives: 0,
           tempScore: { xp: 0, senyasCoins: 0 },
         };
         await progress.flushSave(fullLevelId, stateToSave);
         await progress.remove(fullLevelId);
       } catch (err) {
-        console.warn(
-          "[SignLangRecog] Error flushing/removing save on finish:",
-          err
-        );
+        console.warn("[SignLangRecog] Error flushing/removing save on finish:", err);
       }
     }
     onPress();
-  }, [
-    fullLevelId,
-    count,
-    visibleChoicesFromStore,
-    isXpDoubledFromStore,
-    is2xTryActiveFromStore,
-    progress,
-    onPress,
-  ]);
+  }, [fullLevelId, count, progress, onPress]);
+
+  // --- Status Text ---
+  const statusText = useMemo(() => {
+    if (isCorrectlySigned) {
+      return "Correct!";
+    }
+    if (cameraStatus === "Show Hand" || cameraStatus === "Show Hands") {
+      return "Show Hand";
+    }
+    if (cameraStatus === "Processing...") {
+      return "Identifying...";
+    }
+    return cameraStatus;
+  }, [isCorrectlySigned, cameraStatus]);
 
   // --- Render ---
   return (
@@ -248,6 +331,7 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
       <Text className="font-PoppinsLightItalic text-lg md:text-3xl text-center mb-2 text-orange-400">
         "{filTitle}"
       </Text>
+
       {/* Content Area */}
       {count < signsToPractice.length && currentSign ? (
         <View style={styles.contentArea}>
@@ -272,12 +356,32 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
 
           {/* === WebView Area === */}
           <View style={styles.webviewContainer}>
-            <SignLangRecogWebView modelName={modelName} handMode={handMode} />
+            <SignLangRecogWebView modelName={model} handMode={handMode} />
           </View>
 
-          <Text className="text-center text-gray-500 text-xl mt-1">
-            Prediction: {prediction || "..."}
-          </Text>
+          {/* === Status & Prediction Display === */}
+          <View style={styles.predictionContainer}>
+            <Text style={styles.statusText}>{statusText}</Text>
+            
+            <View style={styles.predictionDisplay}>
+              {isCorrectlySigned ? (
+                <Text style={[styles.predictionText, styles.correctText]}>
+                  {correctSignLetter}
+                </Text>
+              ) : currentPrediction ? (
+                <Text style={[styles.predictionText, styles.predictingText]}>
+                  {currentPrediction}
+                </Text>
+              ) : (
+                <LottieView
+                  source={require("@/assets/lottie/HandWaiting.json")}
+                  autoPlay
+                  loop
+                  style={styles.lottieAnimation}
+                />
+              )}
+            </View>
+          </View>
         </View>
       ) : (
         // --- DONE STATE ---
@@ -288,13 +392,22 @@ const SingLangRecog: React.FC<SingLangRecogProps> = ({
         </View>
       )}
 
-      {/* Buttons (absolute) */}
+      {/* Buttons/Text (absolute) */}
       <View style={styles.buttonContainer}>
         {count < signsToPractice.length ? (
-          <LevelContentBtn
-            text="Skip"
-            onPress={() => setCount((prev) => prev + 1)}
-          />
+          isCorrectlySigned ? (
+            // Show "Correct!" text instead of button
+            <View style={styles.correctTextContainer}>
+              <Text style={styles.correctButtonText}>Correct!</Text>
+            </View>
+          ) : (
+            // Show Skip button
+            <LevelContentBtn
+              text="Skip"
+              onPress={handleSkip}
+           
+            />
+          )
         ) : (
           <LevelContentBtn text="Continue" onPress={handleContinue} />
         )}
@@ -321,7 +434,7 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   videoContainer: {
-    height: "45%",
+    height: "40%",
     width: "90%",
     justifyContent: "center",
     marginTop: 10,
@@ -345,13 +458,44 @@ const styles = StyleSheet.create({
     backgroundColor: "#000",
   },
   webviewContainer: {
-    height: "45%",
+    height: "40%",
     width: "90%",
     marginTop: 10,
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "#e0e0e0",
+  },
+  predictionContainer: {
+    width: "90%",
+    marginTop: 8,
+    alignItems: "center",
+  },
+  statusText: {
+    fontSize: 16,
+    color: "#6b7280",
+    textAlign: "center",
+  },
+  predictionDisplay: {
+    minHeight: 100,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+  },
+  predictionText: {
+    fontSize: 52,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  correctText: {
+    color: "#22c55e",
+  },
+  predictingText: {
+    color: "#2563eb",
+  },
+  lottieAnimation: {
+    width: 80,
+    height: 80,
   },
   buttonContainer: {
     position: "absolute",
@@ -361,6 +505,26 @@ const styles = StyleSheet.create({
     marginLeft: -112,
     zIndex: 50,
   },
+  correctTextContainer: {
+    backgroundColor: "#22c55e",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    opacity:0
+  },
+  correctButtonText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+  },
   backgroundContainer: {
     position: "absolute",
     width: "100%",
@@ -369,4 +533,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SingLangRecog;
+export default SignLangRecog;

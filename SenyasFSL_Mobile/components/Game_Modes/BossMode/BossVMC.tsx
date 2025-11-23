@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
@@ -13,13 +13,9 @@ import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
 import { videoSpeed } from "@/utils/store/videoSpeed";
-
-// ✅ --- IMPORTS FOR BOMB/RETRY ---
 import { useGameStore } from "@/hooks/useGameStore";
 import { QuestionOption as SharedQuestionOption } from "@/shared/types/index";
 import Toast from "react-native-toast-message";
-
-// ✅ --- IMPORT SOUND HOOK ---
 import { useAnswerSounds } from "@/hooks/useAnswerSounds";
 
 // --- Interfaces ---
@@ -28,7 +24,7 @@ export interface VideoQuestionOption {
   isCorrect: boolean;
   labelEn: string;
   labelFil: string;
-  videoSrc: string; // Can be "gs://" or full HTTPS URL
+  videoSrc: string;
 }
 
 interface ViewMCProps {
@@ -38,7 +34,6 @@ interface ViewMCProps {
   onPress: () => void;
   onAnswer: (isCorrect: boolean) => void;
   hearts: number;
-  key: string
 }
 
 const BossViewMC: React.FC<ViewMCProps> = ({
@@ -48,37 +43,34 @@ const BossViewMC: React.FC<ViewMCProps> = ({
   onPress,
   onAnswer,
   hearts,
-  key,
 }) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [choice, setChoice] = useState<string | null>(null); // Stores labelEn
+  const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(100);
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const speed = videoSpeed((state) => state.playingSpeed);
-  const [resolvedVideos, setResolvedVideos] = useState<Record<string, string>>(
-    {}
-  );
+  const [resolvedVideos, setResolvedVideos] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showWrongIcon, setShowWrongIcon] = useState(false);
 
-  // ✅ --- GAME STORE STATE (BOMB/RETRY) ---
+  // Game store state
   const visibleChoices = useGameStore((state) => state.visibleChoices);
   const setVisibleChoices = useGameStore((state) => state.setVisibleChoices);
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
 
-  // ✅ --- USE SOUND HOOK ---
+  // Sound hook
   const { playCorrectSound, playIncorrectSound } = useAnswerSounds();
 
-  // ✅ Determine the correct answer from options
+  // Determine correct answer
   const correctAnswer = useMemo(() => {
     const correctOption = options.find((opt) => opt.isCorrect);
     return correctOption ? correctOption.labelEn : "";
   }, [options]);
 
-  // ✅ Fetch video URLs
+  // Fetch video URLs
   useEffect(() => {
     const fetchVideoUrls = async () => {
       try {
@@ -89,14 +81,11 @@ const BossViewMC: React.FC<ViewMCProps> = ({
           let finalUrl = option.videoSrc;
 
           if (option.videoSrc.startsWith("gs://")) {
-            console.log(`🔄 Fetching URL for: ${option.labelEn}`);
+            console.log(`📄 Fetching URL for: ${option.labelEn}`);
             try {
               finalUrl = await getVideoUrl(option.videoSrc);
             } catch (err) {
-              console.error(
-                `❌ Failed to fetch URL for ${option.labelEn}:`,
-                err
-              );
+              console.error(`❌ Failed to fetch URL for ${option.labelEn}:`, err);
             }
           }
           results[option.id] = finalUrl;
@@ -121,44 +110,38 @@ const BossViewMC: React.FC<ViewMCProps> = ({
     }
   }, [hasChecked, isCorrect]);
 
-  // ✅ --- EFFECT FOR BOMB ITEM ---
+  // Effect for bomb item
   useEffect(() => {
     if (options) {
       setVisibleChoices(options as SharedQuestionOption[]);
     }
-    return () => {
-      setVisibleChoices(null);
-    };
+    // Don't clear on unmount - let BossFight manage this
   }, [options, setVisibleChoices]);
 
-  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  // Handle check
   const handleBG = useCallback(() => {
     if (!choice) return;
 
     const isAnswerCorrect = choice === correctAnswer;
 
     if (isAnswerCorrect) {
-      // --- CORRECT ANSWER ---
-      playCorrectSound(); // ✅ ADDED
+      playCorrectSound();
       incrementScore();
       setIsCorrect(true);
       setHasChecked(true);
       setOpacity(0);
       onAnswer(true);
     } else {
-      // --- INCORRECT ANSWER ---
       if (is2xTryActive) {
-        // --- 2xTRY IS ACTIVE ---
         consume2xTry();
         Toast.show({
           type: "info",
           text1: "Saved by 2x Try!",
           text2: "That was incorrect, try again!",
         });
-        setChoice(null); // Reset choice
+        setChoice(null);
       } else {
-        // --- 2xTRY IS NOT ACTIVE ---
-        playIncorrectSound(); // ✅ ADDED
+        playIncorrectSound();
         setIsCorrect(false);
         setHasChecked(true);
         setOpacity(0);
@@ -173,14 +156,12 @@ const BossViewMC: React.FC<ViewMCProps> = ({
     incrementScore,
     is2xTryActive,
     consume2xTry,
-    playCorrectSound, // ✅ ADDED
-    playIncorrectSound, // ✅ ADDED
+    playCorrectSound,
+    playIncorrectSound,
   ]);
 
-  // ✅ --- RENDER OPTIONS (UPDATED FOR BOMB) ---
+  // Render options
   const renderOptions = useMemo(() => {
-    // Map over the store's choices, but cast to VideoQuestionOption
-    // as the store's filter logic preserves the original objects.
     return ((visibleChoices || options) as VideoQuestionOption[]).map(
       (option) => (
         <VideoMCBTN
@@ -219,31 +200,41 @@ const BossViewMC: React.FC<ViewMCProps> = ({
   }
 
   return (
-    <View className="flex-1 relative items-center bg-white">
-      <View className=" flex-row justify-center items-center ">
-        {Array.from({ length: hearts }).map((_, idx) => (
-          <Text key={idx} style={{ fontSize: 24, color: "red" }}>
-            ❤️
-          </Text>
-        ))}
-        {showWrongIcon ? (
-          <FSL_Wrong height={50} width={50} />
-        ) : (
-          <FSL_Fight height={50} width={50} />
-        )}
-      </View>
-      {/* PROMPTS */}
-      <Text className="text-center font-PoppinsBold  text-xl md:text-3xl">
-        {enPrompt}
-      </Text>
-      <Text className="text-center font-PoppinsLightItalic text-lg md:text-3xl">
-        {filPrompt}
-      </Text>
+    <View className="flex-1 relative bg-white">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 200 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hearts and Icon */}
+        <View className="flex-row justify-center items-center mt-4">
+          {Array.from({ length: hearts }).map((_, idx) => (
+            <Text key={idx} style={{ fontSize: 24, color: "red" }}>
+              ❤️
+            </Text>
+          ))}
+          {showWrongIcon ? (
+            <FSL_Wrong height={50} width={50} />
+          ) : (
+            <FSL_Fight height={50} width={50} />
+          )}
+        </View>
 
-      {/* VIDEO CHOICES */}
-      <View className="w-2/3">{renderOptions}</View>
+        {/* Prompts */}
+             <Text className="text-4xl text-orange-400 font-PoppinsBold text-center my-2">Fill in the Gaps!</Text>
+        <Text className="text-center font-PoppinsBold text-xl md:text-3xl mt-2">
+          {enPrompt}
+        </Text>
+        <Text className="text-center font-PoppinsLightItalic text-lg md:text-3xl">
+          {filPrompt}
+        </Text>
 
-      {/* INVENTORY BUTTON */}
+        {/* Video Choices */}
+        <View className="w-2/3 mx-auto mt-4">{renderOptions}</View>
+  
+
+      {/* Fixed Elements */}
+      {/* Inventory Button */}
       <View
         className={`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}
       >
@@ -254,7 +245,7 @@ const BossViewMC: React.FC<ViewMCProps> = ({
         />
       </View>
 
-      {/* FEEDBACK & BUTTONS */}
+      {/* Feedback & Buttons */}
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
         {isCorrect === true && (
           <View className="flex-row mx-auto justify-center items-center gap-2">
@@ -281,7 +272,7 @@ const BossViewMC: React.FC<ViewMCProps> = ({
         )}
       </View>
 
-      {/* BACKGROUND */}
+      {/* Background */}
       <View className="absolute w-full bottom-0 z-10">
         {isCorrect === true ? (
           <CorrectBG />
@@ -291,6 +282,7 @@ const BossViewMC: React.FC<ViewMCProps> = ({
           <LevelBg />
         )}
       </View>
+          </ScrollView>
     </View>
   );
 };

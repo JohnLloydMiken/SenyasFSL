@@ -28,6 +28,7 @@ export interface CreateUserAccountResult {
 export interface UpdateUserProfileData {
   newUsername?: string;
   newEmail?: string;
+  emailNotifications?: boolean;
 }
 export interface UpdateUserProfileResult {
   status: "success";

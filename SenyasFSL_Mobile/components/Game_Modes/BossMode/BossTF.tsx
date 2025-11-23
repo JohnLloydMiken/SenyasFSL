@@ -1,32 +1,28 @@
-import { View, Text, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
 import LevelContentBtn from "@/components/Game_Modes/GameBtns/LevelContentBtn";
 import MCBTN from "@/components/Game_Modes/GameBtns/MCBTN";
+import Inventory from "@/components/main_interface/treasure/Inventory";
 import LevelBg from "@/assets/svgs/LevelBG.svg";
 import CorrectBG from "@/assets/svgs/CorrectBG.svg";
 import WrongBG from "@/assets/svgs/WrongBG.svg";
 import Incorrect from "@/assets/svgs/Incorrect.svg";
 import CorrectIcon from "@/assets/svgs/CorrectIcon.svg";
-import Inventory from "@/components/main_interface/treasure/Inventory";
 import { getVideoUrl } from "@/services/gameService";
 import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
 import { videoSpeed } from "@/utils/store/videoSpeed";
-
-// ✅ --- IMPORTS FOR BOMB/RETRY ---
 import { useGameStore } from "@/hooks/useGameStore";
 import { QuestionOption as SharedQuestionOption } from "@/shared/types/index";
 import Toast from "react-native-toast-message";
-
-// ✅ --- IMPORT SOUND HOOK ---
 import { useAnswerSounds } from "@/hooks/useAnswerSounds";
 
 // --- Interfaces ---
 export interface TrueFalseOption {
   id: string;
-  isCorrect: boolean; // Note: In TF, this logic is inverted
+  isCorrect: boolean;
   labelEn: string;
   labelFil: string;
 }
@@ -39,7 +35,6 @@ interface TrueOrFalseProps {
   onPress: () => void;
   onAnswer: (isCorrect: boolean) => void;
   hearts: number;
-    key: string
 }
 
 const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
@@ -50,10 +45,9 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
   onPress,
   onAnswer,
   hearts,
-  key
 }) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [selectedChoice, setSelectedChoice] = useState<string | null>(null); // stores option id
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(1);
@@ -63,16 +57,16 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const speed = videoSpeed((state) => state.playingSpeed);
 
-  // ✅ --- GAME STORE STATE (BOMB/RETRY) ---
+  // Game store state
   const visibleChoices = useGameStore((state) => state.visibleChoices);
   const setVisibleChoices = useGameStore((state) => state.setVisibleChoices);
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
 
-  // ✅ --- USE SOUND HOOK ---
+  // Sound hook
   const { playCorrectSound, playIncorrectSound } = useAnswerSounds();
 
-  // Note: This logic seems intentionally inverted in the original file
+  // Correct answer (inverted logic)
   const correctAnswer = useMemo(() => {
     const correctOpt = options.find((opt) => !opt.isCorrect);
     return correctOpt ? correctOpt.labelEn : "";
@@ -115,36 +109,31 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
     }
   }, [hasChecked, isCorrect]);
 
-  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  // Handle check
   const handleCheck = useCallback(() => {
     if (!selectedChoice) return;
 
     const selectedOption = options.find((opt) => opt.id === selectedChoice);
-    // Original logic: the *correct* answer has isCorrect: false
-    const isAnswerCorrect = selectedOption ? !selectedOption.isCorrect : false;
+    const isAnswerCorrect = selectedOption ? selectedOption.isCorrect : false;
 
     if (isAnswerCorrect) {
-      // --- CORRECT ANSWER ---
-      playCorrectSound(); // ✅ ADDED
+      playCorrectSound();
       incrementScore();
       setIsCorrect(true);
       setHasChecked(true);
       setOpacity(0);
       onAnswer(true);
     } else {
-      // --- INCORRECT ANSWER ---
       if (is2xTryActive) {
-        // --- 2xTRY IS ACTIVE ---
         consume2xTry();
         Toast.show({
           type: "info",
           text1: "Saved by 2x Try!",
           text2: "That was incorrect, try again!",
         });
-        setSelectedChoice(null); // Reset choice
+        setSelectedChoice(null);
       } else {
-        // --- 2xTRY IS NOT ACTIVE ---
-        playIncorrectSound(); // ✅ ADDED
+        playIncorrectSound();
         setIsCorrect(false);
         setHasChecked(true);
         setOpacity(0);
@@ -159,8 +148,8 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
     incrementScore,
     is2xTryActive,
     consume2xTry,
-    playCorrectSound, // ✅ ADDED
-    playIncorrectSound, // ✅ ADDED
+    playCorrectSound,
+    playIncorrectSound,
   ]);
 
   // Video speed effect
@@ -170,17 +159,15 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
     }
   }, [speed, player]);
 
-  // ✅ --- EFFECT FOR BOMB ITEM ---
+  // Effect for bomb item
   useEffect(() => {
     if (options) {
       setVisibleChoices(options as SharedQuestionOption[]);
     }
-    return () => {
-      setVisibleChoices(null);
-    };
+    // Don't clear on unmount - let BossFight manage this
   }, [options, setVisibleChoices]);
 
-  // ✅ --- RENDER OPTIONS (UPDATED FOR BOMB) ---
+  // Render options
   const renderOptions = useMemo(
     () =>
       (visibleChoices || options).map((option) => (
@@ -190,7 +177,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
           FilipinoText={`"${option.labelFil}"`}
           onPress={() => !hasChecked && setSelectedChoice(option.id)}
           clicked={hasChecked}
-          isCorrect={!option.isCorrect} // Original logic
+          isCorrect={!option.isCorrect}
           isSelected={selectedChoice === option.id}
           hasChecked={hasChecked}
           rounded={50}
@@ -210,42 +197,56 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
   }
 
   return (
-    <View className="flex-1 relative items-center bg-white">
-      <View className=" flex-row justify-center items-center ">
-        {Array.from({ length: hearts }).map((_, idx) => (
-          <Text key={idx} style={{ fontSize: 24, color: "red" }}>
-            ❤️
-          </Text>
-        ))}
-        {showWrongIcon ? (
-          <FSL_Wrong height={50} width={50} />
-        ) : (
-          <FSL_Fight height={50} width={50} />
-        )}
-      </View>
-      <View className="w-10/12">
-        <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">
-          {enPrompt}
-        </Text>
-        <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">
-          {filPrompt}
-        </Text>
-      </View>
-
-      <View className="w-full h-56 flex-row items-center justify-center">
-        <View className="w-full h-full">
-          <VideoView
-            style={{ width: "100%", height: "100%" }}
-            player={player}
-            allowsFullscreen={false}
-            allowsPictureInPicture={false}
-            nativeControls={false}
-          />
+    <View className="flex-1 relative bg-white">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 200 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hearts and Icon */}
+        <View className="flex-row justify-center items-center mt-4">
+          {Array.from({ length: hearts }).map((_, idx) => (
+            <Text key={idx} style={{ fontSize: 24, color: "red" }}>
+              ❤️
+            </Text>
+          ))}
+          {showWrongIcon ? (
+            <FSL_Wrong height={50} width={50} />
+          ) : (
+            <FSL_Fight height={50} width={50} />
+          )}
         </View>
-      </View>
 
-      <View className="w-11/12 mx-auto">{renderOptions}</View>
+        {/* Prompts */}
+            <Text className="text-4xl text-orange-400 font-PoppinsBold text-center">True or False!</Text>
 
+        {/* Video */}
+        <View className="w-full h-56 flex-row items-center justify-center mt-4">
+          <View className="w-full h-full">
+            <VideoView
+              style={{ width: "100%", height: "100%" }}
+              player={player}
+              allowsFullscreen={false}
+              allowsPictureInPicture={false}
+              nativeControls={false}
+            />
+          </View>
+        </View>
+         <View className="w-10/12 mx-auto mt-2">
+          <Text className="font-PoppinsBold text-2xl md:text-3xl text-center">
+            {enPrompt}
+          </Text>
+          <Text className="font-PoppinsLightItallic text-lg text-center md:text-xl">
+            {filPrompt}
+          </Text>
+        </View>
+
+        {/* Options */}
+        <View className="w-11/12 mx-auto mt-4">{renderOptions}</View>
+      </ScrollView>
+
+      {/* Fixed Elements */}
+      {/* Inventory */}
       <View
         style={{ opacity }}
         className="w-full p-4 mx-auto absolute bottom-28 z-50"
@@ -257,6 +258,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
         />
       </View>
 
+      {/* Feedback and Buttons */}
       <View className="absolute bottom-16 w-56 md:w-64 left-1/2 -translate-x-1/2 z-50 gap-2">
         {isCorrect !== null && (
           <View className="flex-row mx-auto justify-center items-center gap-2">
@@ -274,6 +276,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
         ) : null}
       </View>
 
+      {/* Background */}
       <View className="absolute w-full bottom-0 z-10">
         {isCorrect === true ? (
           <CorrectBG />

@@ -1,26 +1,24 @@
 // components/main_interface/profile/EditPersonalData.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-// --- 1. Import Ionicons ---
 import { Ionicons } from '@expo/vector-icons'; 
 import { useUsernameValidation } from '@/hooks/useUsernameValidation';
 import { useUpdateProfile } from '@/hooks/useUpdateProfile';
 import { useAuthStore } from '@/utils/store/useAuthStore';
-// --- 4. Import useBottomSheet ---
 import { useBottomSheet } from '@/modules/contextProvider';
 
-// No longer needs onClose prop
 const EditPersonalData = () => {
-  // --- 4. Get closeSheet function ---
   const { closeSheet } = useBottomSheet(); 
   const { user } = useAuthStore();
 
-  // --- 3. Use user.username ---
   const defaultUsername = user?.displayName || ''; 
+  // Get the current email notification preference with default value of true
+  const defaultEmailNotifications = user?.preferences?.emailNotifications ?? true;
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [emailNotifications, setEmailNotifications] = useState<boolean>(defaultEmailNotifications);
 
   const {
     username,
@@ -31,7 +29,9 @@ const EditPersonalData = () => {
 
   const { updateProfile, isSaving, saveError } = useUpdateProfile();
 
-  const isUnchanged = username === defaultUsername;
+  const isUnchanged = 
+    username === defaultUsername && 
+    emailNotifications === defaultEmailNotifications;
 
   useEffect(() => {
     if (saveError) {
@@ -57,9 +57,13 @@ const EditPersonalData = () => {
     }
 
     try {
-      await updateProfile(username.trim(), defaultUsername, currentPassword);
+      await updateProfile(
+        username.trim(), 
+        defaultUsername, 
+        currentPassword,
+        emailNotifications
+      );
       Alert.alert('Success', 'Profile updated successfully!');
-      // --- 4. Close sheet on success ---
       closeSheet(); 
     } catch (error) {
       // Error is handled by the useEffect above
@@ -67,7 +71,7 @@ const EditPersonalData = () => {
   };
 
   const renderUsernameFeedback = () => {
-    if (isUnchanged) return null;
+    if (username === defaultUsername) return null;
     switch (usernameStatus) {
       case 'checking':
         return <Text style={styles.feedbackText}>Checking availability…</Text>;
@@ -84,7 +88,8 @@ const EditPersonalData = () => {
 
   const isButtonDisabled =
     isSaving ||
-    (!isUnchanged &&
+    isUnchanged ||
+    (username !== defaultUsername &&
       (usernameStatus === 'checking' || usernameStatus === 'taken' || !isValidFormat));
 
   return (
@@ -109,9 +114,31 @@ const EditPersonalData = () => {
         {renderUsernameFeedback()}
       </View>
 
+      {/* Email Notifications Toggle */}
+      <View style={styles.notificationContainer}>
+        <View style={styles.notificationTextContainer}>
+          <Text style={styles.notificationLabel}>Daily Email Reminders</Text>
+          <Text style={styles.notificationHelper}>Get notified about your streak</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => setEmailNotifications(!emailNotifications)}
+          style={styles.checkboxContainer}
+          activeOpacity={0.7}
+        >
+          <View style={[
+            styles.checkbox,
+            emailNotifications && styles.checkboxChecked
+          ]}>
+            {emailNotifications && (
+              <Ionicons name="checkmark" size={16} color="#fff" />
+            )}
+          </View>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.formGroup}>
         <Text style={styles.label}>Current password</Text>
-        <Text style={styles.helperText}>Type in your password to update your profile</Text>
+        <Text style={styles.helperText}>Type in your password to confirm changes</Text>
         <View style={styles.passwordInputContainer}>
           <TextInput
             style={styles.passwordInput}
@@ -121,7 +148,6 @@ const EditPersonalData = () => {
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-            {/* --- 2. Use Ionicons names --- */}
             <Ionicons name={showPassword ? "eye" : "eye-off"} size={20} color="#777" />
           </TouchableOpacity>
         </View>
@@ -194,6 +220,47 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     marginTop: 6,
+  },
+  notificationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(251, 153, 15, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 153, 15, 0.2)',
+    marginBottom: 20,
+  },
+  notificationTextContainer: {
+    flex: 1,
+  },
+  notificationLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 2,
+  },
+  notificationHelper: {
+    fontSize: 12,
+    color: '#666',
+  },
+  checkboxContainer: {
+    padding: 4,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: '#D5DDE5',
+    borderRadius: 4,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#FB990F',
+    borderColor: '#FB990F',
   },
   passwordInputContainer: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 // app/(main_interface)/treasure.tsx
-// --- MODIFIED FILE ---
+// --- MODIFIED FILE WITH SOUND EFFECTS (HOOK PATTERN) ---
 import { TreasurePreview } from "@/components/main_interface/treasure/items";
 import Tutorial from "@/assets/svgs/Tutorial.svg";
 import BGComponent from "@/assets/svgs/bg 1.svg";
@@ -16,10 +16,6 @@ import {
   View,
 } from "react-native";
 
-// ✅ MODIFICATION: Make sure this path is correct
-// Your previous file had this, but the user-uploaded
-// LootModal.tsx file has a different path.
-// I am keeping your original, working path.
 import LootModal from "@/components/main_interface/treasure/LootModal";
 
 import { buyItem, openChest } from "@/services/gameService";
@@ -29,17 +25,16 @@ import Toast from "react-native-toast-message";
 import LottieView from "lottie-react-native";
 import chestAnimation from "../../assets/lottie/chest.json";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { fetchUserProfile } from "@/services/userService"; //
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchUserProfile } from "@/services/userService";
+import InventoryInTreasure from "@/components/main_interface/treasure/InventoryInTreasure";
+
+// ✅ Import the custom hook for purchase sounds
+import { usePurchaseSounds } from "@/utils/soundEffects";
 
 const BG = React.memo(BGComponent);
 
 const TutorialModal = React.memo(({ onClose }: { onClose: () => void }) => (
-  // ... (Modal content remains the same) ...
   <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/60 z-40 justify-center items-center">
     <View className="bg-[#FAF3E0] w-2/3 p-4 rounded-2xl z-50">
       <View className="flex flex-row justify-between items-center border-b-2 border-b-[#F2C484]">
@@ -100,8 +95,11 @@ export default function Treasure() {
   const router = useRouter();
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
   const animationRef = useRef<LottieView>(null);
-
+  const [isClicked, setIsClicked] = useState(false);
   const queryClient = useQueryClient();
+
+  // ✅ Use the purchase sounds hook
+  const { playBuySuccessSound, playErrorSound } = usePurchaseSounds();
 
   const {
     data: userData,
@@ -117,6 +115,8 @@ export default function Treasure() {
     mutationFn: (variables: { itemId: string; itemCost: number }) =>
       buyItem(variables.itemId, variables.itemCost),
     onSuccess: () => {
+      // ✅ Play success sound when toast appears
+      playBuySuccessSound();
       Toast.show({
         type: "success",
         text1: "Purchase Successful!",
@@ -125,6 +125,8 @@ export default function Treasure() {
       queryClient.invalidateQueries({ queryKey: ["user", user?.uid] });
     },
     onError: (error: any) => {
+      // ✅ Play error sound when toast appears
+      playErrorSound();
       Toast.show({
         type: "error",
         text1: "An Error Occurred",
@@ -133,21 +135,11 @@ export default function Treasure() {
     },
   });
 
-  // ✅ --- MODIFICATION ---
-  // The mutation logic is now simplified.
-  // It only handles the network call and data invalidation.
-  // The logic to show the modal (setWonPrize) is moved to `handleOpenChest`.
   const openChestMutation = useMutation({
     mutationFn: (prizeId: string) => openChest(prizeId),
     onSuccess: () => {
-      // SUCCESS! Invalidate the query *immediately*.
-      // This updates the coins/inventory in the background
-      // *while* the animation is still playing.
       queryClient.invalidateQueries({ queryKey: ["user", user?.uid] });
     },
-    // We will handle the error in the `handleOpenChest` function's
-    // try/catch block, so `onError` here is not strictly needed
-    // unless you want a fallback.
   });
 
   if (authLoading || userLoading) {
@@ -161,9 +153,12 @@ export default function Treasure() {
   const hasChest = (userData?.chestCount ?? 0) > 0;
 
   const handleBuyItem = (itemId: string, itemCost: number) => {
-    if (buyItemMutation.isPending || openChestMutation.isPending || !user) return;
+    if (buyItemMutation.isPending || openChestMutation.isPending || !user)
+      return;
 
     if ((userData?.senyasCoins ?? 0) < itemCost) {
+      // ✅ Play error sound for insufficient coins
+      playErrorSound();
       Toast.show({
         type: "error",
         text1: "Not Enough Coins",
@@ -174,45 +169,40 @@ export default function Treasure() {
     buyItemMutation.mutate({ itemId, itemCost });
   };
 
-  // ✅ --- MODIFICATION ---
-  // This function is now async and uses Promise.all
   const handleOpenChest = async () => {
-    if (openChestMutation.isPending || buyItemMutation.isPending || !user) return;
+    if (openChestMutation.isPending || buyItemMutation.isPending || !user)
+      return;
 
-    // 1. Determine the prize *immediately*
     const prize = prizePool[Math.floor(Math.random() * prizePool.length)];
 
-    // 2. Start the animation *immediately*
     animationRef.current?.play();
 
-    // 3. Create a promise that resolves after the animation duration (3000ms)
-    const animationPromise = new Promise((resolve) => setTimeout(resolve, 3000));
+    const animationPromise = new Promise((resolve) =>
+      setTimeout(resolve, 3000)
+    );
 
     try {
-      // 4. Wait for BOTH the network request AND the animation to finish
       await Promise.all([
-        openChestMutation.mutateAsync(prize.id), // The network request
-        animationPromise, // The 3-second timer
+        openChestMutation.mutateAsync(prize.id),
+        animationPromise,
       ]);
 
-      // 5. Once BOTH are done, show the modal.
       setWonPrize(prize);
     } catch (error: any) {
-      // 6. If anything fails (network request), show an error
+      // ✅ Play error sound when chest opening fails
+      playErrorSound();
       Toast.show({
         type: "error",
         text1: "An Error Occurred",
         text2: error.message || "Could not open chest.",
       });
-      animationRef.current?.reset(); // Reset animation on fail
+      animationRef.current?.reset();
     }
   };
 
   const handleCloseLootModal = () => {
     setWonPrize(null);
     animationRef.current?.reset();
-    // No need to invalidate queries here, it was already done
-    // in openChestMutation.onSuccess
   };
 
   const handleMainButtonPress = () => {
@@ -224,9 +214,7 @@ export default function Treasure() {
   };
 
   const isBusy =
-    buyItemMutation.isPending ||
-    openChestMutation.isPending ||
-    isUserFetching;
+    buyItemMutation.isPending || openChestMutation.isPending || isUserFetching;
 
   return (
     <View className="bg-white flex-1 items-center relative">
@@ -252,7 +240,7 @@ export default function Treasure() {
             <View className="w-full h-44 md:h-72 ">
               <LottieView
                 ref={animationRef}
-                source={chestAnimation} //
+                source={chestAnimation}
                 loop={false}
                 autoPlay={false}
                 style={{ width: "100%", height: "100%" }}
@@ -336,8 +324,13 @@ export default function Treasure() {
       </View>
 
       {/* Tutorial Button */}
-      
-     
+      <View className="absolute left-4 bottom-20">
+        <InventoryInTreasure
+          onPress={() => setIsClicked((prev) => !prev)}
+          isPressed={isClicked}
+          onClose={() => setIsClicked(false)}
+        />
+      </View>
       <TouchableOpacity
         className="absolute bottom-4 left-4"
         onPress={() => setIsShown(true)}

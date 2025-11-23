@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { View, Text, ActivityIndicator } from "react-native";
+import { View, Text, ActivityIndicator, ScrollView } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { LinearGradient } from "expo-linear-gradient";
 import LevelContentBtn from "@/components/Game_Modes/GameBtns/LevelContentBtn";
@@ -15,13 +15,9 @@ import { useUserPoints } from "@/utils/store/userGameEval";
 import FSL_Fight from "@/assets/svgs/FSL_Fight.svg";
 import FSL_Wrong from "@/assets/svgs/FSL_wrong.svg";
 import { videoSpeed } from "@/utils/store/videoSpeed";
-
-// ✅ --- IMPORTS FOR BOMB/RETRY ---
 import { useGameStore } from "@/hooks/useGameStore";
 import { QuestionOption as SharedQuestionOption } from "@/shared/types/index";
 import Toast from "react-native-toast-message";
-
-// ✅ --- IMPORT SOUND HOOK ---
 import { useAnswerSounds } from "@/hooks/useAnswerSounds";
 
 // --- Interfaces ---
@@ -37,11 +33,9 @@ interface FillTheGapProps {
   filPrompt: string;
   videoURL: string;
   options: readonly QuestionOption[];
- 
   onPress: () => void;
   onAnswer: (isCorrect: boolean) => void;
   hearts: number;
-    key: string
 }
 
 const BossFillTheGap: React.FC<FillTheGapProps> = ({
@@ -52,10 +46,9 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
   onPress,
   onAnswer,
   hearts,
-  key
 }) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [choice, setChoice] = useState<string | null>(null); // store selected option id
+  const [choice, setChoice] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [opacity, setOpacity] = useState(100);
@@ -65,22 +58,22 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
   const incrementScore = useUserPoints((state) => state.incrementScore);
   const speed = videoSpeed((state) => state.playingSpeed);
 
-  // ✅ --- GAME STORE STATE (BOMB/RETRY) ---
+  // Game store state
   const visibleChoices = useGameStore((state) => state.visibleChoices);
   const setVisibleChoices = useGameStore((state) => state.setVisibleChoices);
   const is2xTryActive = useGameStore((state) => state.is2xTryActive);
   const consume2xTry = useGameStore((state) => state._consume2xTry);
 
-  // ✅ --- USE SOUND HOOK ---
+  // Sound hook
   const { playCorrectSound, playIncorrectSound } = useAnswerSounds();
 
-  // ✅ Find the correct option
+  // Find the correct option
   const correctOption = useMemo(
     () => options.find((opt) => opt.isCorrect) || null,
     [options]
   );
 
-  // ✅ --- HANDLE CHECK (UPDATED FOR RETRY) ---
+  // Handle check
   const handleCheck = useCallback(() => {
     if (!choice) return;
 
@@ -88,27 +81,23 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
     const isAnswerCorrect = selectedOption ? selectedOption.isCorrect : false;
 
     if (isAnswerCorrect) {
-      // --- CORRECT ANSWER ---
-      playCorrectSound(); // ✅ ADDED
+      playCorrectSound();
       incrementScore();
       setIsCorrect(true);
       setHasChecked(true);
       setOpacity(0);
       onAnswer(true);
     } else {
-      // --- INCORRECT ANSWER ---
       if (is2xTryActive) {
-        // --- 2xTRY IS ACTIVE ---
         consume2xTry();
         Toast.show({
           type: "info",
           text1: "Saved by 2x Try!",
           text2: "That was incorrect, try again!",
         });
-        setChoice(null); // Reset choice
+        setChoice(null);
       } else {
-        // --- 2xTRY IS NOT ACTIVE ---
-        playIncorrectSound(); // ✅ ADDED
+        playIncorrectSound();
         setIsCorrect(false);
         setHasChecked(true);
         setOpacity(0);
@@ -123,17 +112,17 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
     incrementScore,
     is2xTryActive,
     consume2xTry,
-    playCorrectSound, // ✅ ADDED
-    playIncorrectSound, // ✅ ADDED
+    playCorrectSound,
+    playIncorrectSound,
   ]);
 
-  // --- Video Player Setup ---
+  // Video player setup
   const player = useVideoPlayer(null, (p) => {
     p.loop = true;
     p.muted = true;
   });
 
-  // --- Video Loading Effects ---
+  // Video loading
   useEffect(() => {
     const loadVideo = async () => {
       try {
@@ -154,7 +143,7 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
     loadVideo();
   }, [videoURL]);
 
-  // --- Wrong Icon Effect ---
+  // Wrong icon effect
   useEffect(() => {
     if (hasChecked && isCorrect === false) {
       const timer = setTimeout(() => {
@@ -164,30 +153,28 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
     }
   }, [hasChecked, isCorrect]);
 
-  // --- Video Speed Effect ---
+  // Video speed effect
   useEffect(() => {
     if (player) {
       player.playbackRate = speed;
     }
   }, [speed, player]);
 
-  // ✅ --- EFFECT FOR BOMB ITEM ---
+  // Effect for bomb item
   useEffect(() => {
     if (options) {
       setVisibleChoices(options as SharedQuestionOption[]);
     }
-    return () => {
-      setVisibleChoices(null);
-    };
+    // Don't clear on unmount - let BossFight manage this
   }, [options, setVisibleChoices]);
 
-  // ✅ --- RENDER OPTIONS (UPDATED FOR BOMB) ---
+  // Render options
   const renderOptions = useMemo(
     () =>
       (visibleChoices || options).map((option) => (
         <View
           key={option.id}
-          className="w-[48%]  relative items-center"
+          className="w-[48%] relative items-center"
         >
           <View
             className={`${
@@ -224,75 +211,82 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
   }
 
   return (
-    <View className="flex-1 relative items-center bg-white">
-      <View className=" flex-row justify-center items-center ">
-        {Array.from({ length: hearts }).map((_, idx) => (
-          <Text key={idx} style={{ fontSize: 24, color: "red" }}>
-            ❤️
-          </Text>
-        ))}
-        {showWrongIcon ? (
-          <FSL_Wrong height={50} width={50} />
-        ) : (
-          <FSL_Fight height={50} width={50} />
-        )}
-      </View>
-      {/* Prompts */}
-      <Text className="font-PoppinsBold text-2xl md:text-3xl text-center w-11/12">{enPrompt}</Text>
-      <Text className="font-PoppinsLightItallic text-xl md:text-3xl text-center w-11/12">
-        {filPrompt}
-      </Text>
-
-      {/* Video */}
-      <View className="w-full h-[30%] relative -top-1">
-        <VideoView
-          style={{ width: "100%", height: "100%" }}
-          player={player}
-          allowsFullscreen={false}
-          allowsPictureInPicture={false}
-          nativeControls={false}
-        />
-        <View className="bg-white/60 w-full p-4 absolute bottom-0 opacity-0">
-          <Text className="text-sm text-center font-PoppinsRegular">
-            {isCorrect}
-          </Text>
+    <View className="flex-1 relative bg-white">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 200 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hearts and Icon */}
+        <View className="flex-row justify-center items-center mt-4">
+          {Array.from({ length: hearts }).map((_, idx) => (
+            <Text key={idx} style={{ fontSize: 24, color: "red" }}>
+              ❤️
+            </Text>
+          ))}
+          {showWrongIcon ? (
+            <FSL_Wrong height={50} width={50} />
+          ) : (
+            <FSL_Fight height={50} width={50} />
+          )}
         </View>
-      </View>
 
-      {/* Question */}
-      <View className="w-11/12 rounded-md border border-[#F7D674] p-4 items-center">
-        {hasChecked ? (
-          <LinearGradient
-            colors={isCorrect ? ["#31F705", "#007D00"] : ["#FF6A6C", "#A20000"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 0.8 }}
-            style={{
-              width: "50%",
-              borderRadius: 6,
-              backgroundColor: "transparent",
-              elevation: 5,
-              padding: 1,
-              marginTop: 10,
-              marginBottom: 10,
-              zIndex: 50,
-            }}
-          >
-            <View className="rounded-full w-full p-2">
-              <Text className="text-ls md:text-xl font-PoppinsBold text-white text-center">
-                {options.find((opt) => opt.id === choice)?.labelEn || ""}
-              </Text>
-            </View>
-          </LinearGradient>
-        ) : (
-          <View className="w-16 h-10 bg-gray-400" />
-        )}
-      </View>
+        {/* Prompts */}
+        <Text className="text-4xl text-orange-400 font-PoppinsBold text-center">Fill in the Gaps!</Text>
 
-      {/* Options */}
-      <View className="w-11/12 flex-row flex-wrap justify-between mt-2">
-        {renderOptions}
-      </View>
+        {/* Video */}
+        <View className="w-full h-64 relative mt-2">
+          <VideoView
+            style={{ width: "100%", height: "100%" }}
+            player={player}
+            allowsFullscreen={false}
+            allowsPictureInPicture={false}
+            nativeControls={false}
+          />
+        </View>
 
+        {/* Question */}
+        <View className="w-11/12 mx-auto rounded-md border border-[#F7D674] p-4 items-center mt-4">
+        <Text className="font-PoppinsBold text-2xl md:text-3xl text-center w-11/12 mx-auto mt-2">
+          {enPrompt}
+        </Text>
+        <Text className="font-PoppinsLightItallic text-xl md:text-3xl text-center w-11/12 mx-auto">
+          {filPrompt}
+        </Text>
+          {hasChecked ? (
+            <LinearGradient
+              colors={isCorrect ? ["#31F705", "#007D00"] : ["#FF6A6C", "#A20000"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 0.8 }}
+              style={{
+                width: "50%",
+                borderRadius: 6,
+                backgroundColor: "transparent",
+                elevation: 5,
+                padding: 1,
+                marginTop: 10,
+                marginBottom: 10,
+                zIndex: 50,
+              }}
+            >
+              <View className="rounded-full w-full p-2">
+                <Text className="text-ls md:text-xl font-PoppinsBold text-white text-center">
+                  {options.find((opt) => opt.id === choice)?.labelEn || ""}
+                </Text>
+              </View>
+            </LinearGradient>
+          ) : (
+            <View className="w-16 h-10 " />
+          )}
+        </View>
+
+        {/* Options */}
+        <View className="w-11/12 mx-auto flex-row flex-wrap justify-between mt-2">
+          {renderOptions}
+        </View>
+ 
+
+      {/* Fixed Elements */}
       {/* Inventory Button */}
       <View
         className={`w-full p-4 mx-auto absolute bottom-28 z-50 opacity-${opacity}`}
@@ -324,8 +318,6 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
           </View>
         )}
 
-        
-
         {choice && !hasChecked ? (
           <View className="w-2/3 mx-auto">
             <LevelContentBtn text="Check" onPress={handleCheck} />
@@ -349,6 +341,7 @@ const BossFillTheGap: React.FC<FillTheGapProps> = ({
           <LevelBg />
         )}
       </View>
+           </ScrollView>
     </View>
   );
 };

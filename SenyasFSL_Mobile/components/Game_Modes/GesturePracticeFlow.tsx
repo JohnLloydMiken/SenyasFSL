@@ -1,8 +1,8 @@
 // Game_Modes/SignPracticeFlow.tsx
 
-import React, { useState } from 'react';
-import Instruction from '@/components/Game_Modes/SingLangugeRecognition/index';
-import SingLangRecog from './SingLangugeRecognition/SingLangRecog';
+import React, { useState } from "react";
+import Instruction from "@/components/Game_Modes/SingLangugeRecognition/index";
+import SingLangRecog from "./SingLangugeRecognition/SingLangRecog";
 
 // This component receives the database props from [levelId].tsx
 interface SignPracticeFlowProps {
@@ -17,6 +17,10 @@ const SignPracticeFlow: React.FC<SignPracticeFlowProps> = ({
   onPress,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const practiceConfig = levelData.practiceConfig || {
+    modelName: "letters",
+    hands: 1,
+  };
 
   const renderStep = () => {
     switch (currentStep) {
@@ -30,10 +34,12 @@ const SignPracticeFlow: React.FC<SignPracticeFlowProps> = ({
           <SingLangRecog
             levelData={levelData}
             flowContent={flowContent}
-            onPress={onPress} // Pass the final navigation function
+            onPress={onPress}
+            modelName={practiceConfig?.modelName}
+            hands={practiceConfig?.hands} // Pass the final navigation function
           />
         );
-      
+
       // Default to the game just in case
       default:
         return (
@@ -41,6 +47,8 @@ const SignPracticeFlow: React.FC<SignPracticeFlowProps> = ({
             levelData={levelData}
             flowContent={flowContent}
             onPress={onPress}
+            modelName={practiceConfig?.modelName}
+            hands={practiceConfig?.hands} // Pass the final navigation function
           />
         );
     }
