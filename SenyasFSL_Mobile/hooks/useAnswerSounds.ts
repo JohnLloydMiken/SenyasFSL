@@ -6,7 +6,7 @@ import { useAudioStore } from "@/hooks/useAudioStore"; // Adjust path if your st
 // Load the audio assets
 const correctSoundSource = require("@/assets/audio/correct.mp3");
 const incorrectSoundSource = require("@/assets/audio/incorrect.mp3");
-
+const skippedSource = require("@/assets/audio/skip.mp3")
 export const useAnswerSounds = () => {
   // Get volume from the global store
   const { soundEffectsVolume } = useAudioStore();
@@ -14,7 +14,7 @@ export const useAnswerSounds = () => {
   // Create players
   const correctPlayer = useAudioPlayer(correctSoundSource);
   const incorrectPlayer = useAudioPlayer(incorrectSoundSource);
-
+  const skipPlayer =useAudioPlayer(skippedSource)
   // Effect to update volume whenever it changes in the store
   useEffect(() => {
     if (correctPlayer) {
@@ -36,5 +36,10 @@ export const useAnswerSounds = () => {
     incorrectPlayer.play();
   };
 
-  return { playCorrectSound, playIncorrectSound };
+  const playSkippedSound = ()=>{
+    skipPlayer?.seekTo(0),
+    skipPlayer?.play()
+  }
+
+  return { playCorrectSound, playIncorrectSound, playSkippedSound };
 };

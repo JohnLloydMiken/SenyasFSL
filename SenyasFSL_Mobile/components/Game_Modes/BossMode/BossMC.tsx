@@ -1,6 +1,6 @@
 // BossMC.tsx
 
-import { View, Text, ScrollView } from "react-native"; // ✅ Added ScrollView
+import { View, Text, ScrollView } from "react-native";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useVideoPlayer, VideoView } from "expo-video";
 import LevelContentBtn from "@/components/Game_Modes/GameBtns/LevelContentBtn";
@@ -29,7 +29,6 @@ interface Option {
 }
 
 interface MultipleChoiceProps {
-  key: string;
   enPrompt: string;
   filPrompt: string;
   videoURL: string;
@@ -40,7 +39,6 @@ interface MultipleChoiceProps {
 }
 
 const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
-  key,
   enPrompt,
   filPrompt,
   videoURL,
@@ -76,6 +74,20 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
     player.play();
   });
 
+  useEffect(() => {
+  console.log("🔍 [BossMC] Setting visibleChoices, options:", options);
+  if (options) {
+    setVisibleChoices(options as QuestionOption[]);
+    console.log("🔍 [BossMC] Called setVisibleChoices with:", options);
+  }
+  // Don't clear on unmount - let BossFight manage this
+}, [options, setVisibleChoices]);
+
+// Add this right after your state declarations in BossMC
+useEffect(() => {
+  console.log("🔍 [BossMC] visibleChoices changed:", visibleChoices);
+}, [visibleChoices]);
+
   // --- Video Loading Effects ---
   useEffect(() => {
     const loadVideo = async () => {
@@ -108,9 +120,7 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
     if (options) {
       setVisibleChoices(options as QuestionOption[]);
     }
-    return () => {
-      setVisibleChoices(null);
-    };
+    // Don't clear on unmount - let BossFight manage this
   }, [options, setVisibleChoices]);
 
   useEffect(() => {
@@ -122,6 +132,7 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
     }
   }, [hasChecked, isCorrect]);
 
+    
   const handleCheck = useCallback(() => {
     if (!choice) return;
 
@@ -164,7 +175,7 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
     () =>
       (visibleChoices || options).map((item) => (
         <MCBTN
-          key={item.id} // ✅ Added key prop here for React list performance
+          key={item.id}
           EnglishText={item.labelEn ?? ""}
           FilipinoText={item.labelFil ?? ""}
           onPress={() => !hasChecked && setChoice(item as Option)}
@@ -189,10 +200,10 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
   // --- JSX Render ---
   return (
     <View className="flex-1 relative bg-white">
-      {/* ✅ WRAPPED CONTENT IN SCROLLVIEW */}
+      {/* WRAPPED CONTENT IN SCROLLVIEW */}
       <ScrollView
         className="flex-1"
-        // ✅ PADDING BOTTOM: Ensures the last option isn't hidden behind the fixed Inventory/Buttons
+        // PADDING BOTTOM: Ensures the last option isn't hidden behind the fixed Inventory/Buttons
         contentContainerStyle={{ paddingBottom: 200 }}
         showsVerticalScrollIndicator={false}
       >
@@ -210,15 +221,10 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
         </View>
 
         {/* PROMPTS */}
-        <Text className="text-center text-2xl md:text-3xl font-PoppinsBold mt-2">
-          {enPrompt}
-        </Text>
-        <Text className="text-center text-xl md:text-2xl font-PoppinsLightItalic my-2">
-          {filPrompt}
-        </Text>
+        <Text className="text-4xl text-orange-400 font-PoppinsBold text-center my-2">Multiple Choice!</Text>
 
         {/* VIDEO */}
-        {/* ✅ ADJUSTMENT: Changed h-[30%] to h-64 (approx 256px) so it doesn't collapse in ScrollView */}
+        {/* Changed h-[30%] to h-64 (approx 256px) so it doesn't collapse in ScrollView */}
         <View className="w-full h-64 relative -top-1 z-50">
           <VideoView
             style={{ width: "100%", height: "100%" }}
@@ -228,12 +234,20 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
             nativeControls={false}
           />
         </View>
-
+           <Text className="text-center text-2xl md:text-3xl font-PoppinsBold mt-2">
+          {enPrompt}
+        </Text>
+        <Text className="text-center text-xl md:text-2xl font-PoppinsLightItalic my-2">
+          {filPrompt}
+        </Text>
         {/* MULTIPLE CHOICE OPTIONS */}
         <View className="w-11/12 mx-auto mt-4">{renderOptions}</View>
+     
 
-          {/* INVENTORY */}
-      <View className="w-full p-4 mx-auto absolute bottom-8 z-50">
+      {/* --- FIXED ELEMENTS (FLOATING) --- */}
+
+      {/* INVENTORY */}
+      <View className="w-full p-4 mx-auto absolute bottom-32 z-50">
         <Inventory
           onPress={() => setIsClicked((prev) => !prev)}
           isPressed={isClicked}
@@ -271,10 +285,6 @@ const BossMultipleChoice: React.FC<MultipleChoiceProps> = ({
         )}
       </View>
       </ScrollView>
-
-      {/* --- FIXED ELEMENTS (FLOATING) --- */}
-
-    
     </View>
   );
 };

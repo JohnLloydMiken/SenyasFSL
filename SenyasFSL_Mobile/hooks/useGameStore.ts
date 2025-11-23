@@ -1,9 +1,6 @@
 import { create } from "zustand";
 import { shallow } from "zustand/shallow";
-import {
-  QuestionOption,
-  Level,
-} from "@/shared/types/index"; // Or from specific files like ../../types/question
+import { QuestionOption, Level } from "@/shared/types/index"; // Or from specific files like ../../types/question
 import { ItemId, Inventory } from "@/shared/types/user";
 
 // Imports from your existing services and stores
@@ -21,7 +18,6 @@ interface GameStoreState {
   isUsingItem: boolean; // Loading state
   phase: string;
   nextStep: () => void; // Function to advance the game
- 
 }
 
 // Define the actions
@@ -34,7 +30,7 @@ interface GameStoreActions {
   _setLevelData: (level: Level | null) => void;
   _setPhase: (phase: string) => void;
   _setNextStep: (fn: () => void) => void; // Pass in your game's nextStep function
-   _consume2xTry: () => void;
+  _consume2xTry: () => void;
 }
 
 // Initial state of the store
@@ -61,7 +57,11 @@ export const useGameStore = create<GameStoreState & GameStoreActions>()(
 
     // --- Public Actions ---
     setVisibleChoices: (choices) => set({ visibleChoices: choices }),
-    clearGame: () => set(initialState),
+    clearGame: () => {
+      console.log("🔍 [GameStore] clearGame() called! Stack trace:");
+      console.trace();
+      set(initialState);
+    },
     _consume2xTry: () => set({ is2xTryActive: false }),
     useItem: async (itemId: ItemId, currentInventory: Inventory) => {
       if (get().isUsingItem) {
@@ -97,6 +97,13 @@ export const useGameStore = create<GameStoreState & GameStoreActions>()(
           });
         } else if (itemId === "bomb") {
           const { visibleChoices, levelData } = get();
+          console.log("🔍 [GameStore] Bomb clicked!");
+          console.log("🔍 [GameStore] levelData.type:", levelData?.type);
+          console.log("🔍 [GameStore] visibleChoices:", visibleChoices);
+          console.log(
+            "🔍 [GameStore] visibleChoices length:",
+            visibleChoices?.length
+          );
 
           // Rule: Bomb can only be used in quiz_survival
           if (levelData?.type !== "quiz_survival") {

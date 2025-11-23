@@ -9,7 +9,7 @@ import {
   getQuestionsFromPool,
 } from "@/services/gameService";
 
-import SignPracticeFlow from "@/components/Game_Modes/GesturePracticeFlow"; 
+import SignPracticeFlow from "@/components/Game_Modes/GesturePracticeFlow";
 import FlowRenderer from "@/components/Game_Modes/FlowRenderer";
 import BossFight from "@/components/Game_Modes/BossFight";
 import { useSectionStore } from "@/utils/store/useSectionStore";
@@ -17,7 +17,7 @@ import { LevelData } from "@/utils/store/levelData";
 
 export default function LevelContent() {
   const { levelId } = useLocalSearchParams();
-  const router = useRouter(); 
+  const router = useRouter();
   const { currentSectionOrder } = useSectionStore();
   const [loading, setLoading] = useState(true);
   const [levelData, setLevelData] = useState<any>(null);
@@ -50,7 +50,8 @@ export default function LevelContent() {
         ) {
           contentMap = await getQuestionsFromPool(level.questionPool);
         } else if (
-          (level.type === "lesson_and_minigame" || level.type === "sign_practice") && 
+          (level.type === "lesson_and_minigame" ||
+            level.type === "sign_practice") &&
           level.flow &&
           level.flow.length > 0
         ) {
@@ -97,8 +98,8 @@ export default function LevelContent() {
         }
         return <FlowRenderer levelData={levelData} flowContent={flowContent} />;
 
-      case "sign_practice": 
-        if (!flowContent) { 
+      case "sign_practice":
+        if (!flowContent) {
           return (
             <View style={styles.center}>
               <Text>Could not load practice signs.</Text>
@@ -107,15 +108,15 @@ export default function LevelContent() {
         }
         return (
           <SignPracticeFlow
-            levelData={levelData} 
-            flowContent={flowContent} 
+            levelData={levelData}
+            flowContent={flowContent}
             onPress={() => {
               router.push({
                 pathname: "./Eval_phase",
                 params: {
                   levelId,
-                  levelType: levelData.type, // ✅ Pass level type
-                  questions: 0, 
+                  levelType: levelData.type,
+                  questions: levelData.flow?.length || 0, // ✅ Count items in flow
                   lessons: JSON.stringify(
                     levelData.flow
                       .filter((f: any) => f.type === "lesson")

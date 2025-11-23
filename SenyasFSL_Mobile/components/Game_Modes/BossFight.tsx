@@ -195,8 +195,9 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
     return () => {
       clearGame();
       _setLevelData(null);
+      setVisibleChoices(null); // Clear choices when component unmounts
     };
-  }, [levelData?.id, handleNextStep, resetScore, clearGame]);
+  }, [levelData?.id]); // ✅ ONLY depend on levelData.id, not the functions
 
   // Load question steps
   useEffect(() => {
@@ -223,7 +224,7 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
     };
 
     fetchSteps();
-  }, [levelData?.id, flowContent, setVisibleChoices]);
+  }, [levelData?.id, flowContent]); // Removed setVisibleChoices from dependencies
 
   useEffect(() => {
     setLevelStep(currentStep);
@@ -233,7 +234,7 @@ const BossFight: React.FC<BossFightProps> = ({ levelData, flowContent }) => {
     if (steps[currentStep]) {
       setVisibleChoices(steps[currentStep].options || []);
     }
-  }, [currentStep, steps, setVisibleChoices]);
+  }, [currentStep, steps]); // Removed setVisibleChoices from dependencies
 
   // --- Auto-save whenever important fields change ---
   useEffect(() => {

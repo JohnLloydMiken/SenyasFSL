@@ -4,7 +4,11 @@ import { auth } from "../../firebaseConfig";
 
 type PredictionStore = {
   prediction: string;
-  setPrediction: (value: string) => void;
+  confidence: number;
+  cameraStatus: string;
+  setPrediction: (value: string, confidence?: number) => void;
+  setCameraStatus: (status: string) => void;
+  reset: () => void;
 };
 
 interface AuthContextType {
@@ -12,9 +16,17 @@ interface AuthContextType {
   loading: boolean;
 }
 
-
-
 export const usePredictionStore = create<PredictionStore>((set) => ({
   prediction: "",
-  setPrediction: (value: string) => set({ prediction: value }),
+  confidence: 0,
+  cameraStatus: "Initializing...",
+  
+  setPrediction: (value: string, confidence: number = 0) =>
+    set({ prediction: value, confidence }),
+  
+  setCameraStatus: (status: string) =>
+    set({ cameraStatus: status }),
+  
+  reset: () =>
+    set({ prediction: "", confidence: 0, cameraStatus: "Show Hand" }),
 }));
