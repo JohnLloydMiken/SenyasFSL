@@ -100,11 +100,14 @@ export default function Index() {
     }
   }, [player]);
 
-  useEffect(() => {
-    if (player) {
-      player.volume = musicVolume;
-    }
-  }, [player, musicVolume]);
+useEffect(() => {
+  if (player) {
+    // expo-audio rejects exactly 0 and sets it to 1
+    // So we use 0.001 (0.1%) instead, which is effectively muted
+    const safeVolume = musicVolume === 0 ? 0.001 : musicVolume;
+    player.volume = safeVolume;
+  }
+}, [player, musicVolume]);
 
   if (isMapLoading || userLoading || authLoading || isSignLoading) {
     return (

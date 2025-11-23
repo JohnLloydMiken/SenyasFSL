@@ -25,6 +25,13 @@ const SvgSource: Record<string, any> = {
   relationship: require("@/assets/images/dictionary_imgs/Relationship.png"),
   timeExpression: require("@/assets/images/dictionary_imgs/Time.png"),
   weather: require("@/assets/images/dictionary_imgs/Weather.png"),
+  emotions: require("@/assets/images/dictionary_imgs/Emotions.png"),
+   days_of_the_week: require("@/assets/images/dictionary_imgs/DaysOfWeeks.png"),
+   home: require("@/assets/images/dictionary_imgs/house_.png"),
+   school_subjects: require("@/assets/images/dictionary_imgs/Book.png"),
+    socialize: require("@/assets/images/dictionary_imgs/Socialize.png"),
+    time_units: require("@/assets/images/dictionary_imgs/TimeNotations.png"),
+    transportation: require("@/assets/images/dictionary_imgs/Transportation.png"),
 };
 
 const DictionaryCategories = () => {

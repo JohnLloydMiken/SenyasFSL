@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/firebaseConfig";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // 👇 1. IMPORT YOUR USER SERVICE FUNCTIONS
 import {
   fetchUserProfile,
@@ -63,3 +64,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return unsubscribe; // 👈 return the unsubscribe callback
   },
 }));
+const OFFLINE_USER_KEY = '@app_offline_user';
+const saveOfflineUser = async (user: any) => {
+  try {
+    await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify({
+      uid: user.uid,
+      email: user.email,
+      // add other needed fields
+    }));
+  } catch (error) {
+    console.error('Failed to save offline user:', error);
+  }
+};
+
+// Load user data from local storage
+const loadOfflineUser = async () => {
+  try {
+    const userData = await AsyncStorage.getItem(OFFLINE_USER_KEY);
+    return userData ? JSON.parse(userData) : null;
+  } catch (error) {
+    console.error('Failed to load offline user:', error);
+    return null;
+  }
+};
+
+// Clear offline user on logout
+const clearOfflineUser = async () => {
+  try {
+    await AsyncStorage.removeItem(OFFLINE_USER_KEY);
+  } catch (error) {
+    console.error('Failed to clear offline user:', error);
+  }
+};

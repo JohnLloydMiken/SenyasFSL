@@ -61,9 +61,9 @@ const Item: React.FC<itemCardProps> = ({
   const { width } = useWindowDimensions();
 
   const svgSize = width < 768 ? 30 : 50;
-  const svgStar = width < 768 ? 24 : 30;
-  const containerWidth = width < 768 ? 120 : 175;
-  const containerHeight = width < 768 ? 120 : 175;
+  const svgStar = width < 768 ? 20 : 30;
+  const containerWidth = width < 768 ? 100 : 175;
+  const containerHeight = width < 768 ? 110 : 175;
 
   return (
     <LinearGradient
