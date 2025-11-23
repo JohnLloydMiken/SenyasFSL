@@ -58,8 +58,8 @@ const styles = StyleSheet.create({
     marginHorizontal: "auto"
   } as ViewStyle,
   iconWrapper: {
-    width: 80,
-    height: 80,
+    width: 75,
+    height: 75,
     borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",

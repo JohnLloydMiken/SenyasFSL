@@ -19,8 +19,8 @@ const levelHeader: React.FC<SectionHeaderProps> = ({
   level,
 }) => {
   const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 30 : 50;
-  const height = width < 768 ? 70 : 200;
+  const svgSize = width < 768 ? 35 : 50;
+  const height = width < 768 ? 75 : 200;
 
   const SectionIcon: { [key: number]: React.ComponentType<SvgProps> } = {
   1: Book,
@@ -53,15 +53,15 @@ const IconComponent = SectionIcon[section]
       }}
     >
       <View className="w-full flex-row justify-between items-center  h-full">
-        <View>
-          <Text className="text-white text-lg md:text-xl font-PoppinsMedium">
+        <View className="w-10/12">
+          <Text className="text-white text-lg  md:text-xl font-PoppinsMedium">
             Section {section}, Level {level}
           </Text>
-          <Text className="text-white text-lg md:text-2xl font-PoppinsBold">
+          <Text className="text-white text-lg md:text-2xl font-PoppinsBold ">
             {title}
           </Text>
         </View>
-        <View>
+        <View className="w-1/5">
           <IconComponent width={svgSize} height={svgSize} />
         </View>
       </View>

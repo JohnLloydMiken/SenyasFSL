@@ -1,76 +1,104 @@
 // app/(auth)/welcome.tsx
-// --- MODIFIED FILE ---
-
-import FSL_Hi from "@/assets/svgs/FSL_Hi.svg";
-import Authbutton from "@/components/authentication/button";
-import { fslIconSize } from "@/utils/sizes";
-import { useAuthStore } from "@/utils/store/useAuthStore";
-// 🚫 import { useUserStore } from "@/utils/store/useUserStore"; // No longer needed
+import React, { useEffect, useRef, useState } from "react";
+import { View, StyleSheet, Animated } from "react-native";
 import { router } from "expo-router";
-import React from "react";
-import { StatusBar, StyleSheet, Text, View } from "react-native";
-
-// ✅ 1. Import TanStack Query and the fetcher
-import { useQuery } from "@tanstack/react-query";
-import { fetchUserProfile } from "@/services/userService"; // (Assuming this path based on your other files)
+import DownloadingScreen from "@/components/main_interface/DownloadingScreen";
+import { syncData } from "@/services/syncService";
+import { db } from "@/services/db/database";
 
 export default function Welcome() {
-  const { user, loading: authLoading } = useAuthStore();
-  // 🚫 const { userData, loading: userLoading } = useUserStore(); // No longer needed
+  const [isChecking, setIsChecking] = useState(true);
+  const [needsDownload, setNeedsDownload] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const syncStartedRef = useRef(false);
 
-  // ✅ 2. Fetch user data using useQuery
-  const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: ["user", user?.uid], // The same key used in other files
-    queryFn: () => fetchUserProfile(user!.uid), // The fetch function
-    enabled: !!user, // Only run if the user is logged in
-  });
+  // Check if resources are already downloaded
+  const checkResourcesDownloaded = (): boolean => {
+    try {
+      // Check if we have any dictionary entries in local DB
+      const result = db.getFirstSync<{ count: number }>(
+        "SELECT COUNT(*) as count FROM DictionaryEntries"
+      );
+      
+      const count = result?.count || 0;
+      console.log(`WELCOME: Found ${count} dictionary entries in local DB`);
+      
+      return count > 0;
+    } catch (error) {
+      console.error("WELCOME: Error checking local resources:", error);
+      return false;
+    }
+  };
 
-  // ✅ 3. The loading check now uses authLoading and useQuery's isLoading
-  if (userLoading || authLoading) {
+  // Initial check on mount
+  useEffect(() => {
+    const hasResources = checkResourcesDownloaded();
+    
+    if (hasResources) {
+      console.log("WELCOME: Resources already downloaded, going to main interface");
+      // Resources exist, go directly to main interface
+      router.replace("../(main_interface)/");
+    } else {
+      console.log("WELCOME: No resources found, need to download");
+      // Need to download
+      setNeedsDownload(true);
+      setIsChecking(false);
+      
+      // Fade in the downloading screen
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true
+      }).start();
+    }
+  }, []);
+
+  // Start sync when needsDownload is true
+  useEffect(() => {
+    if (!needsDownload || syncStartedRef.current) return;
+    
+    syncStartedRef.current = true;
+    setIsSyncing(true);
+
+    (async () => {
+      try {
+        console.log("WELCOME: Starting syncData...");
+        await syncData();
+        console.log("WELCOME: syncData completed successfully");
+        
+        // Navigate to main interface after successful sync
+        router.replace("../(main_interface)/");
+      } catch (error) {
+        console.error("WELCOME: syncData failed:", error);
+        // Even on error, proceed to main interface
+        // User can try syncing again later or you can show an error
+        router.replace("../(main_interface)/");
+      } finally {
+        setIsSyncing(false);
+      }
+    })();
+  }, [needsDownload]);
+
+  // Show nothing while checking (very brief)
+  if (isChecking) {
+    return <View style={styles.container} />;
+  }
+
+  // Show downloading screen if needed
+  if (needsDownload) {
     return (
-      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Loading...</Text>
-      </View>
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <DownloadingScreen />
+      </Animated.View>
     );
   }
 
-  // ✅ 4. This check is still valid. If useQuery finishes and data is null.
-  if (!userData) {
-    return (
-      <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Could not load user profile. Please try again later.</Text>
-      </View>
-    );
-  }
-
-  return (
-    <View
-      className="flex-1 bg-[#FAF3E0] items-center justify-start flex-col gap-8"
-      style={{ paddingTop: StatusBar.currentHeight }}
-    >
-      <View className="w-11/12  mt-4">
-        <Text className="text-3xl md:text-4xl font-PoppinsBold text-center">
-          Welcome!
-        </Text>
-        <Text className="text-2xl md:text-3xl font-PoppinsBold text-[#FB990F] text-center">
-          {userData?.username}
-        </Text>
-      </View>
-      <FSL_Hi width={fslIconSize()} height={fslIconSize()} />
-      <View className="w-10/12 ">
-        <Text className="text-center text-lg font-PoppinsRegular md:text-2xl">
-          We’re excited to see you join our mission to bridge language barriers
-          through FSL.
-        </Text>
-      </View>
-      <View className="w-11/12 absolute bottom-12">
-        <Authbutton
-          content="Start Playing"
-          onPress={() => router.replace("../(main_interface)/")}
-        ></Authbutton>
-      </View>
-    </View>
-  );
+  // Should never reach here, but just in case
+  return <View style={styles.container} />;
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+});

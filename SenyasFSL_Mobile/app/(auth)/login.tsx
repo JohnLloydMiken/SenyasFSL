@@ -10,6 +10,9 @@ import { doc, getDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const OFFLINE_USER_KEY = '@app_offline_user';
 
 export default function Login() {
   // Local UI state
@@ -22,6 +25,32 @@ export default function Login() {
 
   // Zustand store
   const { loading: authLoading } = useAuthStore();
+
+  // Save user data for offline access
+  const saveOfflineUser = async (userData: any) => {
+    try {
+      await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify({
+        uid: userData.uid,
+        email: userData.email,
+        role: userData.role,
+        status: userData.status,
+        // Add any other fields you need offline
+      }));
+      console.log("User data saved for offline access");
+    } catch (error) {
+      console.error("Failed to save offline user:", error);
+    }
+  };
+
+  // Clear offline user data
+  const clearOfflineUser = async () => {
+    try {
+      await AsyncStorage.removeItem(OFFLINE_USER_KEY);
+      console.log("Offline user data cleared");
+    } catch (error) {
+      console.error("Failed to clear offline user:", error);
+    }
+  };
 
   // Handle login
   const handleLogin = async () => {
@@ -49,6 +78,7 @@ export default function Login() {
         // This is a safety check. If they have an auth account but no
         // firestore doc, something is wrong. Log them out.
         await signOut(auth);
+        await clearOfflineUser();
         throw new Error("User profile not found. Please contact support.");
       }
 
@@ -60,6 +90,7 @@ export default function Login() {
       if (userStatus === "suspended") {
         // Log them out and route to suspended screen
         await signOut(auth);
+        await clearOfflineUser();
         router.push({
           pathname: "/(auth)/suspended",
           params: { email: currentUser.email || email }
@@ -71,6 +102,7 @@ export default function Login() {
       if (userRole === "admin") {
         // IF ADMIN: Show message, log out, and stop.
         await signOut(auth);
+        await clearOfflineUser();
         Toast.show({
           type: "error",
           text1: "Admin Account",
@@ -82,7 +114,14 @@ export default function Login() {
         setEmail("");
         setPassword("");
       } else {
-        // 6. IF USER: Proceed to the welcome screen as normal
+        // 6. IF USER: Save for offline access and proceed
+        await saveOfflineUser({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          role: userRole,
+          status: userStatus,
+        });
+        
         router.push("/(auth)/welcome");
       }
 

@@ -1,23 +1,23 @@
 // app/index.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { View, StyleSheet, Animated } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Splash1 from "../components/authentication/splash1";
 import Splash2 from "../components/authentication/splashScreen";
 import GetStarted from "@/app/(auth)/index";
 import { initDatabase } from "@/services/db/database";
-import { syncData } from "@/services/syncService";
-import DownloadingScreen from "../components/main_interface/DownloadingScreen";
 import { router } from "expo-router";
 import { useAuthStore } from "@/utils/store/useAuthStore";
 
-type ScreenState = "splash1" | "splash2" | "downloading" | "main";
+type ScreenState = "splash1" | "splash2" | "main";
+
+const OFFLINE_USER_KEY = '@app_offline_user';
 
 export default function Splash() {
   const [screen, setScreen] = useState<ScreenState>("splash1");
-  const [isSyncComplete, setIsSyncComplete] = useState(false);
-  const [syncError, setSyncError] = useState<Error | null>(null);
+  const [offlineUser, setOfflineUser] = useState<any>(null);
+  const [offlineChecked, setOfflineChecked] = useState(false);
 
-  const syncStartedRef = useRef(false);
   const isMountedRef = useRef(true);
 
   const { user, loading: authLoading } = useAuthStore();
@@ -25,7 +25,7 @@ export default function Splash() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(300)).current;
 
-  // simple animations
+  // Simple animations
   const fadeIn = () => {
     fadeAnim.setValue(0);
     Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }).start();
@@ -35,7 +35,24 @@ export default function Splash() {
     Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start();
   };
 
-  // run once on mount: init DB and start splash sequence
+  // Load offline user data on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const userData = await AsyncStorage.getItem(OFFLINE_USER_KEY);
+        if (userData) {
+          setOfflineUser(JSON.parse(userData));
+          console.log("APP START: Loaded offline user data");
+        }
+      } catch (error) {
+        console.error("APP START: Failed to load offline user:", error);
+      } finally {
+        setOfflineChecked(true);
+      }
+    })();
+  }, []);
+
+  // Run once on mount: init DB and start splash sequence
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -48,68 +65,38 @@ export default function Splash() {
       }
     })();
 
-    // splash timing: show splash1 -> splash2 -> downloading
+    // Splash timing: show splash1 -> splash2 -> determine next screen
     fadeIn();
     const t1 = setTimeout(() => setScreen("splash2"), 1000);
-    const t2 = setTimeout(() => setScreen("downloading"), 1800);
 
     return () => {
       isMountedRef.current = false;
       clearTimeout(t1);
-      clearTimeout(t2);
     };
   }, []);
 
-  // When we actually enter the 'downloading' screen, start sync (if not started)
+  // Routing decision: when auth loading is finished and offline check is done
   useEffect(() => {
-    if (screen !== "downloading") return;
+    if (screen !== "splash2") return; // Only run after splash2
+    if (!offlineChecked) return; // Wait for offline check
+    if (authLoading) return; // Wait for auth listener
 
-    // start animations for downloading UI
-    fadeIn();
+    // Check if user is authenticated (either online via Firebase or offline via cached data)
+    const isAuthenticated = user || offlineUser;
 
-    if (syncStartedRef.current) return;
-    syncStartedRef.current = true;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        console.log("APP START: Beginning syncData()...");
-        await syncData();
-        if (cancelled) return;
-        console.log("APP START: syncData completed.");
-        if (isMountedRef.current) setIsSyncComplete(true);
-      } catch (err) {
-        console.error("APP START: syncData failed:", err);
-        if (!cancelled && isMountedRef.current) {
-          setSyncError(err as Error);
-          setIsSyncComplete(true); // allow flow to continue even on error
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [screen]);
-
-  // Routing decision: only when sync is done and auth loading finished
-  useEffect(() => {
-    if (!isSyncComplete) return; // wait for sync to finish
-    if (authLoading) return; // wait for auth listener
-
-    // If user is present -> go to main interface
-    if (user) {
-      console.log("APP START: user present, routing to main interface");
-      // replace so splash isn't on the back stack
+    if (isAuthenticated) {
+      console.log("APP START: User authenticated, routing to main interface");
+      // User is logged in, go directly to main interface
+      // The welcome screen will handle sync check if needed
       router.replace("./(main_interface)/");
       return;
     }
 
     // No user -> show onboarding/auth screen
+    console.log("APP START: No user found, showing auth screen");
     setScreen("main");
     slideIn();
-  }, [isSyncComplete, authLoading, user]);
+  }, [screen, offlineChecked, authLoading, user, offlineUser]);
 
   return (
     <View style={styles.container}>
@@ -125,15 +112,8 @@ export default function Splash() {
         </Animated.View>
       )}
 
-      {screen === "downloading" && (
-        <Animated.View style={[styles.fullscreen, { opacity: fadeAnim }]}>
-          {/* Show DownloadingScreen while sync is in progress. The screen can itself reflect progress if your syncService provides callbacks. */}
-          <DownloadingScreen/>
-        </Animated.View>
-      )}
-
       {screen === "main" && (
-        <Animated.View style={[styles.fullscreen, { transform: [{ translateX: slideAnim }] }] }>
+        <Animated.View style={[styles.fullscreen, { transform: [{ translateX: slideAnim }] }]}>
           <GetStarted />
         </Animated.View>
       )}
