@@ -182,7 +182,7 @@ function TabsWithBottomSheet() {
   if (!activeUserData) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Could not load user profile. Please try again later.</Text>
+        <Text className="text-3xl font-PoppinsBold text-orange-500">Syncing User Data.</Text>
       </View>
     );
   }

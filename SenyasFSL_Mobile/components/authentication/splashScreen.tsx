@@ -9,8 +9,8 @@ import FSL_loading_screen from "@/assets/svgs/FSL_loading_screen.svg";
 export default function splashScreen() {
   const { width } = useWindowDimensions();
 
-  const svgWidth = width < 768 ? 400 : 700;
-  const svgHeight = width < 768 ? 400 : 600;
+  const svgWidth = width < 768 ? 250 : 700;
+  const svgHeight = width < 768 ? 250 : 600;
 
   return (
     <SafeAreaView style={styles.container}>

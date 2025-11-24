@@ -78,7 +78,7 @@ const AnimatedMCButton: React.FC<{
         FilipinoText={`"${option.labelFil}"`}
         onPress={onPress}
         clicked={hasChecked}
-        isCorrect={!option.isCorrect} // Original inverted logic
+        isCorrect={option.isCorrect} // Original inverted logic
         isSelected={isSelected}
         hasChecked={hasChecked}
         rounded={50}
@@ -333,11 +333,11 @@ const TrueOrFalse: React.FC<TrueOrFalseProps> = ({
 
       <View className="absolute w-full bottom-0 z-10">
         {isCorrect === true ? (
-          <CorrectBG />
+          <CorrectBG width={"100%"}/>
         ) : isCorrect === false ? (
-          <WrongBG />
+          <WrongBG width={"100%"} />
         ) : (
-          <LevelBg />
+          <LevelBg  width={"100%"}/>
         )}
       </View>
     </View>

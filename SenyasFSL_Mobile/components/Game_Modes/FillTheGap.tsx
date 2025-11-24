@@ -431,11 +431,11 @@ const FillTheGap: React.FC<FillTheGapProps> = ({
       {/* Backgrounds */}
       <View className="absolute w-full bottom-0 z-10">
         {isCorrect === true ? (
-          <CorrectBG />
+          <CorrectBG width={"100%"}/>
         ) : isCorrect === false ? (
-          <WrongBG />
+          <WrongBG width={"100%"}/>
         ) : (
-          <LevelBg />
+          <LevelBg width={"100%"}/>
         )}
       </View>
     </View>

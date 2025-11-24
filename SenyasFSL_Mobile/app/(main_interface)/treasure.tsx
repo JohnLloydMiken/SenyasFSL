@@ -218,132 +218,141 @@ export default function Treasure() {
 
   return (
     <View className="bg-white flex-1 items-center relative">
-      {/* Background */}
-      <View className="w-full h-full absolute top-0 left-0">
-        <BG width={"100%"} height={"100%"} scaleX={1.2} scaleY={1.2} />
-      </View>
-
-      {isUserFetching && !userLoading && (
-        <View className="absolute top-4 right-4 z-50">
-          <ActivityIndicator size="small" color="#0000ff" />
+      <ScrollView
+        style={{ flex: 1, width: "100%" }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          alignItems: "center"
+        }}
+      >
+        {/* Background */}
+        <View className="w-full h-full absolute top-0 left-0">
+          <BG width={"100%"} height={"100%"} scaleX={1.2} scaleY={1.2} />
         </View>
-      )}
 
-      {/* Chest + Button */}
-      <View className="w-11/12 flex justify-center items-center flex-col mb-4">
-        {hasChest ? (
-          <>
-            <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
-              You have {userData?.chestCount} right now. Get 8 questions in a
-              row to open 1!
-            </Text>
-            <View className="w-full h-44 md:h-72 ">
-              <LottieView
-                ref={animationRef}
-                source={chestAnimation}
-                loop={false}
-                autoPlay={false}
-                style={{ width: "100%", height: "100%" }}
-              />
-            </View>
-          </>
-        ) : (
-          <>
-            <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
-              You have no chests right now, get 7 questions right in a row to
-              open 1!
-            </Text>
-            <Image
-              source={require("../../assets/images/Treasure_Locked.png")}
-              className="w-44 h-36 mr-3"
-              style={{ resizeMode: "contain" }}
-            />
-          </>
+        {isUserFetching && !userLoading && (
+          <View className="absolute top-4 right-4 z-50">
+            <ActivityIndicator size="small" color="#0000ff" />
+          </View>
         )}
 
+        {/* Chest + Button */}
+        <View className="w-11/12 flex justify-center items-center flex-col mb-4">
+          {hasChest ? (
+            <>
+              <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
+                You have {userData?.chestCount} right now. Get 8 questions in a
+                row to open 1!
+              </Text>
+              <View className="w-full h-44 md:h-72 ">
+                <LottieView
+                  ref={animationRef}
+                  source={chestAnimation}
+                  loop={false}
+                  autoPlay={false}
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </View>
+            </>
+          ) : (
+            <>
+              <Text className="font-PoppinsBold text-xl md:text-2xl mt-2 text-center">
+                You have no chests right now, get 8 questions right in a row to
+                open 1!
+              </Text>
+              <Image
+                source={require("../../assets/images/Treasure_Locked.png")}
+                className="w-44 h-36 mr-3"
+                style={{ resizeMode: "contain" }}
+              />
+            </>
+          )}
+
+          <TouchableOpacity
+            className="w-2/3 p-4 bg-[#27D700] rounded-xl mt-4"
+            onPress={handleMainButtonPress}
+            disabled={isBusy}
+          >
+            <Text className="font-PoppinsBold text-white text-xl md:text-2xl text-center">
+              {hasChest ? "Claim Rewards" : "Start a lesson"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Items */}
+        <View className="w-11/12 flex-col justify-center items-center md:mt-8 ">
+          <View className="flex-row justify-center gap-24 mb-4 w-2/3">
+            <Item
+              itemName="XP Multiply"
+              itemCost={350}
+              itemIcon="Potion"
+              itemId="xpMultiply"
+              onPress={handleBuyItem}
+              disabled={isBusy}
+            />
+            <Item
+              itemName="Bomb"
+              itemCost={20}
+              itemIcon="Bomb"
+              itemId="bomb"
+              onPress={handleBuyItem}
+              disabled={isBusy}
+            />
+          </View>
+
+          <View className="flex-row justify-center w-2/3 gap-24 mb-4">
+            <Item
+              itemName="Skip"
+              itemCost={50}
+              itemIcon="Next"
+              itemId="skip"
+              onPress={handleBuyItem}
+              disabled={isBusy}
+            />
+            <Item
+              itemName="2x Try"
+              itemCost={25}
+              itemIcon="Retry"
+              itemId="twotry"
+              onPress={handleBuyItem}
+              disabled={isBusy}
+            />
+          </View>
+          <View className="flex-row justify-center gap-4 mb-4">
+            <Item
+              itemName="Streak Protection"
+              itemCost={500}
+              itemIcon="Protection"
+              itemId="streakProtect"
+              onPress={handleBuyItem}
+              disabled={isBusy}
+            />
+          </View>
+        </View>
+
+        {/* Tutorial Button */}
+        <View className="absolute left-4 bottom-20">
+          <InventoryInTreasure
+            onPress={() => setIsClicked((prev) => !prev)}
+            isPressed={isClicked}
+            onClose={() => setIsClicked(false)}
+          />
+        </View>
         <TouchableOpacity
-          className="w-2/3 p-4 bg-[#27D700] rounded-xl mt-4"
-          onPress={handleMainButtonPress}
+          className="absolute bottom-4 left-4"
+          onPress={() => setIsShown(true)}
           disabled={isBusy}
         >
-          <Text className="font-PoppinsBold text-white text-xl md:text-2xl text-center">
-            {hasChest ? "Claim Rewards" : "Start a lesson"}
-          </Text>
+          <Tutorial width={44} height={44} />
         </TouchableOpacity>
-      </View>
 
-      {/* Items */}
-      <View className="w-11/12 flex-col justify-center items-center md:mt-8 ">
-        <View className="flex-row justify-center gap-24 mb-4 w-2/3">
-          <Item
-            itemName="XP Multiply"
-            itemCost={350}
-            itemIcon="Potion"
-            itemId="xpMultiply"
-            onPress={handleBuyItem}
-            disabled={isBusy}
-          />
-          <Item
-            itemName="Bomb"
-            itemCost={20}
-            itemIcon="Bomb"
-            itemId="bomb"
-            onPress={handleBuyItem}
-            disabled={isBusy}
-          />
-        </View>
+        {/* Tutorial Modal */}
+        {isShown && <TutorialModal onClose={() => setIsShown(false)} />}
 
-        <View className="flex-row justify-center w-2/3 gap-24 mb-4">
-          <Item
-            itemName="Skip"
-            itemCost={50}
-            itemIcon="Next"
-            itemId="skip"
-            onPress={handleBuyItem}
-            disabled={isBusy}
-          />
-          <Item
-            itemName="2x Try"
-            itemCost={25}
-            itemIcon="Retry"
-            itemId="twotry"
-            onPress={handleBuyItem}
-            disabled={isBusy}
-          />
-        </View>
-        <View className="flex-row justify-center gap-4 mb-4">
-          <Item
-            itemName="Streak Protection"
-            itemCost={500}
-            itemIcon="Protection"
-            itemId="streakProtect"
-            onPress={handleBuyItem}
-            disabled={isBusy}
-          />
-        </View>
-      </View>
-
-      {/* Tutorial Button */}
-      <View className="absolute left-4 bottom-20">
-        <InventoryInTreasure
-          onPress={() => setIsClicked((prev) => !prev)}
-          isPressed={isClicked}
-          onClose={() => setIsClicked(false)}
-        />
-      </View>
-      <TouchableOpacity
-        className="absolute bottom-4 left-4"
-        onPress={() => setIsShown(true)}
-        disabled={isBusy}
-      >
-        <Tutorial width={44} height={44} />
-      </TouchableOpacity>
-
-      {/* Tutorial Modal */}
-      {isShown && <TutorialModal onClose={() => setIsShown(false)} />}
-
-      {/* Render the new LootModal conditionally */}
-      <LootModal prize={wonPrize} onClose={handleCloseLootModal} />
+        {/* Render the new LootModal conditionally */}
+        <LootModal prize={wonPrize} onClose={handleCloseLootModal} />
+      </ScrollView>
     </View>
   );
 }

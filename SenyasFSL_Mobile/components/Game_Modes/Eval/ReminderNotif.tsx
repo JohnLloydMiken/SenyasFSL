@@ -11,7 +11,7 @@ interface ReminderNotifProps{
 const ReminderNotif: React.FC<ReminderNotifProps> = ({onRemind, onContinue}) => {
   return (
     <View className="bg-white flex-1 justify-center items-center">
-      <FSL_Reminder width={fslIconSize()} height={fslIconSize()} />
+      <FSL_Reminder width={275} height={275} />
       <Text className="font-PoppinsBold text-2xl md:text-3xl text-center w-11/12">
         Never forget to lose a streak again!
       </Text>

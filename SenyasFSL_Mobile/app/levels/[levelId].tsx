@@ -116,7 +116,7 @@ export default function LevelContent() {
                 params: {
                   levelId,
                   levelType: levelData.type,
-                  questions: levelData.flow?.length || 0, // ✅ Count items in flow
+                 questions: levelData.flow?.filter((item: { type: string; }) => item.type === "question").length || 0, // ✅ Count only question items
                   lessons: JSON.stringify(
                     levelData.flow
                       .filter((f: any) => f.type === "lesson")

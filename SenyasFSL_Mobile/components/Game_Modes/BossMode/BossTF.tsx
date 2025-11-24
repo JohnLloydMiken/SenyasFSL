@@ -177,7 +177,7 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
           FilipinoText={`"${option.labelFil}"`}
           onPress={() => !hasChecked && setSelectedChoice(option.id)}
           clicked={hasChecked}
-          isCorrect={!option.isCorrect}
+          isCorrect={option.isCorrect || true}
           isSelected={selectedChoice === option.id}
           hasChecked={hasChecked}
           rounded={50}
@@ -279,11 +279,11 @@ const BossTrueOrFalse: React.FC<TrueOrFalseProps> = ({
       {/* Background */}
       <View className="absolute w-full bottom-0 z-10">
         {isCorrect === true ? (
-          <CorrectBG />
+          <CorrectBG width={"100%"}/>
         ) : isCorrect === false ? (
-          <WrongBG />
+          <WrongBG width={"100%"}/>
         ) : (
-          <LevelBg />
+          <LevelBg width={"100%"}/>
         )}
       </View>
     </View>

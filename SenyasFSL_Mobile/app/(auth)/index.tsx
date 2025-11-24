@@ -19,7 +19,7 @@ export default function GetStarted() {
   return (
     <SafeAreaView style={styles.container}>
       <View>
-        <FSL_start width={fslIconSize()} height={fslIconSize()} />
+        <FSL_start width={275} height={275} />
       </View>
 
       <View className="w-11/12">
@@ -31,7 +31,7 @@ export default function GetStarted() {
         </Text>
       </View>
 
-      <View className="w-11/12 absolute bottom-12">
+      <View className="w-11/12 absolute bottom-12 gap-4">
         <Authbutton
           content="Get Started"
           onPress={() => router.replace("./register")}
