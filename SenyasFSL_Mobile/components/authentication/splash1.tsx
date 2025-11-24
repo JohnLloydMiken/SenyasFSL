@@ -4,7 +4,7 @@ import FSL_sign from "@/assets/svgs/FSL_sign.svg";
 export default function Index() {
 
   const {width} = useWindowDimensions()
-  const svgSize = width < 768 ? 300 : 500;
+  const svgSize = width < 768 ? 250 : 500;
   return (
     <SafeAreaView style={styles.container}>
       <View>

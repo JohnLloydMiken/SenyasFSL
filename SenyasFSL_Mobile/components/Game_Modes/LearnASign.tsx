@@ -43,7 +43,7 @@ const LearnASign: React.FC<LearnASignProps> = ({
         }
         setResolvedUrl(finalUrl);
         player.replace(finalUrl); // ✅ Correct way to update video source
-        player.pause();
+        player.play();
         player.playbackRate = speed
       } catch (error) {
       } finally {
@@ -94,12 +94,7 @@ const LearnASign: React.FC<LearnASignProps> = ({
         <LearnAsignBTN
           EnglishText={EnglishText}
           FilipinoText={`"${FilipinoText}"`}
-          onPress={() => {
-            setIsClicked(!isClicked);
-            if (isClicked) player.pause();
-            else player.play();
-          }}
-          clicked={isClicked}
+         
         />
       </View>
 
@@ -110,7 +105,7 @@ const LearnASign: React.FC<LearnASignProps> = ({
 
       {/* BACKGROUND */}
       <View className="absolute w-full bottom-0 z-10">
-        <LevelBg />
+        <LevelBg width={"100%"}/>
       </View>
     </View>
   );

@@ -24,7 +24,7 @@ const Evaluation: React.FC<EvaluationProps> = ({
   onRetake,
 }) => {
   const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 350 : 500;
+  const svgSize = width < 768 ? 275 : 500;
   const resetScore = useUserPoints((state) => state.resetScore);
 
   return (

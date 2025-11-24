@@ -9,11 +9,11 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Level } from "../modules/types/interface";
 export default function LevelSplashScreen() {
   const { width } = useWindowDimensions();
-  const svgSize = width < 768 ? 130 : 160;
+  const svgSize = width < 768 ? 100 : 160;
 
   return (
     <View className="bg-[#FB990F] flex-1 items-center justify-center">
-      <FSL_splash />
+      <FSL_splash width={275} height={275} />
       <View className={`absolute bottom-12 w-full h-max flex-col justify-center items-center gap-3`}>
         <LinearGradient
           colors={["#FFC87A", "#EA0505"]} // orange to red

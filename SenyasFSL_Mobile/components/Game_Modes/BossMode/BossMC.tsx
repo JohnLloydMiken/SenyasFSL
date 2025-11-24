@@ -277,11 +277,11 @@ useEffect(() => {
       {/* Kept at bottom with z-10 so it stays fixed behind the scrolling content (parallax effect) */}
       <View className="absolute w-full bottom-0 z-0">
         {isCorrect === true ? (
-          <CorrectBG />
+          <CorrectBG width={"100%"}/>
         ) : isCorrect === false ? (
-          <WrongBG />
+          <WrongBG width={"100%"} />
         ) : (
-          <LevelBg />
+          <LevelBg width={"100%"}/>
         )}
       </View>
       </ScrollView>

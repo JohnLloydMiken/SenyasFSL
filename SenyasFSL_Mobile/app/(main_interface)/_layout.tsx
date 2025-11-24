@@ -1,6 +1,4 @@
 // app/(main_interface)/_layout.tsx
-// --- MODIFIED FILE ---
-
 import Authbutton from "@/components/authentication/button";
 import HeaderRightBtn from "@/components/authentication/headerRightBtn";
 import UserInput from "@/components/authentication/userInput";
@@ -33,31 +31,27 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetProvider, useBottomSheet } from "@/modules/contextProvider";
-import { updateUserProfile } from "@/services/AuthService"; //
+import { updateUserProfile } from "@/services/AuthService";
 import ChangePasswordSheet from "@/components/main_interface/profile/ChangePasswordSheet";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ✅ 1. Import *only* the hooks, not the Client/Provider
 import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 
-// ✅ 2. Import your user profile fetcher
-import { fetchUserProfile } from "@/services/userService"; //
+import { fetchUserProfile } from "@/services/userService";
+import { UserProfileData } from "@/shared/types/user";
 
-// 🚫 3. DELETE THE REDUNDANT CLIENT
-// const queryClient = new QueryClient();
+const CACHED_USER_PROFILE_KEY = '@cached_user_profile';
 
 export default function RootLayout() {
   return (
-    // 🚫 4. DELETE THE REDUNDANT PROVIDER
-    // <QueryClientProvider client={queryClient}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetProvider>
         <TabsWithBottomSheet />
       </BottomSheetProvider>
     </GestureHandlerRootView>
-    // </QueryClientProvider>
   );
 }
 
@@ -69,15 +63,58 @@ function TabsWithBottomSheet() {
   const { width } = useWindowDimensions();
   const titleSize = width < 768 ? 12 : 18;
 
-  // ✅ 5. This hook now finds the *root* client (from app/_layout.tsx)
   const queryClient = useQueryClient();
 
-  // ✅ 6. This query now uses the *root* client
-  const { data: userData, isLoading: userLoading } = useQuery({
+  // State to track if we're offline and using cached data
+  const [isOffline, setIsOffline] = useState(false);
+  const [cachedUserData, setCachedUserData] = useState<UserProfileData | null>(null);
+
+  // Try to fetch user profile from Firebase
+  const { data: userData, isLoading: userLoading, error } = useQuery({
     queryKey: ["user", user?.uid],
-    queryFn: () => fetchUserProfile(user!.uid), //
+    queryFn: async () => {
+      try {
+        const profile = await fetchUserProfile(user!.uid);
+        
+        // If successful, cache the data
+        if (profile) {
+          await AsyncStorage.setItem(CACHED_USER_PROFILE_KEY, JSON.stringify(profile));
+          setIsOffline(false);
+        }
+        
+        return profile;
+      } catch (err) {
+        console.error("Failed to fetch user profile:", err);
+        throw err;
+      }
+    },
     enabled: !!user,
+    retry: 1, // Only retry once
+    retryDelay: 1000,
   });
+
+  // Load cached data on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const cached = await AsyncStorage.getItem(CACHED_USER_PROFILE_KEY);
+        if (cached) {
+          setCachedUserData(JSON.parse(cached));
+          console.log("Loaded cached user profile for offline use");
+        }
+      } catch (err) {
+        console.error("Failed to load cached profile:", err);
+      }
+    })();
+  }, []);
+
+  // Detect offline mode
+  useEffect(() => {
+    if (error && cachedUserData) {
+      console.log("Using cached profile data (offline mode)");
+      setIsOffline(true);
+    }
+  }, [error, cachedUserData]);
 
   const snapPoints = useMemo(() => {
     switch (sheet) {
@@ -91,17 +128,20 @@ function TabsWithBottomSheet() {
     }
   }, [sheet]);
 
-  const [username, setUsername] = useState(userData?.username || "");
-  const [email, setEmail] = useState(userData?.email || "");
+  // Use cached data if offline, otherwise use fresh data
+  const activeUserData = isOffline ? cachedUserData : userData;
+
+  const [username, setUsername] = useState(activeUserData?.username || "");
+  const [email, setEmail] = useState(activeUserData?.email || "");
   const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (isSheetOpen && sheet === "editData") {
-      setUsername(userData?.username || "");
-      setEmail(userData?.email || "");
+      setUsername(activeUserData?.username || "");
+      setEmail(activeUserData?.email || "");
       setPassword("");
     }
-  }, [isSheetOpen, sheet, userData]);
+  }, [isSheetOpen, sheet, activeUserData]);
 
   const handleUpdateProfile = async () => {
     if (!password) {
@@ -115,12 +155,11 @@ function TabsWithBottomSheet() {
       await updateUserProfile({
         newUsername: username,
         newEmail: email,
-      }); //
+      });
 
       Alert.alert("Success", "Profile updated successfully!");
       bottomSheetRef.current?.close();
 
-      // ✅ 7. This invalidates the *root* cache
       queryClient.invalidateQueries({ queryKey: ["user", user?.uid] });
     } catch (error: any) {
       Alert.alert(
@@ -130,12 +169,8 @@ function TabsWithBottomSheet() {
     }
   };
 
-  // ✅ 8. This loading check now works perfectly.
-  // It will show 'Loading...' if auth is loading,
-  // OR if the root cache is being fetched for the first time.
-  // It will *not* show 'Loading...' if the cache was
-  // already filled by welcome.tsx.
-  if (authLoading || userLoading) {
+  // Show loading only if we don't have cached data
+  if (authLoading || (userLoading && !cachedUserData)) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
         <Text className="text-3xl font-PoppinsBold text-orange-500">Preparing the Game ...</Text>
@@ -143,11 +178,11 @@ function TabsWithBottomSheet() {
     );
   }
 
-  // ✅ 9. This check is still valid.
-  if (!userData) {
+  // Only show error if we have no cached data to fall back on
+  if (!activeUserData) {
     return (
       <View className="flex-1 bg-[#FAF3E0] justify-center items-center">
-        <Text>Could not load user profile. Please try again later.</Text>
+        <Text className="text-3xl font-PoppinsBold text-orange-500">Syncing User Data.</Text>
       </View>
     );
   }
@@ -159,13 +194,18 @@ function TabsWithBottomSheet() {
         screenOptions={{
           headerTitle: "",
           tabBarStyle: isSheetOpen ? { display: "none" } : {},
-          // ✅ 10. This now reads from the *root* cache and will
-          // update instantly when 'treasure.tsx' invalidates.
-          headerLeft: () => <Curency number={userData?.senyasCoins} />,
+          headerLeft: () => (
+            <View className="flex-row items-center">
+              <Curency number={activeUserData?.senyasCoins} />
+              {isOffline && (
+                <Text className="text-xs text-gray-500 ml-2">(Offline)</Text>
+              )}
+            </View>
+          ),
           headerRight: () => (
             <HeaderRightBtn
-              achievementCount={userData.achievements.length}
-              streakCount={userData.currentStreak}
+              achievementCount={activeUserData.achievements.length}
+              streakCount={activeUserData.currentStreak}
               onPressAchievement={() => router.push("./headeroptions/")}
               onPressLeaderboards={() =>
                 router.push("../headeroptions/leaderboards")
@@ -193,17 +233,39 @@ function TabsWithBottomSheet() {
             },
             tabBarLabelPosition: "below-icon",
           }}
+          listeners={{
+            tabPress: (e) => {
+              if (isOffline) {
+                e.preventDefault();
+                Alert.alert(
+                  "No Internet Connection",
+                  "Please connect to the internet to access the Home tab."
+                );
+              }
+            },
+          }}
         />
         <Tabs.Screen
           name="treasure"
           options={{
             lazy: false,
-            tabBarIcon: ({ focused }) => <TreasureIcon focused={focused} />, //
+            tabBarIcon: ({ focused }) => <TreasureIcon focused={focused} />,
             title: "Treasure",
             tabBarLabelStyle: {
               fontSize: titleSize,
             },
             tabBarLabelPosition: "below-icon",
+          }}
+          listeners={{
+            tabPress: (e) => {
+              if (isOffline) {
+                e.preventDefault();
+                Alert.alert(
+                  "No Internet Connection",
+                  "Please connect to the internet to access the Treasure tab."
+                );
+              }
+            },
           }}
         />
         <Tabs.Screen
@@ -217,6 +279,7 @@ function TabsWithBottomSheet() {
             },
             tabBarLabelPosition: "below-icon",
           }}
+          // Dictionary is always accessible (no listener blocking it)
         />
         <Tabs.Screen
           name="profile"
@@ -228,6 +291,17 @@ function TabsWithBottomSheet() {
               fontSize: titleSize,
             },
             tabBarLabelPosition: "below-icon",
+          }}
+          listeners={{
+            tabPress: (e) => {
+              if (isOffline) {
+                e.preventDefault();
+                Alert.alert(
+                  "No Internet Connection",
+                  "Please connect to the internet to access your Profile."
+                );
+              }
+            },
           }}
         />
       </Tabs>
@@ -244,14 +318,14 @@ function TabsWithBottomSheet() {
             <>
               <View className="w-full relative flex-col justify-center items-center h-full">
                 <UserStreak
-                  streakFreezes={userData.streakFreezes}
-                  currentStreak={userData.currentStreak}
-                  activityDays={userData.activityDays}
+                  streakFreezes={activeUserData.streakFreezes}
+                  currentStreak={activeUserData.currentStreak}
+                  activityDays={activeUserData.activityDays}
                 />
 
                 <TouchableOpacity
                   className="w-11/12 p-4 bg-[#FB990F] rounded-xl absolute bottom-10"
-                  onPress={() => shareStreak(userData.currentStreak)}
+                  onPress={() => shareStreak(activeUserData.currentStreak)}
                 >
                   <Text className="font-PoppinsBold text-2xl text-center text-white">
                     Share your Streak
@@ -275,7 +349,6 @@ function TabsWithBottomSheet() {
             </>
           )}
 
-          {/* --- START: Added new modal views --- */}
           {sheet === "help" && (
             <HelpModal onPress={() => bottomSheetRef.current?.close()} />
           )}
@@ -292,7 +365,6 @@ function TabsWithBottomSheet() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // justifyContent: "center",
     position: "relative",
     width: "100%",
     height: "100%",

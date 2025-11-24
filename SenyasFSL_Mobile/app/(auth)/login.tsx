@@ -10,9 +10,9 @@ import { doc, getDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const OFFLINE_USER_KEY = '@app_offline_user';
+const OFFLINE_USER_KEY = "@app_offline_user";
 
 export default function Login() {
   // Local UI state
@@ -29,13 +29,16 @@ export default function Login() {
   // Save user data for offline access
   const saveOfflineUser = async (userData: any) => {
     try {
-      await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify({
-        uid: userData.uid,
-        email: userData.email,
-        role: userData.role,
-        status: userData.status,
-        // Add any other fields you need offline
-      }));
+      await AsyncStorage.setItem(
+        OFFLINE_USER_KEY,
+        JSON.stringify({
+          uid: userData.uid,
+          email: userData.email,
+          role: userData.role,
+          status: userData.status,
+          // Add any other fields you need offline
+        })
+      );
       console.log("User data saved for offline access");
     } catch (error) {
       console.error("Failed to save offline user:", error);
@@ -93,7 +96,7 @@ export default function Login() {
         await clearOfflineUser();
         router.push({
           pathname: "/(auth)/suspended",
-          params: { email: currentUser.email || email }
+          params: { email: currentUser.email || email },
         });
         return; // Stop execution here
       }
@@ -121,10 +124,9 @@ export default function Login() {
           role: userRole,
           status: userStatus,
         });
-        
+
         router.push("/(auth)/welcome");
       }
-
     } catch (err: any) {
       // This will now also catch the errors from the admin check and suspended check
       Toast.show({
@@ -147,7 +149,7 @@ export default function Login() {
       return;
     }
 
-    setIsLoading(true); 
+    setIsLoading(true);
     try {
       await sendPasswordResetEmail(auth, resetEmail);
 
@@ -196,6 +198,7 @@ export default function Login() {
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
+            placeholderTextColor={"black"}
             keyboardType="email-address"
             className="border-[1px] border-gray-400 rounded-md bg-white p-4 md:text-xl"
           />
@@ -210,6 +213,7 @@ export default function Login() {
               value={password}
               onChangeText={setPassword}
               placeholder="Password"
+              placeholderTextColor={"black"}
               secureTextEntry={!isPasswordVisible}
               className="flex-1 p-4 md:text-xl"
             />
@@ -272,6 +276,7 @@ export default function Login() {
               </Text>
               <TextInput
                 placeholder="Email"
+                placeholderTextColor={"black"}
                 value={resetEmail}
                 onChangeText={setResetEmail}
                 autoCapitalize="none"
